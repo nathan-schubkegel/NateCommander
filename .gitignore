@@ -1,0 +1,10 @@
+#ignore vim backup files
+*~
+*.vcproj.*.user
+*.suo
+*.ncb
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+*.bak
