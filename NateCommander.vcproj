@@ -41,16 +41,16 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=".\lua-5.2.3\src"
+				AdditionalIncludeDirectories="&quot;.\lua-5.2.3\src&quot;;&quot;.\SDL-1.2.14\include&quot;;&quot;SDL_mixer-1.2.11&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG"
-				ExceptionHandling="0"
+				ExceptionHandling="1"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				WarnAsError="false"
 				Detect64BitPortabilityProblems="true"
-				DebugInformationFormat="3"
+				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -63,8 +63,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
+				AdditionalDependencies="lua.lib sdl.lib SDL_mixer.lib winmm.lib dxguid.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;lua-5.2.3\Debug&quot;;&quot;SDL-1.2.14\VisualC\SDL\Debug&quot;;&quot;SDL_mixer-1.2.11\VisualC\Debug&quot;;&quot;Microsoft DirectX SDK (August 2009)\Lib&quot;"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				SubSystem="2"
@@ -201,6 +202,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\FatalErrorHandler.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\NateCommander.cpp"
 				>
 			</File>
@@ -210,240 +215,8 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
-		</Filter>
-		<Filter
-			Name="lua Header Files"
-			>
 			<File
-				RelativePath=".\lua-5.2.3\src\lapi.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lauxlib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lcode.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lctype.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ldebug.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ldo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lfunc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lgc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\llex.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\llimits.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lmem.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lobject.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lopcodes.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lparser.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lstate.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lstring.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ltable.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ltm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lua.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lua.hpp"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\luaconf.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lualib.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lundump.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lvm.h"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lzio.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="lua Source Files"
-			>
-			<File
-				RelativePath=".\lua-5.2.3\src\lapi.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lauxlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lbaselib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lbitlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lcode.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lcorolib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lctype.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ldblib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ldebug.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ldo.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ldump.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lfunc.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lgc.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\linit.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\liolib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\llex.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lmathlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lmem.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\loadlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lobject.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lopcodes.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\loslib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lparser.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lstate.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lstring.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lstrlib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ltable.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ltablib.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\ltm.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lundump.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lvm.c"
-				>
-			</File>
-			<File
-				RelativePath=".\lua-5.2.3\src\lzio.c"
+				RelativePath=".\FatalErrorHandler.h"
 				>
 			</File>
 		</Filter>
