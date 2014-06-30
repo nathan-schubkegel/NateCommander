@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;.\lua-5.2.3\src&quot;;&quot;.\SDL-1.2.14\include&quot;;&quot;SDL_mixer-1.2.11&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG"
+				PreprocessorDefinitions="WIN32;_DEBUG;$(NOINHERIT)"
 				ExceptionHandling="1"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -51,6 +51,7 @@
 				WarnAsError="false"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
+				CompileAs="1"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -67,9 +68,9 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;lua-5.2.3\Debug&quot;;&quot;SDL-1.2.14\VisualC\SDL\Debug&quot;;&quot;SDL_mixer-1.2.11\VisualC\Debug&quot;;&quot;Microsoft DirectX SDK (August 2009)\Lib&quot;"
 				GenerateDebugInformation="true"
-				AssemblyDebug="1"
+				AssemblyDebug="0"
 				SubSystem="2"
-				EntryPointSymbol="main"
+				EntryPointSymbol=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -206,7 +207,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NateCommander.cpp"
+				RelativePath=".\main.cpp"
 				>
 			</File>
 		</Filter>
