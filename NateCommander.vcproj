@@ -203,11 +203,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\FatalErrorHandler.cpp"
+				RelativePath=".\FatalErrorHandler.c"
 				>
 			</File>
 			<File
-				RelativePath=".\main.cpp"
+				RelativePath=".\Main.c"
+				>
+			</File>
+			<File
+				RelativePath=".\MainEvents.c"
 				>
 			</File>
 		</Filter>
@@ -218,6 +222,10 @@
 			>
 			<File
 				RelativePath=".\FatalErrorHandler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MainEvents.h"
 				>
 			</File>
 		</Filter>
