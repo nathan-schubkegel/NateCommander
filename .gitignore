@@ -1,6 +1,6 @@
 #ignore vim backup files
 *~
-*.vcproj.*.user
+*.user
 *.suo
 *.ncb
 [Dd]ebug/
@@ -8,3 +8,4 @@
 [Bb]in/
 [Oo]bj/
 *.bak
+*.aps

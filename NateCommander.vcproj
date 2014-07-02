@@ -229,6 +229,22 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Resource Files"
+			>
+			<File
+				RelativePath=".\MainWindowIcon.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\Resources.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Resources.rc"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>
