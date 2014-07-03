@@ -4,6 +4,27 @@
 #include <assert.h>
 #include <Windows.h>
 
+/*
+SDL_Event is a union of all event structures used in SDL, 
+using it is a simple matter of knowing which union member 
+relates to which event type.
+
+Event type	Event Structure
+SDL_ACTIVEEVENT	SDL_ActiveEvent
+SDL_KEYDOWN/UP	SDL_KeyboardEvent
+SDL_MOUSEMOTION	SDL_MouseMotionEvent
+SDL_MOUSEBUTTONDOWN/UP	SDL_MouseButtonEvent
+SDL_JOYAXISMOTION	SDL_JoyAxisEvent
+SDL_JOYBALLMOTION	SDL_JoyBallEvent
+SDL_JOYHATMOTION	SDL_JoyHatEvent
+SDL_JOYBUTTONDOWN/UP	SDL_JoyButtonEvent
+SDL_QUIT	SDL_QuitEvent
+SDL_SYSWMEVENT	SDL_SysWMEvent
+SDL_VIDEORESIZE	SDL_ResizeEvent
+SDL_VIDEOEXPOSE	SDL_ExposeEvent
+SDL_USEREVENT	SDL_UserEvent
+*/
+
 void MainEvents_HandleSdlEvent(SDL_Event *sdlEvent)
 {
   switch (sdlEvent->type)
