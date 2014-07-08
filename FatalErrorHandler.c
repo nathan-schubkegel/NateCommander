@@ -17,3 +17,8 @@ void FatalError2(const char* message, const char * extraInfo)
   SDL_Quit();
   exit(-1);
 }
+
+void FatalError_OutOfMemory()
+{
+  FatalError("Out of memory (failed to allocate memory for something)");
+}

@@ -3,5 +3,6 @@
 
 void FatalError(const char * message);
 void FatalError2(const char * message, const char * extraInfo);
+void FatalError_OutOfMemory();
 
 #endif

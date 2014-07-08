@@ -64,7 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="lua.lib sdl.lib SDL_mixer.lib winmm.lib dxguid.lib user32.lib gdi32.lib advapi32.lib $(NOINHERIT)"
+				AdditionalDependencies="lua.lib sdl.lib SDL_mixer.lib winmm.lib dxguid.lib user32.lib gdi32.lib advapi32.lib opengl32.lib glu32.lib $(NOINHERIT)"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;lua-5.2.3\Debug&quot;;&quot;SDL-1.2.14\VisualC\SDL\Debug&quot;;&quot;SDL_mixer-1.2.11\VisualC\Debug&quot;;&quot;Microsoft DirectX SDK (August 2009)\Lib&quot;"
 				GenerateDebugInformation="true"
@@ -211,7 +211,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MainEvents.c"
+				RelativePath=".\ResourcesLoader.c"
+				>
+			</File>
+			<File
+				RelativePath=".\SpinnyTriangleApp.c"
+				>
+			</File>
+			<File
+				RelativePath=".\TickCounter.c"
+				>
+			</File>
+			<File
+				RelativePath=".\Utils.c"
 				>
 			</File>
 		</Filter>
@@ -225,7 +237,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MainEvents.h"
+				RelativePath=".\ResourcesLoader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SpinnyTriangleApp.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TickCounter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Utils.h"
 				>
 			</File>
 		</Filter>
