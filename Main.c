@@ -9,30 +9,23 @@
 
 void InitMainWindow2D()
 {
-  SDL_Surface * screen;
-
   // Have a preference for 8-bit, but accept any depth
   // (and software surface)
-  screen = SDL_SetVideoMode(640, 480, 8, SDL_SWSURFACE | SDL_ANYFORMAT);
-  if (screen == NULL)
+  if (NULL == SDL_SetVideoMode(640, 480, 8, SDL_SWSURFACE | SDL_ANYFORMAT))
   {
-    FatalError2("Couldn't set 640x480x8 video mode: %s", SDL_GetError());
+    FatalError_Sdl("Couldn't set 640x480x8 video mode");
   }
-  //printf("Set 640x480 at %d bits-per-pixel mode\n",
-  //       screen->format->BitsPerPixel);
-
-  // TODO: need to do anything with screen?
 }
 
 void InitMainWindowGL()
 {
   // Information about the current video settings.
   const SDL_VideoInfo* info = NULL;
-  
+
   // Dimensions of our window.
   int width = 0;
   int height = 0;
-  
+
   // Color depth in bits of our window.
   int bpp = 0;
 
@@ -45,7 +38,7 @@ void InitMainWindowGL()
   if (NULL == (info = SDL_GetVideoInfo()))
   {
     // This will probably never happen.
-    FatalError2("Video query failed: %s\n", SDL_GetError());
+    FatalError_Sdl("Video query failed");
   }
 
   // Set our width/height to resolution of primary display
@@ -97,23 +90,22 @@ void InitMainWindowGL()
     // This could happen for a variety of reasons,
     // including DISPLAY not being set, the specified
     // resolution not being available, etc.
-    FatalError2("Video mode set failed: %s", SDL_GetError());
+    FatalError_Sdl("Video mode set failed");
   }
 }
-
-SDL_Event gSdlEvent;
 
 #pragma warning(disable : 4100) // unreferenced formal parameter
 #pragma warning(disable : 4702) // unreachable code
 int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
-  SDL_Surface * bmpSurface;
-  SpinnyTriangleApp_State * state;
+  static SDL_Surface * bmpSurface;
+  static SpinnyTriangleApp_State state;
+  static SDL_Event sdlEvent;
 
   // Initialize defaults, Video and Audio
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == -1)
   {
-    FatalError2("Could not initialize SDL: %s.\n", SDL_GetError());
+    FatalError_Sdl("Could not initialize SDL");
   }
 
   // Clean up on exit
@@ -125,7 +117,7 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
   // Main window icon will be a dorky smiley face
   if (NULL == (bmpSurface = LoadEmbeddedResourceBmp(RES_ID_MAIN_WINDOW_ICON_BMP)))
   {
-    FatalError2("Could not load BMP for main window icon: %s.\n", SDL_GetError());
+    FatalError_Sdl("Could not load BMP for main window icon");
 	}
   SDL_WM_SetIcon(bmpSurface, NULL);
   SDL_FreeSurface(bmpSurface);
@@ -136,16 +128,20 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
 
   // Initialize app state
   // Today's app is: SpinnyTriangleApp
-  state = MallocAndInitOrDie(sizeof(SpinnyTriangleApp_State));
-  SpinnyTriangleApp_Initialize(state);
+  SpinnyTriangleApp_Initialize(&state);
 
 again:
-  while (SDL_PollEvent(&gSdlEvent))
+  while (SDL_PollEvent(&sdlEvent))
   {
-    SpinnyTriangleApp_HandleEvent(state, &gSdlEvent);
+    // pass all events on to the app
+    SpinnyTriangleApp_HandleEvent(&state, &sdlEvent);
   }
-  SpinnyTriangleApp_Process(state);
-  SpinnyTriangleApp_Draw(state);
+
+  // give the app a chance to increment its game state
+  SpinnyTriangleApp_Process(&state);
+
+  // give the app a chance to draw
+  SpinnyTriangleApp_Draw(&state);
 
   Sleep(0); // give up execution to other threads that might want it
   goto again;
