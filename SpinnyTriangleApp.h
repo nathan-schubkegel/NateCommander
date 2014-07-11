@@ -2,13 +2,15 @@
 #define NATE_COMMANDER_SPINNY_TRIANGLE_APP_H
 
 #include "TickCounter.h"
-#include <SDL.h>
+#include "SDL.h"
 
 typedef struct SpinnyTriangleApp_State
 {
+  SDL_Window * MainWindow;
   double CurrentAngle;
   TickCounter Ticks;
   Uint8 ShouldRotate;
+
 } SpinnyTriangleApp_State;
 
 void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State * state);

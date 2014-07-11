@@ -1,7 +1,7 @@
 #ifndef NATE_COMMANDER_TICK_COUNTER_H
 #define NATE_COMMANDER_TICK_COUNTER_H
 
-#include <SDL.h>
+#include "SDL.h"
 
 typedef struct TickCounter
 {
