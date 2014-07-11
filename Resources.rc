@@ -1,0 +1,9 @@
+#include "Resources.h"
+
+// LANG_ENGLISH = 0x09, according to winnt.h
+// SUBLANG_ENGLISH_US = 0x01, according to winnt.h
+LANGUAGE 0x09, 0x01
+#pragma code_page(1252)
+
+RES_ID_MAIN_WINDOW_ICON_BMP RCDATA "MainWindowIcon.bmp"
+

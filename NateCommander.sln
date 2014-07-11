@@ -2,6 +2,28 @@
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NateCommander", "NateCommander.vcproj", "{E570D697-10B4-45C2-BBB3-5A12017255D3}"
+	ProjectSection(ProjectDependencies) = postProject
+		{A10E8C75-5ED6-43CA-B317-06981CFF2D85} = {A10E8C75-5ED6-43CA-B317-06981CFF2D85}
+		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68} = {81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}
+		{F7E944B3-0815-40CD-B3E4-90B2A15B0E33} = {F7E944B3-0815-40CD-B3E4-90B2A15B0E33}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SDL", "SDL-1.2.14\VisualC\SDL\SDL.vcproj", "{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F7E944B3-0815-40CD-B3E4-90B2A15B0E33} = {F7E944B3-0815-40CD-B3E4-90B2A15B0E33}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SDL_mixer", "SDL_mixer-1.2.11\VisualC\SDL_mixer.vcproj", "{F7E944B3-0815-40CD-B3E4-90B2A15B0E33}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EBDA67CA-4A23-4F22-BFBC-B8DBE0580D4F} = {EBDA67CA-4A23-4F22-BFBC-B8DBE0580D4F}
+		{B162B6F1-E876-4D5F-A1F6-E3A6DC2F4A2C} = {B162B6F1-E876-4D5F-A1F6-E3A6DC2F4A2C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "native_midi", "SDL_mixer-1.2.11\VisualC\native_midi\native_midi.vcproj", "{EBDA67CA-4A23-4F22-BFBC-B8DBE0580D4F}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "timidity", "SDL_mixer-1.2.11\VisualC\timidity\timidity.vcproj", "{B162B6F1-E876-4D5F-A1F6-E3A6DC2F4A2C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lua", "lua-5.2.3\lua.vcproj", "{A10E8C75-5ED6-43CA-B317-06981CFF2D85}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +35,26 @@ Global
 		{E570D697-10B4-45C2-BBB3-5A12017255D3}.Debug|Win32.Build.0 = Debug|Win32
 		{E570D697-10B4-45C2-BBB3-5A12017255D3}.Release|Win32.ActiveCfg = Release|Win32
 		{E570D697-10B4-45C2-BBB3-5A12017255D3}.Release|Win32.Build.0 = Release|Win32
+		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}.Debug|Win32.ActiveCfg = Debug|Win32
+		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}.Debug|Win32.Build.0 = Debug|Win32
+		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}.Release|Win32.ActiveCfg = Release|Win32
+		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}.Release|Win32.Build.0 = Release|Win32
+		{F7E944B3-0815-40CD-B3E4-90B2A15B0E33}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F7E944B3-0815-40CD-B3E4-90B2A15B0E33}.Debug|Win32.Build.0 = Debug|Win32
+		{F7E944B3-0815-40CD-B3E4-90B2A15B0E33}.Release|Win32.ActiveCfg = Release|Win32
+		{F7E944B3-0815-40CD-B3E4-90B2A15B0E33}.Release|Win32.Build.0 = Release|Win32
+		{EBDA67CA-4A23-4F22-BFBC-B8DBE0580D4F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EBDA67CA-4A23-4F22-BFBC-B8DBE0580D4F}.Debug|Win32.Build.0 = Debug|Win32
+		{EBDA67CA-4A23-4F22-BFBC-B8DBE0580D4F}.Release|Win32.ActiveCfg = Release|Win32
+		{EBDA67CA-4A23-4F22-BFBC-B8DBE0580D4F}.Release|Win32.Build.0 = Release|Win32
+		{B162B6F1-E876-4D5F-A1F6-E3A6DC2F4A2C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B162B6F1-E876-4D5F-A1F6-E3A6DC2F4A2C}.Debug|Win32.Build.0 = Debug|Win32
+		{B162B6F1-E876-4D5F-A1F6-E3A6DC2F4A2C}.Release|Win32.ActiveCfg = Release|Win32
+		{B162B6F1-E876-4D5F-A1F6-E3A6DC2F4A2C}.Release|Win32.Build.0 = Release|Win32
+		{A10E8C75-5ED6-43CA-B317-06981CFF2D85}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A10E8C75-5ED6-43CA-B317-06981CFF2D85}.Debug|Win32.Build.0 = Debug|Win32
+		{A10E8C75-5ED6-43CA-B317-06981CFF2D85}.Release|Win32.ActiveCfg = Release|Win32
+		{A10E8C75-5ED6-43CA-B317-06981CFF2D85}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
