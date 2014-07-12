@@ -12,8 +12,13 @@ struct MsCounter
   // (I want someone to be able to run a dedicated server that lasts more than 50 days =)
   Uint64 Count;
   Uint32 LastGetTicksValue;
+
+  // The function to use to determine the current system time in milliseconds
+  // (this is here to support unit tests)
+  Uint32 (*GetSystemTimeMs) ();
 };
 
+void MsCounter_Init(MsCounter * counter);
 void MsCounter_Reset(MsCounter * counter);
 Uint64 MsCounter_Update(MsCounter * counter);
 Uint64 MsCounter_GetCount(MsCounter * counter);

@@ -18,6 +18,7 @@ void SetupWorldView(SpinnyTriangleApp_State * state);
 void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State * state)
 {
   memset(state, 0, sizeof(SpinnyTriangleApp_State));
+  MsCounter_Init(&state->ElapsedTime);
   MsCounter_Reset(&state->ElapsedTime);
 
   // Initialize the main window w/ dorky smiley face icon
