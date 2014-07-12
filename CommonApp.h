@@ -3,6 +3,14 @@
 
 #include "SDL.h"
 
-SDL_Window * CreateMainWindow(const char * title, int iconId);
+typedef struct WindowAndOpenGlContext
+{
+  SDL_Window * Window;
+  SDL_GLContext GlContext;
+} 
+WindowAndOpenGlContext;
+
+// On failure, this performs a FatalError
+WindowAndOpenGlContext CreateMainWindow(const char * title, int iconId, int fullscreen);
 
 #endif

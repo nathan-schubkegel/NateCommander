@@ -3,10 +3,11 @@
 
 #include "TickCounter.h"
 #include "SDL.h"
+#include "CommonApp.h"
 
 typedef struct SpinnyTriangleApp_State
 {
-  SDL_Window * MainWindow;
+  WindowAndOpenGlContext MainWindow;
   double CurrentAngle;
   TickCounter Ticks;
   Uint8 ShouldRotate;
