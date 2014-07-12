@@ -222,15 +222,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MsCounter.c"
+				>
+			</File>
+			<File
 				RelativePath=".\ResourcesLoader.c"
 				>
 			</File>
 			<File
 				RelativePath=".\SpinnyTriangleApp.c"
-				>
-			</File>
-			<File
-				RelativePath=".\TickCounter.c"
 				>
 			</File>
 			<File
@@ -252,15 +252,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MsCounter.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ResourcesLoader.h"
 				>
 			</File>
 			<File
 				RelativePath=".\SpinnyTriangleApp.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TickCounter.h"
 				>
 			</File>
 			<File

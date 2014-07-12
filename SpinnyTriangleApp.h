@@ -1,7 +1,7 @@
 #ifndef NATE_COMMANDER_SPINNY_TRIANGLE_APP_H
 #define NATE_COMMANDER_SPINNY_TRIANGLE_APP_H
 
-#include "TickCounter.h"
+#include "MsCounter.h"
 #include "SDL.h"
 #include "CommonApp.h"
 
@@ -9,7 +9,7 @@ typedef struct SpinnyTriangleApp_State
 {
   WindowAndOpenGlContext MainWindow;
   double CurrentAngle;
-  TickCounter Ticks;
+  MsCounter ElapsedTime;
   Uint8 ShouldRotate;
 
 } SpinnyTriangleApp_State;

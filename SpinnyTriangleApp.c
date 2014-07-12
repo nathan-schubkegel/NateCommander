@@ -1,7 +1,7 @@
 #include "SpinnyTriangleApp.h"
 
 #include "Utils.h"
-#include "TickCounter.h"
+#include "MsCounter.h"
 #include <Windows.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
@@ -10,6 +10,7 @@
 #include "SDL.h"
 #include "Resources.h"
 #include "CommonApp.h"
+#include "FatalErrorHandler.h"
 
 void DrawToScreen(SpinnyTriangleApp_State * state);
 void SetupWorldView(SpinnyTriangleApp_State * state);
@@ -17,7 +18,7 @@ void SetupWorldView(SpinnyTriangleApp_State * state);
 void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State * state)
 {
   memset(state, 0, sizeof(SpinnyTriangleApp_State));
-  TickCounter_Reset(&state->Ticks);
+  MsCounter_Reset(&state->ElapsedTime);
 
   // Initialize the main window w/ dorky smiley face icon
   state->MainWindow = CreateMainWindow("Nate Commander", RES_ID_MAIN_WINDOW_ICON_BMP, 0);
@@ -41,6 +42,9 @@ void SpinnyTriangleApp_HandleEvent(SpinnyTriangleApp_State * state, SDL_Event * 
         case SDLK_SPACE:
           state->ShouldRotate = !state->ShouldRotate;
           break;
+
+        case SDLK_a:
+          Nate_Assert(state == 0, "oh noes an assertion failed");
       }
       break;
 
@@ -52,18 +56,20 @@ void SpinnyTriangleApp_HandleEvent(SpinnyTriangleApp_State * state, SDL_Event * 
 
 void SpinnyTriangleApp_Process(SpinnyTriangleApp_State * state)
 {
+  Uint64 msCount;
+
   if (state->ShouldRotate)
   {
     // update our sense of time
-    TickCounter_Update(&state->Ticks);
+    msCount = MsCounter_Update(&state->ElapsedTime);
 
     // Produce a full rotation every 2 seconds
-    state->CurrentAngle = (double)(state->Ticks.TickCount % 2000) * 360 / 2000;
+    state->CurrentAngle = (double)(msCount % 2000) * 360 / 2000;
   }
   else
   {
     // maintain a frozen sense of time
-    TickCounter_ResetToTickCount(&state->Ticks, state->Ticks.TickCount);
+    MsCounter_ResetToCurrentCount(&state->ElapsedTime);
   }
 }
 
