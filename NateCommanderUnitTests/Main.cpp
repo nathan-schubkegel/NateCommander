@@ -4,6 +4,7 @@
 #include "TestUtils.h"
 
 extern void Test_MsCounter();
+extern void Test_MeasuredString();
 
 #pragma warning(disable : 4100) // unreferenced formal parameter
 #pragma warning(disable : 4702) // unreachable code
@@ -13,6 +14,7 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
   SDL_MessageBoxButtonData buttonData;
 
   Test_MsCounter();
+  Test_MeasuredString();
 
   memset(&mbData, 0, sizeof(SDL_MessageBoxData));
   

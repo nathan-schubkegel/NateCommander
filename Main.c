@@ -6,7 +6,7 @@
 #include "SpinnyTriangleApp.h"
 
 #pragma warning(disable : 4100) // unreferenced formal parameter
-#pragma warning(disable : 4702) // unreachable code
+#pragma warning(disable : 4127) // conditional expression is constant
 int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
   static SpinnyTriangleApp_State state;
@@ -22,24 +22,24 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
   atexit(SDL_Quit);
 
   // Initialize app state
-  // Today's app is: SpinnyTriangleApp
   SpinnyTriangleApp_Initialize(&state);
 
-again:
-  while (SDL_PollEvent(&sdlEvent))
+  while (1)
   {
-    // pass all events on to the app
-    SpinnyTriangleApp_HandleEvent(&state, &sdlEvent);
+    while (SDL_PollEvent(&sdlEvent))
+    {
+      // pass all events on to the app
+      SpinnyTriangleApp_HandleEvent(&state, &sdlEvent);
+    }
+
+    // give the app a chance to increment its game state
+    SpinnyTriangleApp_Process(&state);
+
+    // give the app a chance to draw
+    SpinnyTriangleApp_Draw(&state);
+
+    Sleep(0); // give up execution to other threads that might want it
   }
-
-  // give the app a chance to increment its game state
-  SpinnyTriangleApp_Process(&state);
-
-  // give the app a chance to draw
-  SpinnyTriangleApp_Draw(&state);
-
-  Sleep(0); // give up execution to other threads that might want it
-  goto again;
 
   return 0; // this never executes
 }

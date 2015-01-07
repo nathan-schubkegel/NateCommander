@@ -21,8 +21,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
-			UseOfMFC="1"
-			CharacterSet="1"
+			UseOfMFC="0"
+			CharacterSet="0"
 			ManagedExtensions="0"
 			>
 			<Tool
@@ -66,9 +66,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib"
+				AdditionalDependencies="lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;lua-5.2.3\Debug&quot;;&quot;SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;Microsoft DirectX SDK (August 2009)\Lib&quot;"
+				AdditionalLibraryDirectories="&quot;lua-5.2.3\Debug&quot;;&quot;SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;Microsoft DirectX SDK (August 2009)\Lib&quot;;ccan\Debug"
 				DelayLoadDLLs="$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				AssemblyDebug="0"
@@ -222,6 +222,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MeasuredString.c"
+				>
+			</File>
+			<File
 				RelativePath=".\MsCounter.c"
 				>
 			</File>
@@ -249,6 +253,10 @@
 			</File>
 			<File
 				RelativePath=".\FatalErrorHandler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MeasuredString.h"
 				>
 			</File>
 			<File
