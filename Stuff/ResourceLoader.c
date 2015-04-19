@@ -1,4 +1,4 @@
-#include "ResourcesLoader.h"
+#include "ResourceLoader.h"
 
 #include "SDL.h"
 #include <Windows.h>
@@ -33,7 +33,7 @@ void LoadExecutingDir()
 }
 
 // returns null and populates SDL_GetError() on failure
-SDL_Surface * ResourcesLoader_LoadBmp(const char * resourceFileName)
+SDL_Surface * ResourceLoader_LoadBmp(const char * resourceFileName)
 {
   FILE * bmpFile;
   LPVOID bmpData;

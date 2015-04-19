@@ -1,6 +1,6 @@
 #include "CommonApp.h"
 #include "SDL.h"
-#include "ResourcesLoader.h"
+#include "ResourceLoader.h"
 #include "FatalErrorHandler.h"
 
 WindowAndOpenGlContext CreateMainWindow(const char * title, const char * iconFileName, int fullscreen)
@@ -27,7 +27,7 @@ WindowAndOpenGlContext CreateMainWindow(const char * title, const char * iconFil
 
   if (iconFileName != 0)
   {
-    if (NULL == (bmpSurface = ResourcesLoader_LoadBmp(iconFileName)))
+    if (NULL == (bmpSurface = ResourceLoader_LoadBmp(iconFileName)))
     {
       NonFatalError_Sdl("Could not load BMP for main window icon");
     }
