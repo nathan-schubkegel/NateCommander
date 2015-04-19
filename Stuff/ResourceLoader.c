@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 char gExecutingDir[MAX_PATH + 1] = {0};
-char gTempFilePath[MAX_PATH + 1] = {0};
+char gPathSeparator[2];
 
 void LoadExecutingDir()
 {
@@ -22,6 +22,8 @@ void LoadExecutingDir()
     {
       if (gExecutingDir[i] == '\\' || gExecutingDir[i] == '/')
       {
+        gPathSeparator[0] = gExecutingDir[i];
+        gPathSeparator[1] = 0;
         break;
       }
       else
@@ -33,78 +35,129 @@ void LoadExecutingDir()
 }
 
 // returns null and populates SDL_GetError() on failure
-SDL_Surface * ResourceLoader_LoadBmp(const char * resourceFileName)
+void ResourceLoader_LoadBinaryFile(const char * dirName, const char * fileName, void ** dataOut, long * lengthOut)
 {
-  FILE * bmpFile;
-  LPVOID bmpData;
-  long bmpDataLength;
+  FILE * file;
+  LPVOID data;
+  long dataLength;
   size_t numBytesAcquired;
-  SDL_Surface * bmpSurface;
+  static char gTempFilePath[MAX_PATH + 1];
+
+  // initialize in/out parameters
+  *dataOut = 0;
+  *lengthOut = 0;
 
   // assemble full path to resource file
   LoadExecutingDir();
   strncpy_s(gTempFilePath, sizeof(gTempFilePath), gExecutingDir, MAX_PATH);
-  strncat_s(gTempFilePath, sizeof(gTempFilePath), resourceFileName, MAX_PATH);
+  if (dirName != 0)
+  {
+    strncat_s(gTempFilePath, sizeof(gTempFilePath), dirName, MAX_PATH);
+    strncat_s(gTempFilePath, sizeof(gTempFilePath), gPathSeparator, MAX_PATH);
+  }
+  strncat_s(gTempFilePath, sizeof(gTempFilePath), fileName, MAX_PATH);
 
-  // open resource file
-  bmpFile = 0;
-  fopen_s(&bmpFile, gTempFilePath, "rb");
-  if (bmpFile == 0)
+  // open binary file
+  file = 0;
+  fopen_s(&file, gTempFilePath, "rb");
+  if (file == 0)
   {
     SDL_SetError("Failed to fopen resource file");
-    return 0;
+    return;
   }
   
   // seek to end of resource file
-  if (0 != fseek(bmpFile, 0L, SEEK_END))
+  if (0 != fseek(file, 0L, SEEK_END))
   {
-    fclose(bmpFile);
+    fclose(file);
     SDL_SetError("Failed to fseek to end of resource file");
-    return 0;
+    return;
   }
 
   // get current position (indicates total file size)
-  bmpDataLength = ftell(bmpFile);
-  if (bmpDataLength == -1)
+  dataLength = ftell(file);
+  if (dataLength < 0)
   {
-    fclose(bmpFile);
+    fclose(file);
     SDL_SetError("Failed to ftell resource file size");
-    return 0;
+    return;
   }
 
-  // allocate memory for file data
-  bmpData = malloc(bmpDataLength);
-  if (bmpData == 0)
+  // allocate memory for file data (plus trailing null byte, for ease of loading text files)
+  data = malloc(dataLength + 1);
+  if (data == 0)
   {
-    fclose(bmpFile);
+    fclose(file);
     SDL_SetError("Failed to allocate memory for resource file");
-    return 0;
+    return;
   }
 
   // seek to start of resource file
-  if (0 != fseek(bmpFile, 0L, SEEK_SET))
+  if (0 != fseek(file, 0L, SEEK_SET))
   {
-    fclose(bmpFile);
-    free(bmpData);
+    fclose(file);
+    free(data);
     SDL_SetError("Failed to fseek to start of resource file");
-    return 0;
+    return;
   }
 
   // read file data
-  numBytesAcquired = fread(bmpData, 1, bmpDataLength, bmpFile);
-  if ((size_t)numBytesAcquired != (size_t)bmpDataLength)
+  numBytesAcquired = fread(data, 1, dataLength, file);
+  if ((size_t)numBytesAcquired != (size_t)dataLength)
   {
-    fclose(bmpFile);
-    free(bmpData);
+    fclose(file);
+    free(data);
     SDL_SetError("Failed to fread resource file");
+    return;
+  }
+
+  // add trailing null byte, for ease of loading text files
+  // TODO: use a type that I feel safer is always 1-byte big
+  ((char*)data)[dataLength] = 0;
+
+  fclose(file);
+
+  *dataOut = data;
+  *lengthOut = dataLength;
+}
+
+// returns null and populates SDL_GetError() on failure
+SDL_Surface * ResourceLoader_LoadBmp(const char * resourceFileName)
+{
+  void * data;
+  long length;
+  SDL_Surface * bmpSurface;
+
+  // Load file data
+  ResourceLoader_LoadBinaryFile("Resources", resourceFileName, &data, &length);
+  if (data == 0)
+  {
     return 0;
   }
 
   // convert to SDL bitmap
-  bmpSurface = SDL_LoadBMP_RW(SDL_RWFromMem(bmpData, bmpDataLength), 1);
+  bmpSurface = SDL_LoadBMP_RW(SDL_RWFromMem(data, length), 1);
 
-  fclose(bmpFile);
-  free(bmpData);
+  free(data);
 
   return bmpSurface;
+}
+
+// returns null and populates SDL_GetError() on failure
+char * ResourceLoader_LoadLuaFile(const char * luaFileName, long * lengthOut)
+{
+  void * data;
+  long length;
+
+  // Load file data
+  ResourceLoader_LoadBinaryFile("Lua Files", luaFileName, &data, &length);
+  if (data == 0)
+  {
+    return 0;
+  }
+
+  // return raw data as char*
+  // TODO: this may be dorked up by BOM or UTF-8 someday
+  *lengthOut = length;
+  return (char*) data;
 }

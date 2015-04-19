@@ -66,9 +66,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib"
+				AdditionalDependencies="stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrtd.lib uuid.lib $(NOINHERIT)"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\Stuff\Debug;&quot;..\lua-5.2.3\Debug&quot;;&quot;..\SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug"
+				AdditionalLibraryDirectories="..\Stuff\Debug;&quot;..\lua-5.2.3\Debug&quot;;&quot;..\SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug;$(NOINHERIT)"
+				IgnoreAllDefaultLibraries="true"
 				DelayLoadDLLs="$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				AssemblyDebug="0"
@@ -99,7 +100,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="xcopy ..\Resources\* &quot;$(OutDir)&quot; /D /S"
+				CommandLine="if not exist &quot;$(OutDir)\Resources&quot; mkdir &quot;$(OutDir)\Resources&quot;&#x0D;&#x0A;xcopy ..\Resources\* &quot;$(OutDir)\Resources&quot; /D /S&#x0D;&#x0A;&#x0D;&#x0A;if not exist &quot;$(OutDir)\Lua Files&quot; mkdir &quot;$(OutDir)\Lua Files&quot;&#x0D;&#x0A;xcopy &quot;..\Stuff\Lua Files\*&quot; &quot;$(OutDir)\Lua Files&quot; /D /S&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration

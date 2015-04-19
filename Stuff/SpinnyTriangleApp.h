@@ -5,16 +5,10 @@
 #include "SDL.h"
 #include "CommonApp.h"
 
-typedef struct SpinnyTriangleApp_State
-{
-  WindowAndOpenGlContext MainWindow;
-  double CurrentAngle;
-  MsCounter ElapsedTime;
-  Uint8 ShouldRotate;
+struct SpinnyTriangleApp_State;
+typedef struct SpinnyTriangleApp_State SpinnyTriangleApp_State;
 
-} SpinnyTriangleApp_State;
-
-void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State * state);
+void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State ** state);
 void SpinnyTriangleApp_HandleEvent(SpinnyTriangleApp_State * state, SDL_Event * sdlEvent);
 void SpinnyTriangleApp_Process(SpinnyTriangleApp_State * state);
 void SpinnyTriangleApp_Draw(SpinnyTriangleApp_State * state);

@@ -219,6 +219,14 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Lua Files"
+			>
+			<File
+				RelativePath=".\Lua Files\SpinnyTriangleApp.lua"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

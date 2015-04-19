@@ -9,24 +9,83 @@
 #include <stdlib.h>
 #include "SDL.h"
 #include "Resources.h"
+#include "ResourceLoader.h"
 #include "CommonApp.h"
 #include "FatalErrorHandler.h"
+#include "lua.h"
+#include "lauxlib.h"
+
+struct SpinnyTriangleApp_State
+{
+  WindowAndOpenGlContext MainWindow;
+  double CurrentAngle;
+  MsCounter ElapsedTime;
+  Uint8 ShouldRotate;
+  lua_State * luaState;
+};
 
 void DrawToScreen(SpinnyTriangleApp_State * state);
 void SetupWorldView(SpinnyTriangleApp_State * state);
+void* MyLuaAlloc(void *ud, void *ptr, size_t osize, size_t nsize);
 
-void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State * state)
+void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State ** state)
 {
-  memset(state, 0, sizeof(SpinnyTriangleApp_State));
-  MsCounter_Init(&state->ElapsedTime);
-  MsCounter_Reset(&state->ElapsedTime);
+  SpinnyTriangleApp_State * state2;
+  char * luaFileData;
+  long luaFileDataLength;
+  const char * message;
+  size_t messageLength;
+
+  state2 = malloc(sizeof(SpinnyTriangleApp_State));
+  if (state2 == 0) FatalError("failed to malloc for SpinnyTriangleApp_State");
+  *state = state2;
+
+  memset(state2, 0, sizeof(SpinnyTriangleApp_State));
+  MsCounter_Init(&state2->ElapsedTime);
+  MsCounter_Reset(&state2->ElapsedTime);
 
   // Initialize the main window w/ dorky smiley face icon
-  state->MainWindow = CreateMainWindow("Nate Commander", Resource_MainWindowIcon_FileName, 0);
+  state2->MainWindow = CreateMainWindow("Nate Commander", Resource_MainWindowIcon_FileName, 0);
+  
+  // Initialize a LUA state
+  state2->luaState = lua_newstate(MyLuaAlloc, 0);
+  if (state2->luaState == 0) FatalError("Failed to create LUA state");
+
+  luaFileData = ResourceLoader_LoadLuaFile("SpinnyTriangleApp.lua", &luaFileDataLength);
+  if (luaFileData != 0)
+  {
+    if (LUA_OK != luaL_loadbufferx(state2->luaState, luaFileData, luaFileDataLength, "my whatever", "t"))
+    {
+      FatalError("Failed to load LUA chunk");
+    }
+    free(luaFileData);
+
+    // execute the LUA chunk just loaded
+    if (LUA_OK != lua_pcall(state2->luaState, 0, 1, 0))
+    {
+      FatalError("Failed to execute LUA chunk");
+    }
+
+    // execute the LUA function that it returned
+    if (LUA_OK != lua_pcall(state2->luaState, 0, 1, 0))
+    {
+      FatalError("Failed to execute method returned by LUA chunk");
+    }
+
+    // get the returned string
+    message = lua_tolstring(state2->luaState, 1, &messageLength);
+    if (message != 0)
+    {
+      NonFatalError(message);
+    }
+  }
 }
 
 void SpinnyTriangleApp_HandleEvent(SpinnyTriangleApp_State * state, SDL_Event * sdlEvent)
 {
+  
+
+
   // TODO: window management, input handling, others?
 
   switch (sdlEvent->type)
@@ -268,4 +327,48 @@ void DrawToScreen(SpinnyTriangleApp_State * state)
   // from the application drawing on areas of the
   // screen that are being updated at the same time.
   SDL_GL_SwapWindow(state->MainWindow.Window);
+}
+
+/*
+The lua allocator function must provide a functionality similar to realloc, 
+but not exactly the same. Its arguments are 
+  ud, an opaque pointer passed to lua_newstate; 
+  ptr, a pointer to the block being allocated/reallocated/freed; 
+  osize, the original size of the block or some code about what is being allocated; 
+  nsize, the new size of the block.
+
+When ptr is not NULL, osize is the size of the block pointed by ptr, that is, 
+the size given when it was allocated or reallocated.
+When ptr is NULL, osize encodes the kind of object that Lua is allocating. 
+osize is any of LUA_TSTRING, LUA_TTABLE, LUA_TFUNCTION, LUA_TUSERDATA, or 
+LUA_TTHREAD when (and only when) Lua is creating a new object of that type. 
+When osize is some other value, Lua is allocating memory for something else.
+
+Lua assumes the following behavior from the allocator function:
+  When nsize is zero, the allocator should behave like free and return NULL.
+  When nsize is not zero, the allocator should behave like realloc. 
+  The allocator returns NULL if and only if it cannot fulfill the request. 
+  Lua assumes that the allocator never fails when osize >= nsize.
+
+Note that Standard C ensures that free(NULL) has no effect and 
+that realloc(NULL, size) is equivalent to malloc(size). 
+This code assumes that realloc does not fail when shrinking a block. 
+(Although Standard C does not ensure this behavior, it seems to be a 
+safe assumption.)
+*/
+void* MyLuaAlloc(void *ud, void *ptr, size_t osize, size_t nsize)
+{
+  // eliminate compiler warning
+  (void)ud;
+  (void)osize;
+
+  if (nsize == 0) 
+  {
+    free(ptr);
+    return NULL;
+  }
+  else
+  {
+    return realloc(ptr, nsize);
+  }
 }

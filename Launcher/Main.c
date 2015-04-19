@@ -9,7 +9,7 @@
 #pragma warning(disable : 4127) // conditional expression is constant
 int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
-  static SpinnyTriangleApp_State state;
+  SpinnyTriangleApp_State * state;
   static SDL_Event sdlEvent;
 
   // Initialize defaults, Video and Audio
@@ -29,14 +29,14 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
     while (SDL_PollEvent(&sdlEvent))
     {
       // pass all events on to the app
-      SpinnyTriangleApp_HandleEvent(&state, &sdlEvent);
+      SpinnyTriangleApp_HandleEvent(state, &sdlEvent);
     }
 
     // give the app a chance to increment its game state
-    SpinnyTriangleApp_Process(&state);
+    SpinnyTriangleApp_Process(state);
 
     // give the app a chance to draw
-    SpinnyTriangleApp_Draw(&state);
+    SpinnyTriangleApp_Draw(state);
 
     Sleep(0); // give up execution to other threads that might want it
   }
