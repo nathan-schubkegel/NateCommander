@@ -1,6 +1,6 @@
 #ifndef NATE_COMMANDER_RESOURCES_H
 #define NATE_COMMANDER_RESOURCES_H
 
-#define RES_ID_MAIN_WINDOW_ICON_BMP     101
+const char Resource_MainWindowIcon_FileName[] = "MainWindowIcon.bmp";
 
 #endif

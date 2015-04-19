@@ -3,7 +3,7 @@
 #include "ResourcesLoader.h"
 #include "FatalErrorHandler.h"
 
-WindowAndOpenGlContext CreateMainWindow(const char * title, int iconId, int fullscreen)
+WindowAndOpenGlContext CreateMainWindow(const char * title, const char * iconFileName, int fullscreen)
 {
   WindowAndOpenGlContext result;
   SDL_Surface * bmpSurface;
@@ -25,9 +25,9 @@ WindowAndOpenGlContext CreateMainWindow(const char * title, int iconId, int full
     FatalError_Sdl("Failed to create window");
   }
 
-  if (iconId != 0)
+  if (iconFileName != 0)
   {
-    if (NULL == (bmpSurface = LoadEmbeddedResourceBmp(iconId)))
+    if (NULL == (bmpSurface = ResourcesLoader_LoadBmp(iconFileName)))
     {
       NonFatalError_Sdl("Could not load BMP for main window icon");
     }

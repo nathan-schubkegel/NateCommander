@@ -11,6 +11,6 @@ typedef struct WindowAndOpenGlContext
 WindowAndOpenGlContext;
 
 // On failure, this performs a FatalError
-WindowAndOpenGlContext CreateMainWindow(const char * title, int iconId, int fullscreen);
+WindowAndOpenGlContext CreateMainWindow(const char * title, const char * iconFileName, int fullscreen);
 
 #endif

@@ -1,6 +1,5 @@
 #include "TestUtils.h"
 #include "MeasuredString.h"
-#include "MeasuredString.c"
 
 void Test_MeasuredString()
 {

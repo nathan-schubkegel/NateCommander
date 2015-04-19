@@ -22,7 +22,7 @@ void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State * state)
   MsCounter_Reset(&state->ElapsedTime);
 
   // Initialize the main window w/ dorky smiley face icon
-  state->MainWindow = CreateMainWindow("Nate Commander", RES_ID_MAIN_WINDOW_ICON_BMP, 0);
+  state->MainWindow = CreateMainWindow("Nate Commander", Resource_MainWindowIcon_FileName, 0);
 }
 
 void SpinnyTriangleApp_HandleEvent(SpinnyTriangleApp_State * state, SDL_Event * sdlEvent)

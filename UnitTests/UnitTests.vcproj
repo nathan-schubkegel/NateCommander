@@ -2,11 +2,11 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="NateCommander"
-	ProjectGUID="{E570D697-10B4-45C2-BBB3-5A12017255D3}"
-	RootNamespace="NateCommander"
-	Keyword="ManagedCProj"
-	TargetFrameworkVersion="131072"
+	Name="UnitTests"
+	ProjectGUID="{D9A503A4-F13B-4E32-B08D-866615DA4874}"
+	RootNamespace="UnitTests"
+	Keyword="Win32Proj"
+	TargetFrameworkVersion="196613"
 	>
 	<Platforms>
 		<Platform
@@ -18,12 +18,10 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="./Debug"
+			IntermediateDirectory="./Debug"
 			ConfigurationType="1"
-			UseOfMFC="0"
 			CharacterSet="0"
-			ManagedExtensions="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -43,15 +41,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;.\lua-5.2.3\src&quot;;&quot;.\SDL2-2.0.3\include&quot;"
+				AdditionalIncludeDirectories="..\Stuff;&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;$(NOINHERIT)"
+				MinimalRebuild="false"
 				ExceptionHandling="0"
+				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
-				WarningLevel="4"
-				WarnAsError="false"
-				Detect64BitPortabilityProblems="false"
+				WarningLevel="3"
 				DebugInformationFormat="4"
 				CompileAs="1"
 			/>
@@ -66,18 +64,15 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib"
+				AdditionalDependencies="ccan.lib stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;lua-5.2.3\Debug&quot;;&quot;SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;Microsoft DirectX SDK (August 2009)\Lib&quot;;ccan\Debug"
+				AdditionalLibraryDirectories="&quot;..\lua-5.2.3\Debug&quot;;&quot;..\SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\Stuff\Debug;..\ccan\Debug"
 				DelayLoadDLLs="$(NOINHERIT)"
 				GenerateDebugInformation="true"
-				AssemblyDebug="0"
 				SubSystem="2"
-				EntryPointSymbol=""
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				TargetMachine="1"
-				CLRImageType="0"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -107,7 +102,6 @@
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
-			ManagedExtensions="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -127,9 +121,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG"
+				Optimization="2"
+				EnableIntrinsicFunctions="true"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="2"
-				UsePrecompiledHeader="2"
+				EnableFunctionLevelLinking="true"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -144,13 +141,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="$(NoInherit)"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
-				EntryPointSymbol="main"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -177,31 +172,6 @@
 		</Configuration>
 	</Configurations>
 	<References>
-		<AssemblyReference
-			RelativePath="System.dll"
-			AssemblyName="System, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
-			MinFrameworkVersion="131072"
-		/>
-		<AssemblyReference
-			RelativePath="System.Data.dll"
-			AssemblyName="System.Data, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86"
-			MinFrameworkVersion="131072"
-		/>
-		<AssemblyReference
-			RelativePath="System.Drawing.dll"
-			AssemblyName="System.Drawing, Version=2.0.0.0, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL"
-			MinFrameworkVersion="131072"
-		/>
-		<AssemblyReference
-			RelativePath="System.Windows.Forms.dll"
-			AssemblyName="System.Windows.Forms, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
-			MinFrameworkVersion="131072"
-		/>
-		<AssemblyReference
-			RelativePath="System.XML.dll"
-			AssemblyName="System.Xml, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
-			MinFrameworkVersion="131072"
-		/>
 	</References>
 	<Files>
 		<Filter
@@ -210,35 +180,19 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\CommonApp.c"
+				RelativePath=".\Main.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FatalErrorHandler.c"
+				RelativePath=".\TestMeasuredString.c"
 				>
 			</File>
 			<File
-				RelativePath=".\Main.c"
+				RelativePath=".\TestMsCounter.c"
 				>
 			</File>
 			<File
-				RelativePath=".\MeasuredString.c"
-				>
-			</File>
-			<File
-				RelativePath=".\MsCounter.c"
-				>
-			</File>
-			<File
-				RelativePath=".\ResourcesLoader.c"
-				>
-			</File>
-			<File
-				RelativePath=".\SpinnyTriangleApp.c"
-				>
-			</File>
-			<File
-				RelativePath=".\Utils.c"
+				RelativePath=".\TestUtils.c"
 				>
 			</File>
 		</Filter>
@@ -248,47 +202,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\CommonApp.h"
-				>
-			</File>
-			<File
-				RelativePath=".\FatalErrorHandler.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MeasuredString.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MsCounter.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ResourcesLoader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SpinnyTriangleApp.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Utils.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Resource Files"
-			>
-			<File
-				RelativePath=".\MainWindowIcon.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\Resources.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Resources.rc"
+				RelativePath=".\TestUtils.h"
 				>
 			</File>
 		</Filter>

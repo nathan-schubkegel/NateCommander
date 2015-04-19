@@ -1,6 +1,5 @@
 #include "TestUtils.h"
 #include "MsCounter.h"
-#include "MsCounter.c"
 #include "SDL.h"
 
 Uint32 fakeSystemTime;

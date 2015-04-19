@@ -4,6 +4,6 @@
 #include "SDL.h"
 
 // on failure, returns null and populates SDL_GetError()
-SDL_Surface * LoadEmbeddedResourceBmp(int resourceId);
+SDL_Surface * ResourcesLoader_LoadBmp(const char * resourceFileName);
 
 #endif

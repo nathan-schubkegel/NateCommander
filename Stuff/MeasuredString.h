@@ -1,7 +1,7 @@
 #ifndef NATE_COMMANDER_MEASURED_STRING_H
 #define NATE_COMMANDER_MEASURED_STRING_H
 
-#include "ccan\charset\charset.h"
+#include "..\ccan\charset\charset.h"
 
 typedef struct MeasuredString
 {
