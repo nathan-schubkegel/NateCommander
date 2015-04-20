@@ -161,6 +161,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MainApp.c"
+				>
+			</File>
+			<File
 				RelativePath=".\MeasuredString.c"
 				>
 			</File>
@@ -170,10 +174,6 @@
 			</File>
 			<File
 				RelativePath=".\ResourceLoader.c"
-				>
-			</File>
-			<File
-				RelativePath=".\SpinnyTriangleApp.c"
 				>
 			</File>
 			<File
@@ -195,6 +195,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MainApp.h"
+				>
+			</File>
+			<File
 				RelativePath=".\MeasuredString.h"
 				>
 			</File>
@@ -211,10 +215,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SpinnyTriangleApp.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Utils.h"
 				>
 			</File>
@@ -223,7 +223,7 @@
 			Name="Lua Files"
 			>
 			<File
-				RelativePath=".\Lua Files\SpinnyTriangleApp.lua"
+				RelativePath=".\Lua Files\MainApp.lua"
 				>
 			</File>
 		</Filter>

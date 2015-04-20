@@ -1,4 +1,4 @@
-#include "SpinnyTriangleApp.h"
+#include "MainApp.h"
 
 #include "Utils.h"
 #include "MsCounter.h"
@@ -15,7 +15,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 
-struct SpinnyTriangleApp_State
+struct MainApp_State
 {
   WindowAndOpenGlContext MainWindow;
   double CurrentAngle;
@@ -24,23 +24,23 @@ struct SpinnyTriangleApp_State
   lua_State * luaState;
 };
 
-void DrawToScreen(SpinnyTriangleApp_State * state);
-void SetupWorldView(SpinnyTriangleApp_State * state);
+void DrawToScreen(MainApp_State * state);
+void SetupWorldView(MainApp_State * state);
 void* MyLuaAlloc(void *ud, void *ptr, size_t osize, size_t nsize);
 
-void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State ** state)
+void MainApp_Initialize(MainApp_State ** state)
 {
-  SpinnyTriangleApp_State * state2;
+  MainApp_State * state2;
   char * luaFileData;
   long luaFileDataLength;
   const char * message;
   size_t messageLength;
 
-  state2 = malloc(sizeof(SpinnyTriangleApp_State));
-  if (state2 == 0) FatalError("failed to malloc for SpinnyTriangleApp_State");
+  state2 = malloc(sizeof(MainApp_State));
+  if (state2 == 0) FatalError("failed to malloc for MainApp_State");
   *state = state2;
 
-  memset(state2, 0, sizeof(SpinnyTriangleApp_State));
+  memset(state2, 0, sizeof(MainApp_State));
   MsCounter_Init(&state2->ElapsedTime);
   MsCounter_Reset(&state2->ElapsedTime);
 
@@ -51,37 +51,39 @@ void SpinnyTriangleApp_Initialize(SpinnyTriangleApp_State ** state)
   state2->luaState = lua_newstate(MyLuaAlloc, 0);
   if (state2->luaState == 0) FatalError("Failed to create LUA state");
 
-  luaFileData = ResourceLoader_LoadLuaFile("SpinnyTriangleApp.lua", &luaFileDataLength);
-  if (luaFileData != 0)
+  luaFileData = ResourceLoader_LoadLuaFile("MainApp.lua", &luaFileDataLength);
+  if (luaFileData == 0)
   {
-    if (LUA_OK != luaL_loadbufferx(state2->luaState, luaFileData, luaFileDataLength, "my whatever", "t"))
-    {
-      FatalError("Failed to load LUA chunk");
-    }
-    free(luaFileData);
+    FatalError("Failed to load LUA file contents");
+  }
+   
+  if (LUA_OK != luaL_loadbufferx(state2->luaState, luaFileData, luaFileDataLength, "my whatever", "t"))
+  {
+    FatalError("Failed to load LUA chunk");
+  }
+  free(luaFileData);
 
-    // execute the LUA chunk just loaded
-    if (LUA_OK != lua_pcall(state2->luaState, 0, 1, 0))
-    {
-      FatalError("Failed to execute LUA chunk");
-    }
+  // execute the LUA chunk just loaded
+  if (LUA_OK != lua_pcall(state2->luaState, 0, 1, 0))
+  {
+    FatalError("Failed to execute LUA chunk");
+  }
 
-    // execute the LUA function that it returned
-    if (LUA_OK != lua_pcall(state2->luaState, 0, 1, 0))
-    {
-      FatalError("Failed to execute method returned by LUA chunk");
-    }
+  // execute the LUA function that it returned
+  if (LUA_OK != lua_pcall(state2->luaState, 0, 1, 0))
+  {
+    FatalError("Failed to execute method returned by LUA chunk");
+  }
 
-    // get the returned string
-    message = lua_tolstring(state2->luaState, 1, &messageLength);
-    if (message != 0)
-    {
-      NonFatalError(message);
-    }
+  // get the returned string
+  message = lua_tolstring(state2->luaState, 1, &messageLength);
+  if (message != 0)
+  {
+    NonFatalError(message);
   }
 }
 
-void SpinnyTriangleApp_HandleEvent(SpinnyTriangleApp_State * state, SDL_Event * sdlEvent)
+void MainApp_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent)
 {
   
 
@@ -114,7 +116,7 @@ void SpinnyTriangleApp_HandleEvent(SpinnyTriangleApp_State * state, SDL_Event * 
   }
 }
 
-void SpinnyTriangleApp_Process(SpinnyTriangleApp_State * state)
+void MainApp_Process(MainApp_State * state)
 {
   Uint64 msCount;
 
@@ -133,7 +135,7 @@ void SpinnyTriangleApp_Process(SpinnyTriangleApp_State * state)
   }
 }
 
-void SpinnyTriangleApp_Draw(SpinnyTriangleApp_State * state)
+void MainApp_Draw(MainApp_State * state)
 {
   // Fools! They thought it would be sufficient to call this only once at the
   // start of the application!
@@ -145,7 +147,7 @@ void SpinnyTriangleApp_Draw(SpinnyTriangleApp_State * state)
   DrawToScreen(state);
 }
 
-void SetupWorldView(SpinnyTriangleApp_State * state)
+void SetupWorldView(MainApp_State * state)
 {
   float ratio;
   int width;
@@ -179,7 +181,7 @@ void SetupWorldView(SpinnyTriangleApp_State * state)
   gluPerspective( 60.0, ratio, 1.0, 1024.0 );
 }
 
-void DrawToScreen(SpinnyTriangleApp_State * state)
+void DrawToScreen(MainApp_State * state)
 {
   float angle;
 
