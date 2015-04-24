@@ -49,6 +49,7 @@
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 				CompileAs="1"

@@ -61,3 +61,8 @@ void NonFatalError_Sdl(const char * message)
 
   gIsShowingErrorMessage--;
 }
+
+int FatalError_IsDeliveringMessage()
+{
+  return gIsShowingErrorMessage;
+}

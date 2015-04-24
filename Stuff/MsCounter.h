@@ -25,5 +25,4 @@ Uint64 MsCounter_GetCount(MsCounter * counter);
 void MsCounter_ResetToNewCount(MsCounter * counter, Uint64 newCount);
 void MsCounter_ResetToCurrentCount(MsCounter * counter);
 
-
 #endif

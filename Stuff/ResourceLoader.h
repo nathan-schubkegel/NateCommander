@@ -5,6 +5,6 @@
 
 // on failure, returns null and populates SDL_GetError()
 SDL_Surface * ResourceLoader_LoadBmp(const char * resourceFileName);
-char * ResourceLoader_LoadLuaFile(const char * luaFileName, long * lengthOut);
+void * ResourceLoader_LoadLuaFile(const char * luaFileName, long * lengthOut);
 
 #endif

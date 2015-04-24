@@ -28,15 +28,29 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
   {
     while (SDL_PollEvent(&sdlEvent))
     {
-      // pass all events on to the app
-      MainApp_HandleEvent(state, &sdlEvent);
+      if (sdlEvent.type == SDL_QUIT)
+      {
+        exit(0);
+      }
+      // TODO: there are bound to be events that I can't afford to miss
+
+      // do not make any further LUA calls when a possibly-fatal error is being delivered
+      if (!FatalError_IsDeliveringMessage())
+      {
+        // pass all events on to the app
+        MainApp_HandleEvent(state, &sdlEvent);
+      }
     }
 
-    // give the app a chance to increment its game state
-    MainApp_Process(state);
+    // do not make any further LUA calls when a possibly-fatal error is being delivered
+    if (!FatalError_IsDeliveringMessage())
+    {
+      // give the app a chance to increment its game state
+      MainApp_Process(state);
 
-    // give the app a chance to draw
-    MainApp_Draw(state);
+      // give the app a chance to draw
+      MainApp_Draw(state);
+    }
 
     Sleep(0); // give up execution to other threads that might want it
   }

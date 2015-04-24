@@ -42,13 +42,14 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS;$(NOINHERIT)"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_LIB;$(NOINHERIT)"
 				MinimalRebuild="false"
 				ExceptionHandling="0"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="4"
 				DebugInformationFormat="4"
 				CompileAs="1"
@@ -161,6 +162,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LuaExports.c"
+				>
+			</File>
+			<File
 				RelativePath=".\MainApp.c"
 				>
 			</File>
@@ -192,6 +197,10 @@
 			</File>
 			<File
 				RelativePath=".\FatalErrorHandler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LuaExports.h"
 				>
 			</File>
 			<File

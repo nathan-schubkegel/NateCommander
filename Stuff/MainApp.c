@@ -14,129 +14,164 @@
 #include "FatalErrorHandler.h"
 #include "lua.h"
 #include "lauxlib.h"
+#include "LuaExports.h"
 
 struct MainApp_State
 {
   WindowAndOpenGlContext MainWindow;
-  double CurrentAngle;
-  MsCounter ElapsedTime;
-  Uint8 ShouldRotate;
   lua_State * luaState;
 };
 
-void DrawToScreen(MainApp_State * state);
+void DrawToScreen(MainApp_State * state, lua_Number currentAngle);
 void SetupWorldView(MainApp_State * state);
 void* MyLuaAlloc(void *ud, void *ptr, size_t osize, size_t nsize);
+void LoadAndRunLuaFile(lua_State * state, const char * luaFileName);
+void GetLuaMethod(lua_State * state, const char * luaFileName);
 
-void MainApp_Initialize(MainApp_State ** state)
+const char * NateCommander_LuaGameState = "NateCommander_LuaGameState";
+
+void MainApp_Initialize(MainApp_State ** state2)
 {
-  MainApp_State * state2;
-  char * luaFileData;
-  long luaFileDataLength;
-  const char * message;
-  size_t messageLength;
+  MainApp_State * state;
 
-  state2 = malloc(sizeof(MainApp_State));
-  if (state2 == 0) FatalError("failed to malloc for MainApp_State");
-  *state = state2;
-
-  memset(state2, 0, sizeof(MainApp_State));
-  MsCounter_Init(&state2->ElapsedTime);
-  MsCounter_Reset(&state2->ElapsedTime);
+  state = malloc(sizeof(MainApp_State));
+  if (state == 0) 
+  {
+    FatalError("failed to malloc for MainApp_State");
+  }
+  *state2 = state;
+  memset(state, 0, sizeof(MainApp_State));
 
   // Initialize the main window w/ dorky smiley face icon
-  state2->MainWindow = CreateMainWindow("Nate Commander", Resource_MainWindowIcon_FileName, 0);
+  state->MainWindow = CreateMainWindow("Nate Commander", Resource_MainWindowIcon_FileName, 0);
   
   // Initialize a LUA state
-  state2->luaState = lua_newstate(MyLuaAlloc, 0);
-  if (state2->luaState == 0) FatalError("Failed to create LUA state");
-
-  luaFileData = ResourceLoader_LoadLuaFile("MainApp.lua", &luaFileDataLength);
-  if (luaFileData == 0)
+  state->luaState = lua_newstate(MyLuaAlloc, 0);
+  if (state->luaState == 0) 
   {
-    FatalError("Failed to load LUA file contents");
-  }
-   
-  if (LUA_OK != luaL_loadbufferx(state2->luaState, luaFileData, luaFileDataLength, "my whatever", "t"))
-  {
-    FatalError("Failed to load LUA chunk");
-  }
-  free(luaFileData);
-
-  // execute the LUA chunk just loaded
-  if (LUA_OK != lua_pcall(state2->luaState, 0, 1, 0))
-  {
-    FatalError("Failed to execute LUA chunk");
+    FatalError("Failed to create LUA state");
   }
 
-  // execute the LUA function that it returned
-  if (LUA_OK != lua_pcall(state2->luaState, 0, 1, 0))
+  // add the exported C methods
+  LuaExports_PublishCMethods(state->luaState);
+
+  // Load the MainApp lua file
+  LoadAndRunLuaFile(state->luaState, "MainApp.lua");
+
+  // create a table for game state,
+  // it will live in the registry as "NateCommander_LuaGameState"
+  lua_pushstring(state->luaState, NateCommander_LuaGameState);
+  lua_newtable(state->luaState);
+  lua_settable(state->luaState, LUA_REGISTRYINDEX);
+
+  // Get the 'MainApp_Initialize' method
+  lua_getglobal(state->luaState, "MainApp_Initialize");
+  if (lua_isnil(state->luaState, -1))
   {
-    FatalError("Failed to execute method returned by LUA chunk");
+    FatalError("Unable to find lua MainApp_Initialize");
   }
 
-  // get the returned string
-  message = lua_tolstring(state2->luaState, 1, &messageLength);
-  if (message != 0)
+  // first argument is the game state object
+  lua_pushstring(state->luaState, NateCommander_LuaGameState);
+  lua_gettable(state->luaState, LUA_REGISTRYINDEX);  
+
+  // call the method
+  if (LUA_OK != lua_pcall(state->luaState, 1, 0, 0))
   {
-    NonFatalError(message);
+    FatalError("Failed to run lua MainApp_Initialize");
   }
 }
 
 void MainApp_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent)
 {
-  
+  // Get the 'MainApp_HandleEvent' method
+  lua_getglobal(state->luaState, "MainApp_HandleEvent");
+  if (lua_isnil(state->luaState, -1))
+  {
+    FatalError("Unable to find lua MainApp_HandleEvent");
+  }
 
+  // first argument is the game state object
+  lua_pushstring(state->luaState, NateCommander_LuaGameState);
+  lua_gettable(state->luaState, LUA_REGISTRYINDEX);
 
-  // TODO: window management, input handling, others?
+  // second argument is a new table to hold the event info
+  lua_newtable(state->luaState);
+
+  // table.type = the sdl event type
+  lua_pushstring(state->luaState, "type");
+  lua_pushnumber(state->luaState, sdlEvent->type);
+  lua_settable(state->luaState, -3);
 
   switch (sdlEvent->type)
   {
     case SDL_KEYDOWN:
-      switch( sdlEvent->key.keysym.sym )
-      {
-        case SDLK_ESCAPE:
-          SDL_Quit();
-          // TODO: do we need to exit here?
-          exit(0);
-          break;
-
-        case SDLK_SPACE:
-          state->ShouldRotate = !state->ShouldRotate;
-          break;
-
-        case SDLK_a:
-          Nate_Assert(state == 0, "oh noes an assertion failed");
-      }
+      // table.keySymbol = the pressed key
+      lua_pushstring(state->luaState, "keySym");
+      lua_pushnumber(state->luaState, sdlEvent->key.keysym.sym);
+      lua_settable(state->luaState, -3);
       break;
-
+      
     case SDL_QUIT:
       exit(0);
       break;
+  }
+
+  // call the method
+  if (LUA_OK != lua_pcall(state->luaState, 2, 0, 0))
+  {
+    FatalError("Failed to run lua MainApp_HandleEvent");
   }
 }
 
 void MainApp_Process(MainApp_State * state)
 {
-  Uint64 msCount;
-
-  if (state->ShouldRotate)
+  // Get the 'MainApp_Process' method
+  lua_getglobal(state->luaState, "MainApp_Process");
+  if (lua_isnil(state->luaState, -1))
   {
-    // update our sense of time
-    msCount = MsCounter_Update(&state->ElapsedTime);
-
-    // Produce a full rotation every 2 seconds
-    state->CurrentAngle = (double)(msCount % 2000) * 360 / 2000;
+    FatalError("Unable to find lua MainApp_Process");
   }
-  else
+
+  // first argument is the game state object
+  lua_pushstring(state->luaState, NateCommander_LuaGameState);
+  lua_gettable(state->luaState, LUA_REGISTRYINDEX);
+
+  // call the lua function
+  if (LUA_OK != lua_pcall(state->luaState, 1, 0, 0))
   {
-    // maintain a frozen sense of time
-    MsCounter_ResetToCurrentCount(&state->ElapsedTime);
+    FatalError("Failed to execute lua MainApp_Process");
   }
 }
 
 void MainApp_Draw(MainApp_State * state)
 {
+  /*
+  MainApp_Draw(MainApp_State * state);
+  */  
+  lua_Number currentAngle;
+
+  // Get the 'MainApp_Draw' method
+  lua_getglobal(state->luaState, "MainApp_Draw");
+  if (lua_isnil(state->luaState, -1))
+  {
+    FatalError("Unable to find lua MainApp_Draw");
+  }
+
+  // first argument is the game state object
+  lua_pushstring(state->luaState, NateCommander_LuaGameState);
+  lua_gettable(state->luaState, LUA_REGISTRYINDEX);
+
+  // call the lua function
+  if (LUA_OK != lua_pcall(state->luaState, 1, 1, 0))
+  {
+    FatalError("Failed to execute lua MainApp_Draw");
+  }
+
+  // the return value is the current angle to draw
+  currentAngle = lua_tonumber(state->luaState, -1);
+  lua_pop(state->luaState, 1);
+
   // Fools! They thought it would be sufficient to call this only once at the
   // start of the application!
   // At this point, we should have a properly set-up
@@ -144,7 +179,7 @@ void MainApp_Draw(MainApp_State * state)
   SetupWorldView(state);
 
   // Draw stuff
-  DrawToScreen(state);
+  DrawToScreen(state, currentAngle);
 }
 
 void SetupWorldView(MainApp_State * state)
@@ -181,7 +216,7 @@ void SetupWorldView(MainApp_State * state)
   gluPerspective( 60.0, ratio, 1.0, 1024.0 );
 }
 
-void DrawToScreen(MainApp_State * state)
+void DrawToScreen(MainApp_State * state, lua_Number currentAngle)
 {
   float angle;
 
@@ -223,7 +258,7 @@ void DrawToScreen(MainApp_State * state)
   glTranslatef( 0.0, 0.0, -5.0 );
 
   // Rotate.
-  angle = (float)state->CurrentAngle;
+  angle = (float)currentAngle;
   glRotated( angle, 0.0, 1.0, 0.0 );
 
   // Send our triangle data to the pipeline.
@@ -372,5 +407,30 @@ void* MyLuaAlloc(void *ud, void *ptr, size_t osize, size_t nsize)
   else
   {
     return realloc(ptr, nsize);
+  }
+}
+
+void LoadAndRunLuaFile(lua_State * luaState, const char * luaFileName)
+{
+  void* luaFileData;
+  long luaFileDataLength;
+
+  luaFileData = ResourceLoader_LoadLuaFile(luaFileName, &luaFileDataLength);
+  if (luaFileData == 0)
+  {
+    FatalError("Failed to load LUA file contents");
+  }
+  
+  // This could still be dorked up by unicode or whatever. Oh well. They'll learn.
+  BuildAssertSize(sizeof(char), 1); // Char is supposed to be 1 byte for this to work
+  if (LUA_OK != luaL_loadbufferx(luaState, (char*)luaFileData, luaFileDataLength, "my whatever", "t"))
+  {
+    free(luaFileData);
+    FatalError("Failed to load LUA chunk");
+  }
+  free(luaFileData);
+  if (LUA_OK != lua_pcall(luaState, 0, 0, 0))
+  {
+    FatalError("Failed to execute LUA chunk");
   }
 }

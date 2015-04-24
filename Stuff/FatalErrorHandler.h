@@ -8,6 +8,15 @@ void FatalError_OutOfMemory();
 void NonFatalError(const char * message);
 void NonFatalError_Sdl(const char * message);
 
-#define Nate_Assert(condition, message) if (!(condition)) { FatalError(#condition ", " message); }
+#define NateAssert(condition, message) if (!(condition)) { FatalError(#condition ", " message); }
+
+#define BuildAssert(cond) \
+	(void) sizeof(char [1 - 2*!(cond)]);
+
+#define BuildAssertSize(expr, size) \
+  (void) sizeof(char[1 - 50 * ((size) - (expr))]); \
+  (void) sizeof(char[1 - 50 * ((expr) - (size))]);
+
+int FatalError_IsDeliveringMessage();
 
 #endif

@@ -1,16 +1,15 @@
 #include "MsCounter.h"
-#include "SDL.h"
 #include "FatalErrorHandler.h"
 
 void MsCounter_Init(MsCounter * counter)
 {
-  Nate_Assert(counter != 0, "MsCounter_Reset");
+  NateAssert(counter != 0, "MsCounter_Init");
   counter->GetSystemTimeMs = SDL_GetTicks;
 }
 
 void MsCounter_Reset(MsCounter * counter)
 {
-  Nate_Assert(counter != 0, "MsCounter_Reset");
+  NateAssert(counter != 0, "MsCounter_Reset");
 
   counter->LastGetTicksValue = counter->GetSystemTimeMs();
   counter->Count = 0;
@@ -22,7 +21,7 @@ Uint64 MsCounter_Update(MsCounter * counter)
   Uint32 msSinceLast;
   static int hasNotified = 0;
 
-  Nate_Assert(counter != 0, "MsCounter_Update");
+  NateAssert(counter != 0, "MsCounter_Update");
   newGetTicksValue = counter->GetSystemTimeMs();
   msSinceLast = newGetTicksValue - counter->LastGetTicksValue; // this will underflow sometimes - that's OK/intended
   
@@ -51,14 +50,14 @@ Uint64 MsCounter_Update(MsCounter * counter)
 
 Uint64 MsCounter_GetCount(MsCounter * counter)
 {
-  Nate_Assert(counter != 0, "MsCounter_GetTickCount");
+  NateAssert(counter != 0, "MsCounter_GetCount");
 
   return counter->Count;
 }
 
 void MsCounter_ResetToNewCount(MsCounter * counter, Uint64 newTickCount)
 {
-  Nate_Assert(counter != 0, "MsCounter_ResetToNewCount");
+  NateAssert(counter != 0, "MsCounter_ResetToNewCount");
 
   counter->LastGetTicksValue = counter->GetSystemTimeMs();
   counter->Count = newTickCount;
@@ -66,7 +65,7 @@ void MsCounter_ResetToNewCount(MsCounter * counter, Uint64 newTickCount)
 
 void MsCounter_ResetToCurrentCount(MsCounter * counter)
 {
-  Nate_Assert(counter != 0, "MsCounter_ResetToCurrentCount");
+  NateAssert(counter != 0, "MsCounter_ResetToCurrentCount");
 
   counter->LastGetTicksValue = counter->GetSystemTimeMs();
 }

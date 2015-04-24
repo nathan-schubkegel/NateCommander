@@ -144,7 +144,7 @@ SDL_Surface * ResourceLoader_LoadBmp(const char * resourceFileName)
 }
 
 // returns null and populates SDL_GetError() on failure
-char * ResourceLoader_LoadLuaFile(const char * luaFileName, long * lengthOut)
+void * ResourceLoader_LoadLuaFile(const char * luaFileName, long * lengthOut)
 {
   void * data;
   long length;
@@ -153,11 +153,10 @@ char * ResourceLoader_LoadLuaFile(const char * luaFileName, long * lengthOut)
   ResourceLoader_LoadBinaryFile("Lua Files", luaFileName, &data, &length);
   if (data == 0)
   {
+    *lengthOut = 0;
     return 0;
   }
 
-  // return raw data as char*
-  // TODO: this may be dorked up by BOM or UTF-8 someday
   *lengthOut = length;
-  return (char*) data;
+  return data;
 }

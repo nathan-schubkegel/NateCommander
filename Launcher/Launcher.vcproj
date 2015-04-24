@@ -44,11 +44,13 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\Stuff;&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;$(NOINHERIT)"
+				MinimalRebuild="false"
 				ExceptionHandling="0"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="4"
 				WarnAsError="false"
 				Detect64BitPortabilityProblems="false"
@@ -67,6 +69,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrtd.lib uuid.lib $(NOINHERIT)"
+				OutputFile="$(OutDir)\NateCommander.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\Stuff\Debug;&quot;..\lua-5.2.3\Debug&quot;;&quot;..\SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug;$(NOINHERIT)"
 				IgnoreAllDefaultLibraries="true"
@@ -100,7 +103,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist &quot;$(OutDir)\Resources&quot; mkdir &quot;$(OutDir)\Resources&quot;&#x0D;&#x0A;xcopy ..\Resources\* &quot;$(OutDir)\Resources&quot; /D /S&#x0D;&#x0A;&#x0D;&#x0A;if not exist &quot;$(OutDir)\Lua Files&quot; mkdir &quot;$(OutDir)\Lua Files&quot;&#x0D;&#x0A;xcopy &quot;..\Stuff\Lua Files\*&quot; &quot;$(OutDir)\Lua Files&quot; /D /S&#x0D;&#x0A;"
+				CommandLine="if not exist &quot;$(OutDir)\Resources&quot; mkdir &quot;$(OutDir)\Resources&quot;&#x0D;&#x0A;xcopy ..\Resources\* &quot;$(OutDir)\Resources&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;if not exist &quot;$(OutDir)\Lua Files&quot; mkdir &quot;$(OutDir)\Lua Files&quot;&#x0D;&#x0A;xcopy &quot;..\Stuff\Lua Files\*&quot; &quot;$(OutDir)\Lua Files&quot; /D /S /R /Y&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
