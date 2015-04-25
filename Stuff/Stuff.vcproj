@@ -216,6 +216,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NetLayer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ResourceLoader.h"
 				>
 			</File>
