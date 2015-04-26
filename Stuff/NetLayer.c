@@ -1,15 +1,36 @@
-#ifndef NATE_COMMANDER_NET_LAYER
-#define NATE_COMMANDER_NET_LAYER
+#include "NetLayer.h"
+
+#include "SDL.h"
+#include "Utils.h"
+#include "StringEater.h"
+#include <string.h>
 
 // Yay C object-oriented programming.
 
-struct NetAddress;
-typedef struct NetAddress NetAddress;
+struct NetAddress
+{
+  Uint32 address;
+  Uint16 bindToAllInterfaces; // 1 or 0
+  Uint16 port;
+};
+
 // for IPv4:
 //    just bind to 1 interface: "192.168.0.1:1337"
 //    bind to all interfaces: "*:1337";
 // this object makes a clone of the passed-in data
-NetAddress * NetAddress_Create(const char * addressInfo);
+NetAddress * NetAddress_Create(const char * addressInfo)
+{
+  NetAddress * address;
+  size_t maxSize;
+  size_t currentPos;
+  
+  address = MallocAndInitOrDie(sizeof(NetAddress));
+  maxSize = strlen(addressInfo);
+
+  StringEater_Init(addressInfo, maxSize, &currentPos);
+  StringEater_(addressInfo, maxSize, &currentPos);
+}
+
 void NetAddress_Destroy(NetAddress ** obj);
 // for IPv4 this is 192.168.0.1 port 1337
 // for IPv6 this is something else

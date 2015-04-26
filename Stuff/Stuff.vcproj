@@ -178,7 +178,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NetLayer.c"
+				>
+			</File>
+			<File
 				RelativePath=".\ResourceLoader.c"
+				>
+			</File>
+			<File
+				RelativePath=".\StringEater.c"
 				>
 			</File>
 			<File
@@ -225,6 +233,10 @@
 			</File>
 			<File
 				RelativePath=".\Resources.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StringEater.h"
 				>
 			</File>
 			<File
