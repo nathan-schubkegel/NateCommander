@@ -33,6 +33,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTests", "UnitTests\Unit
 		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68} = {81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tokamak", "tokamak\tokamak.vcproj", "{DE49562B-F87F-48FE-AE4B-2ACE89892231}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -63,6 +65,10 @@ Global
 		{D9A503A4-F13B-4E32-B08D-866615DA4874}.Debug|Win32.Build.0 = Debug|Win32
 		{D9A503A4-F13B-4E32-B08D-866615DA4874}.Release|Win32.ActiveCfg = Release|Win32
 		{D9A503A4-F13B-4E32-B08D-866615DA4874}.Release|Win32.Build.0 = Release|Win32
+		{DE49562B-F87F-48FE-AE4B-2ACE89892231}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DE49562B-F87F-48FE-AE4B-2ACE89892231}.Debug|Win32.Build.0 = Debug|Win32
+		{DE49562B-F87F-48FE-AE4B-2ACE89892231}.Release|Win32.ActiveCfg = Release|Win32
+		{DE49562B-F87F-48FE-AE4B-2ACE89892231}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
