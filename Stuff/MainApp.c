@@ -15,6 +15,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "LuaExports.h"
+#include "tokamak_c.h"
 
 struct MainApp_State
 {
@@ -33,6 +34,11 @@ const char * NateCommander_LuaGameState = "NateCommander_LuaGameState";
 void MainApp_Initialize(MainApp_State ** state2)
 {
   MainApp_State * state;
+
+  // create a tokamak thing? temporarily? proof that it works?
+  cneSimulatorSizeInfo * sizeInfo;
+  sizeInfo = cneSimulatorSizeInfo_Create();
+  cneSimulatorSizeInfo_Destroy(&sizeInfo);
 
   state = malloc(sizeof(MainApp_State));
   if (state == 0) 
