@@ -15,7 +15,7 @@
 #include "lua.h"
 #include "lauxlib.h"
 #include "LuaExports.h"
-#include "tokamak_c.h"
+#include "ctokamak.h"
 
 struct MainApp_State
 {
