@@ -13,4 +13,7 @@ void MainApp_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent);
 void MainApp_Process(MainApp_State * state);
 void MainApp_Draw(MainApp_State * state);
 
+// TODO: called by LUA, probly shouldn't be exposed here? maybe?
+void MainApp_AdvanceGSIM();
+
 #endif

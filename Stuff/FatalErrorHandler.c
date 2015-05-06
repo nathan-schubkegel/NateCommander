@@ -18,6 +18,18 @@ void FatalError(const char * message)
   exit(-1);
 }
 
+void FatalError2(const char * message, const char * message2)
+{
+  if (gIsShowingErrorMessage) return;
+  gIsShowingErrorMessage++;
+
+  strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
+  MessageBox(0, gErrorMessageBuffer, "NateCommander Fatal Error", 0);
+  SDL_Quit();
+  exit(-1);
+}
+
 void FatalError_Sdl(const char* message)
 {
   if (gIsShowingErrorMessage) return;

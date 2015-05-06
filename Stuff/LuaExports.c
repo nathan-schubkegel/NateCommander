@@ -4,6 +4,7 @@
 #include "FatalErrorHandler.h"
 #include <Windows.h>
 #include "MsCounter.h"
+#include "MainApp.h"
 
 /*
 A C function receives its arguments from Lua in its stack in direct order 
@@ -133,6 +134,12 @@ int C_MsCounter_ResetToCurrentCount(struct lua_State * luaState)
   return 0;
 }
 
+int C_AdvanceGSIM(struct lua_State * luaState)
+{
+  MainApp_AdvanceGSIM();
+  return 0;
+}
+
 void LuaExports_PublishCMethods(struct lua_State * luaState)
 {
   //lua_pushnumber(lua_state, LUA_RIDX_GLOBALS);
@@ -155,6 +162,7 @@ void LuaExports_PublishCMethods(struct lua_State * luaState)
   PUBLISH_CMETHOD(C_MsCounter_GetCount);
   PUBLISH_CMETHOD(C_MsCounter_ResetToNewCount);
   PUBLISH_CMETHOD(C_MsCounter_ResetToCurrentCount);
+  PUBLISH_CMETHOD(C_AdvanceGSIM);
 
   //lua_pop(luaState, 1);
 }
