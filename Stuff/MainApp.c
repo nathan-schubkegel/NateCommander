@@ -383,6 +383,9 @@ void SetupWorldView(MainApp_State * state)
   glFrontFace( GL_CCW );
   glEnable( GL_CULL_FACE );
 
+  // Depth testing (so I don't have to try to order my opaque objects)
+  glEnable( GL_DEPTH_TEST );
+
   // Set the clear color.
   glClearColor( 0, 0, 0, 0 );
 
@@ -572,15 +575,16 @@ void DrawFloor()
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity( );
 
+  // Move down the y-axis so the floor appears at the right height
+  // Move up or down the z-axis based on where user specified the floor to be
+  // TODO: Why do I have to translate first? (Why doesn't it work right when I scale first?)
+  glTranslatef( 0.0, -3.0, (GLfloat)gFloorZOffset );
+
   // scale so the floor is squat (or whatever dimensons the floor really is)
   glScalef(
     (1.0f / cubeWidth) * FLOOR_WIDTH, 
     (1.0f / cubeHeight) * FLOOR_HEIGHT,
     (1.0f / cubeLength) * FLOOR_LENGTH);
-
-  // Move down the y-axis so the floor appears at the right height
-  // Move up or down the z-axis based on where user specified the floor to be
-  glTranslatef( 0.0, -3.0, (GLfloat)gFloorZOffset );
 
   // Send our triangle data to the pipeline.
   glBegin( GL_TRIANGLES );
