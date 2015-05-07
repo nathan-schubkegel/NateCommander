@@ -41,6 +41,7 @@ cneSimulator *gSim = NULL;
 #define CUBECOUNT 5 
 cneRigidBody *gCubes[CUBECOUNT]; 
 cneAnimatedBody *gFloor;
+lua_Number gFloorZOffset; // TODO: just let the simulator keep track of this? don't need a variable?
 #define FLOOR_WIDTH 3
 #define FLOOR_LENGTH 3
 #define FLOOR_HEIGHT 0.3f
@@ -235,6 +236,7 @@ void MainApp_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent)
   switch (sdlEvent->type)
   {
     case SDL_KEYDOWN:
+    case SDL_KEYUP:
       // table.keySymbol = the pressed key
       lua_pushstring(state->luaState, "keySym");
       lua_pushnumber(state->luaState, sdlEvent->key.keysym.sym);
@@ -299,8 +301,11 @@ void MainApp_Process(MainApp_State * state)
 }
 
 // LUA script calls this
-void MainApp_AdvanceGSIM()
+void MainApp_AdvanceGSIM(lua_Number floorZOffset)
 {
+  // move the floor
+  gFloorZOffset = floorZOffset;
+
   // TODO: reposition any errant boxes
 
   // Not calling this for today... tokamak is still pretty unstable now
@@ -542,9 +547,6 @@ void DrawSpinningCube(lua_Number currentAngle)
 
 void DrawFloor()
 {
-  /*
-  float angle;
-
   static GLfloat cubeWidth = 2.0f;
   static GLfloat cubeHeight = 2.0f;
   static GLfloat cubeLength = 2.0f;
@@ -576,15 +578,9 @@ void DrawFloor()
     (1.0f / cubeHeight) * FLOOR_HEIGHT,
     (1.0f / cubeLength) * FLOOR_LENGTH);
 
-  // Move down the z-axis. 
-  // This makes the cube appear 5.0 further into the screen than where we're currently viewing from
-  glTranslatef( 0.0, 0.0, -5.0 );
-
-  // Rotate.
-  angle = (float)currentAngle;
-  // the first parameter is in degrees
-  // the later three values indicate the vector of the axis around which we'll rotate
-  glRotated( angle, 0.0, 1.0, 0.0 );
+  // Move down the y-axis so the floor appears at the right height
+  // Move up or down the z-axis based on where user specified the floor to be
+  glTranslatef( 0.0, -3.0, (GLfloat)gFloorZOffset );
 
   // Send our triangle data to the pipeline.
   glBegin( GL_TRIANGLES );
@@ -674,12 +670,6 @@ void DrawFloor()
   glVertex3fv( v5 );
 
   glEnd( );
-
-  // EXERCISE:
-  // Draw text telling the user that 'Spc'
-  // pauses the rotation and 'Esc' quits.
-  // Do it using vetors and textured quads.
-  */
 }
 
 /*

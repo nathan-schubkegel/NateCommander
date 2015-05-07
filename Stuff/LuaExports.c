@@ -136,7 +136,9 @@ int C_MsCounter_ResetToCurrentCount(struct lua_State * luaState)
 
 int C_AdvanceGSIM(struct lua_State * luaState)
 {
-  MainApp_AdvanceGSIM();
+  // first argument is the FloorZOffset
+  lua_Number zoffset = lua_tonumber(luaState, -1);
+  MainApp_AdvanceGSIM(zoffset);
   return 0;
 }
 
