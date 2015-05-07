@@ -10,3 +10,7 @@
 *.bak
 *.aps
 /ccan-original
+
+# the wiki zip file is in source control
+# and the extracted contents are not
+/SDL2-2.0.3/SDL-wiki
