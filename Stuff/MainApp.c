@@ -16,6 +16,7 @@
 #include "lauxlib.h"
 #include "LuaExports.h"
 #include "ctokamak.h"
+#include "BoxGraphics.h"
 
 struct MainApp_State
 {
@@ -23,8 +24,8 @@ struct MainApp_State
   lua_State * luaState;
 };
 
-void SetupWorldView(MainApp_State * state);
-void DrawSpinningCube(lua_Number currentAngle);
+void SetupWorldView(MainApp_State * state, lua_Number viewAngleX, lua_Number viewAngleY);
+
 void DrawFloor();
 void DrawFallingCubes();
 
@@ -41,10 +42,13 @@ cneSimulator *gSim = NULL;
 #define CUBECOUNT 5 
 cneRigidBody *gCubes[CUBECOUNT]; 
 cneAnimatedBody *gFloor;
-lua_Number gFloorZOffset; // TODO: just let the simulator keep track of this? don't need a variable?
+//lua_Number gFloorZOffset; // TODO: just let the simulator keep track of this? don't need a variable?
 #define FLOOR_WIDTH 3
-#define FLOOR_LENGTH 3
 #define FLOOR_HEIGHT 0.3f
+#define FLOOR_LENGTH 3
+float floorDimensions[] = { FLOOR_WIDTH, FLOOR_HEIGHT, FLOOR_LENGTH };
+float floorLocation[] = { 0, -3, 0 };
+float cameraPosition[] = { 3, 3, 15 };
 #define FLOOR_X 0
 #define FLOOR_Y -3
 #define FLOOR_Z 0
@@ -212,7 +216,7 @@ void MainApp_Initialize(MainApp_State ** state2)
   }
 }
 
-void MainApp_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent)
+void PrepareToCallLua_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent)
 {
   // Get the 'MainApp_HandleEvent' method
   lua_getglobal(state->luaState, "MainApp_HandleEvent");
@@ -232,15 +236,48 @@ void MainApp_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent)
   lua_pushstring(state->luaState, "type");
   lua_pushnumber(state->luaState, sdlEvent->type);
   lua_settable(state->luaState, -3);
+}
 
+void MainApp_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent)
+{
+  int hasLuaEvent = 0;
   switch (sdlEvent->type)
   {
     case SDL_KEYDOWN:
     case SDL_KEYUP:
-      // table.keySymbol = the pressed key
+      PrepareToCallLua_HandleEvent(state, sdlEvent);
+      hasLuaEvent = 1;
+      // table.keySym = the pressed key
       lua_pushstring(state->luaState, "keySym");
       lua_pushnumber(state->luaState, sdlEvent->key.keysym.sym);
       lua_settable(state->luaState, -3);
+      break;
+
+    case SDL_MOUSEMOTION:
+      PrepareToCallLua_HandleEvent(state, sdlEvent);
+      hasLuaEvent = 1;
+      // table.xrel = relative x movement
+      lua_pushstring(state->luaState, "xrel");
+      lua_pushnumber(state->luaState, sdlEvent->motion.xrel);
+      lua_settable(state->luaState, -3);
+      // table.yrel = relative y movement
+      lua_pushstring(state->luaState, "yrel");
+      lua_pushnumber(state->luaState, sdlEvent->motion.yrel);
+      lua_settable(state->luaState, -3);
+      // table.x = absolute x position
+      lua_pushstring(state->luaState, "x");
+      lua_pushnumber(state->luaState, sdlEvent->motion.x);
+      lua_settable(state->luaState, -3);
+      // table.y = absolute x position
+      lua_pushstring(state->luaState, "y");
+      lua_pushnumber(state->luaState, sdlEvent->motion.y);
+      lua_settable(state->luaState, -3);
+      break;
+
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP:
+    case SDL_MOUSEWHEEL:
+      //sdlEvent->motion.xrel
       break;
       
     case SDL_QUIT:
@@ -248,10 +285,13 @@ void MainApp_HandleEvent(MainApp_State * state, SDL_Event * sdlEvent)
       break;
   }
 
-  // call the method
-  if (LUA_OK != lua_pcall(state->luaState, 2, 0, 0))
+  if (hasLuaEvent)
   {
-    FatalError("Failed to run lua MainApp_HandleEvent");
+    // call the method
+    if (LUA_OK != lua_pcall(state->luaState, 2, 0, 0))
+    {
+      FatalError2("Failed to run lua MainApp_HandleEvent", lua_tolstring(state->luaState, -1, 0));
+    }
   }
 }
 
@@ -304,7 +344,7 @@ void MainApp_Process(MainApp_State * state)
 void MainApp_AdvanceGSIM(lua_Number floorZOffset)
 {
   // move the floor
-  gFloorZOffset = floorZOffset;
+  floorLocation[2] = (float)floorZOffset;
 
   // TODO: reposition any errant boxes
 
@@ -317,7 +357,9 @@ void MainApp_Draw(MainApp_State * state)
   /*
   MainApp_Draw(MainApp_State * state);
   */  
-  lua_Number currentAngle;
+  lua_Number spinnyCubeAngle;
+  lua_Number viewAngleX;
+  lua_Number viewAngleY;
 
   // Get the 'MainApp_Draw' method
   lua_getglobal(state->luaState, "MainApp_Draw");
@@ -331,27 +373,33 @@ void MainApp_Draw(MainApp_State * state)
   lua_gettable(state->luaState, LUA_REGISTRYINDEX);
 
   // call the lua function
-  if (LUA_OK != lua_pcall(state->luaState, 1, 1, 0))
+  if (LUA_OK != lua_pcall(state->luaState, 1, 3, 0))
   {
     FatalError("Failed to execute lua MainApp_Draw");
   }
 
-  // the return value is the current angle to draw
-  currentAngle = lua_tonumber(state->luaState, -1);
-  lua_pop(state->luaState, 1);
+  // the return values are the spinny cube angle and the view angle
+  spinnyCubeAngle = lua_tonumber(state->luaState, -3);
+  viewAngleX = lua_tonumber(state->luaState, -2);
+  viewAngleY = lua_tonumber(state->luaState, -1);
+  // and we're responsible for cleaning up returned values off the stack
+  lua_pop(state->luaState, 3);
 
   // Fools! They thought it would be sufficient to call this only once at the
   // start of the application!
   // At this point, we should have a properly set-up
   // double-buffered window for use with OpenGL.
-  SetupWorldView(state);
+  SetupWorldView(state, viewAngleX, viewAngleY);
 
   // Clear the color and depth buffers.
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
   // Draw stuff
-  DrawSpinningCube(currentAngle);
-  DrawFloor();
+  DrawAxisLineX();
+  DrawAxisLineY();
+  DrawAxisLineZ();
+  DrawYAngledCube((float)spinnyCubeAngle);
+  DrawSizedLocatedBox(floorDimensions, floorLocation);
   DrawFallingCubes();
 
   // Swap the buffers. This this tells the driver to
@@ -365,14 +413,56 @@ void MainApp_Draw(MainApp_State * state)
   SDL_GL_SwapWindow(state->MainWindow.Window);
 }
 
-void SetupWorldView(MainApp_State * state)
+// view angle (x=0 y=0) looks down the Z axis from + to -
+// view angle (x+) rotates camera right (initially shows more x+)
+// view angle (y+) rotates camera up (initially shows more y+)
+// x axis: -1 is left, +1 is right
+// y axis: -1 is down, +1 is up
+// z axis: -1 is into the monitor, +1 is toward me
+void SetView_CameraAtPoint_LookingAtAngle(float * xyzCameraPosition, float leftRightAngle, float upDownAngle)
+{
+  // first (TODO: why first? why must rotation be done before translation?)
+  // rotate all the world objects in the negative-as-desired direction 
+  // to simulate camera angle.
+
+  // left-right is implemented as "around the y axis"
+  // up-down is implemented as "around the x axis"
+  glRotated(-upDownAngle, 1.0f, 0.0f, 0.0f);
+  glRotated(leftRightAngle, 0.0f, 1.0f, 0.0f);
+
+  // next (TODO: why next? why can we translate in world units AFTER rotating?)
+  // translate all the world objects in the negative-as-desired direction
+  // to simulate the camera position
+  glTranslatef(-xyzCameraPosition[0], -xyzCameraPosition[1], -xyzCameraPosition[2]);
+}
+
+void SetView_CameraAtAngle_LookingAtPoint_FromDistance(
+  float leftRightAngle, float upDownAngle, 
+  float * xyzFocalPoint, float distance)
+{
+  // TODO: this method is not tested at all
+
+  // VERY FIRST do the distance thing
+  glTranslatef(0.0f, 0.0f, distance);
+  
+  // then rotate and translate to the desired point
+  SetView_CameraAtPoint_LookingAtAngle(xyzFocalPoint, leftRightAngle, upDownAngle);
+}
+
+void SetupWorldView(MainApp_State * state, lua_Number viewAngleX, lua_Number viewAngleY)
 {
   float ratio;
   int width;
   int height;
-
+  //float cameraDistance = 15.0f;
+  //float focusPointX = 0.0f;
+  //float focusPointY = 5.0f;
+  //float focusPointZ = 0.0f;
+  
   // get window width and height
   SDL_GetWindowSize(state->MainWindow.Window, &width, &height);
+  if (width <= 0) width = 1;
+  if (height <= 0) height = 1;
   ratio = (float)width / (float)height;
 
   // Our shading model--Gouraud (smooth).
@@ -402,279 +492,31 @@ void SetupWorldView(MainApp_State * state)
   // TODO: NeHe used 45.0 degrees... what do I think looks good? (What did Halo use? I hated that)
   gluPerspective( 60.0, ratio, 1.0, 1024.0 );
 
-  // For the view, slide everything into the monitor so we get a good look at world coordinate 0,0,0
-  // and slide everything down so we're looking a little from above
-  glTranslatef( 0.0, -4.0, -15.0 );
+  SetView_CameraAtPoint_LookingAtAngle(
+    cameraPosition, 
+    // translate viewing angle from screen coordinates (top left is 0,0 bottom right is width,height)
+    // to angles between -360 and +360, and flip y so when user moves mouse up it's considered y+
+    (((float)viewAngleX - (width * 0.5f)) / (width * 0.5f)) * 360.0f, 
+    -(((float)viewAngleY - (height * 0.5f)) / (height * 0.5f)) * 360.0f);
+  /*
+  // first (TODO: why first? why must rotation be done before translation?)
+  // rotate all the world objects in the negative-as-desired direction 
+  // to simulate camera angle.
+  // viewAngleX means to rotate left-right, which is implemented as "around the y axis"
+  glRotated(viewAngleX, 0.0f, 1.0f, 0.0f);
+  // viewAngleY means to rotate up-down, which is implemented as "around the x axis"
+  glRotated(viewAngleY, 1.0f, 0.0f, 0.0f);
+
+  // next (TODO: why next? why can we translate in world units AFTER rotating?)
+  // translate all the world objects in the negative-as-desired direction 
+  // to simulate the camera position
+  glTranslatef(5.0f, -5.0f, 0.0f);
+  */
 }
 
-void DrawSpinningCube(lua_Number currentAngle)
-{
-  float angle;
 
-  // EXERCISE:
-  // Replace this awful mess with vertex
-  // arrays and a call to glDrawElements.
-  //
-  // EXERCISE:
-  // After completing the above, change
-  // it to use compiled vertex arrays.
-  //
-  // EXERCISE:
-  // Verify my windings are correct here ;).
-  static GLfloat v0[] = { -1.0f, -1.0f,  1.0f };
-  static GLfloat v1[] = {  1.0f, -1.0f,  1.0f };
-  static GLfloat v2[] = {  1.0f,  1.0f,  1.0f };
-  static GLfloat v3[] = { -1.0f,  1.0f,  1.0f };
-  static GLfloat v4[] = { -1.0f, -1.0f, -1.0f };
-  static GLfloat v5[] = {  1.0f, -1.0f, -1.0f };
-  static GLfloat v6[] = {  1.0f,  1.0f, -1.0f };
-  static GLfloat v7[] = { -1.0f,  1.0f, -1.0f };
-  static GLubyte red[]    = { 255,   0,   0, 255 };
-  static GLubyte green[]  = {   0, 255,   0, 255 };
-  static GLubyte blue[]   = {   0,   0, 255, 255 };
-  static GLubyte white[]  = { 255, 255, 255, 255 };
-  static GLubyte yellow[] = {   0, 255, 255, 255 };
-  static GLubyte black[]  = {   0,   0,   0, 255 };
-  static GLubyte orange[] = { 255, 255,   0, 255 };
-  static GLubyte purple[] = { 255,   0, 255,   0 };
 
-  // We don't want to modify the projection matrix.
-  // (that was modified in SetupWorldView())
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity( );
 
-  // Move down the z-axis. 
-  // This makes the cube appear 5.0 further into the screen than where we're currently viewing from
-  //glTranslatef( 0.0, 0.0, -5.0 );
-
-  // Rotate.
-  angle = (float)currentAngle;
-  // the first parameter is in degrees
-  // the later three values indicate the vector of the axis around which we'll rotate
-  glRotated( angle, 0.0, 1.0, 0.0 );
-
-  // Send our triangle data to the pipeline.
-  glBegin( GL_TRIANGLES );
-
-  glColor4ubv( red );
-  glVertex3fv( v0 );
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( blue );
-  glVertex3fv( v2 );
-
-  glColor4ubv( red );
-  glVertex3fv( v0 );
-  glColor4ubv( blue );
-  glVertex3fv( v2 );
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( black );
-  glVertex3fv( v5 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-  glColor4ubv( blue );
-  glVertex3fv( v2 );
-
-  glColor4ubv( black );
-  glVertex3fv( v5 );
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-  glColor4ubv( purple );
-  glVertex3fv( v7 );
-
-  glColor4ubv( black );
-  glVertex3fv( v5 );
-  glColor4ubv( purple );
-  glVertex3fv( v7 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-  glColor4ubv( red );
-  glVertex3fv( v0 );
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-  glColor4ubv( purple );
-  glVertex3fv( v7 );
-
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-  glColor4ubv( blue );
-  glVertex3fv( v2 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-  glColor4ubv( purple );
-  glVertex3fv( v7 );
-
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( red );
-  glVertex3fv( v0 );
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-  glColor4ubv( black );
-  glVertex3fv( v5 );
-
-  glEnd( );
-
-  // EXERCISE:
-  // Draw text telling the user that 'Spc'
-  // pauses the rotation and 'Esc' quits.
-  // Do it using vetors and textured quads.
-}
-
-void DrawFloor()
-{
-  static GLfloat cubeWidth = 2.0f;
-  static GLfloat cubeHeight = 2.0f;
-  static GLfloat cubeLength = 2.0f;
-  static GLfloat v0[] = { -1.0f, -1.0f,  1.0f };
-  static GLfloat v1[] = {  1.0f, -1.0f,  1.0f };
-  static GLfloat v2[] = {  1.0f,  1.0f,  1.0f };
-  static GLfloat v3[] = { -1.0f,  1.0f,  1.0f };
-  static GLfloat v4[] = { -1.0f, -1.0f, -1.0f };
-  static GLfloat v5[] = {  1.0f, -1.0f, -1.0f };
-  static GLfloat v6[] = {  1.0f,  1.0f, -1.0f };
-  static GLfloat v7[] = { -1.0f,  1.0f, -1.0f };
-  static GLubyte red[]    = { 255,   0,   0, 255 };
-  static GLubyte green[]  = {   0, 255,   0, 255 };
-  static GLubyte blue[]   = {   0,   0, 255, 255 };
-  static GLubyte white[]  = { 255, 255, 255, 255 };
-  static GLubyte yellow[] = {   0, 255, 255, 255 };
-  static GLubyte black[]  = {   0,   0,   0, 255 };
-  static GLubyte orange[] = { 255, 255,   0, 255 };
-  static GLubyte purple[] = { 255,   0, 255,   0 };
-
-  // We don't want to modify the projection matrix.
-  // (that was modified in SetupWorldView())
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity( );
-
-  // Move down the y-axis so the floor appears at the right height
-  // Move up or down the z-axis based on where user specified the floor to be
-  // TODO: Why do I have to translate first? (Why doesn't it work right when I scale first?)
-  glTranslatef( 0.0, -3.0, (GLfloat)gFloorZOffset );
-
-  // scale so the floor is squat (or whatever dimensons the floor really is)
-  glScalef(
-    (1.0f / cubeWidth) * FLOOR_WIDTH, 
-    (1.0f / cubeHeight) * FLOOR_HEIGHT,
-    (1.0f / cubeLength) * FLOOR_LENGTH);
-
-  // Send our triangle data to the pipeline.
-  glBegin( GL_TRIANGLES );
-
-  glColor4ubv( red );
-  glVertex3fv( v0 );
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( blue );
-  glVertex3fv( v2 );
-
-  glColor4ubv( red );
-  glVertex3fv( v0 );
-  glColor4ubv( blue );
-  glVertex3fv( v2 );
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( black );
-  glVertex3fv( v5 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-  glColor4ubv( blue );
-  glVertex3fv( v2 );
-
-  glColor4ubv( black );
-  glVertex3fv( v5 );
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-  glColor4ubv( purple );
-  glVertex3fv( v7 );
-
-  glColor4ubv( black );
-  glVertex3fv( v5 );
-  glColor4ubv( purple );
-  glVertex3fv( v7 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-  glColor4ubv( red );
-  glVertex3fv( v0 );
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-  glColor4ubv( purple );
-  glVertex3fv( v7 );
-
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-  glColor4ubv( blue );
-  glVertex3fv( v2 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-
-  glColor4ubv( white );
-  glVertex3fv( v3 );
-  glColor4ubv( orange );
-  glVertex3fv( v6 );
-  glColor4ubv( purple );
-  glVertex3fv( v7 );
-
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( red );
-  glVertex3fv( v0 );
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-
-  glColor4ubv( green );
-  glVertex3fv( v1 );
-  glColor4ubv( yellow );
-  glVertex3fv( v4 );
-  glColor4ubv( black );
-  glVertex3fv( v5 );
-
-  glEnd( );
-}
 
 /*
 void DrawFallingCube(float xOffset, float yOffset, float zOffset, float xRot, float yRot, float zRot)
@@ -778,7 +620,7 @@ void LoadAndRunLuaFile(lua_State * luaState, const char * luaFileName)
   
   // This could still be dorked up by unicode or whatever. Oh well. They'll learn.
   BuildAssertSize(sizeof(char), 1); // Char is supposed to be 1 byte for this to work
-  if (LUA_OK != luaL_loadbufferx(luaState, (char*)luaFileData, luaFileDataLength, "my whatever", "t"))
+  if (LUA_OK != luaL_loadbufferx(luaState, (char*)luaFileData, luaFileDataLength, luaFileName, "t"))
   {
     free(luaFileData);
 

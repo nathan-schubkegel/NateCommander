@@ -6,13 +6,16 @@ function MainApp_Initialize(state)
   state.FloorZOffset = 0.0 -- this gets update in MainApp_Process once per game tick
   state.FloorZOffsetDirection = nil -- I know this is basically a noop, but I like the clarity
   
+  state.ViewAngleX = 0
+  state.ViewAngleY = 0
+  
   --state.KeyStates = {}
   --state.KeysWhenPressed = {}
 
   state.ElapsedTime = C_MsCounter_Create()
   C_MsCounter_Reset(state.ElapsedTime)
   
-  state.ShouldRotate = false
+  state.ShouldRotate = true
   
   state.LastSim60thSecondCount = 0
 end
@@ -56,6 +59,11 @@ function MainApp_HandleEvent(state, e)
     -- record that this key is now released
     --state.KeyStates[keySym] = nil
     --state.KeysWhenPressed[keySym] = nil    
+  elseif type == 0x400 then -- SDL_MOUSEMOTION
+    --state.ViewAngleX = state.ViewAngleX + e.relx
+    --state.ViewAngleY = state.ViewAngleY + e.rely
+    state.ViewAngleX = e.x
+    state.ViewAngleY = e.y    
   end
   -- TODO: window management, more input handling, others?
 end
@@ -104,5 +112,5 @@ end
 
 function MainApp_Draw(state)
   -- TODO: more engine, less hacks
-  return state.CurrentAngle
+  return state.CurrentAngle, state.ViewAngleX, state.ViewAngleY
 end
