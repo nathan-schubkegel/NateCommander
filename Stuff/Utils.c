@@ -8,7 +8,7 @@
 void * MallocAndInitOrDie(int numBytes)
 {
   void * chunk = malloc(numBytes);
-  if (chunk == 0) FatalError_OutOfMemory();
+  if (chunk == 0) FatalError_OutOfMemory("");
   memset(chunk, 0, numBytes);
   return chunk;
 }

@@ -168,9 +168,29 @@
 			<File
 				RelativePath=".\LuaExports.c"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						GeneratePreprocessedFile="0"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\MainApp.c"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppDrawing.c"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppLua.c"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppPhysics.c"
 				>
 			</File>
 			<File
@@ -187,6 +207,18 @@
 			</File>
 			<File
 				RelativePath=".\Utils.c"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						GeneratePreprocessedFile="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ViewGraphics.c"
 				>
 			</File>
 		</Filter>
@@ -216,6 +248,22 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MainAppDrawing.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppHostStruct.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppLua.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppPhysics.h"
+				>
+			</File>
+			<File
 				RelativePath=".\MeasuredString.h"
 				>
 			</File>
@@ -233,6 +281,10 @@
 			</File>
 			<File
 				RelativePath=".\Utils.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ViewGraphics.h"
 				>
 			</File>
 		</Filter>

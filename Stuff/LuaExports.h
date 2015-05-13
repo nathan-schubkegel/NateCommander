@@ -3,6 +3,6 @@
 
 #include "lua.h"
 
-void LuaExports_PublishCMethods(struct lua_State * luaState);
+void LuaExports_PublishCMethods(lua_State * luaState);
 
 #endif

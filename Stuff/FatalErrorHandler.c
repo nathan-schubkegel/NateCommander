@@ -7,18 +7,7 @@
 char gErrorMessageBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 int gIsShowingErrorMessage;
 
-void FatalError(const char * message)
-{
-  if (gIsShowingErrorMessage) return;
-  gIsShowingErrorMessage++;
-
-  strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
-  MessageBox(0, gErrorMessageBuffer, "NateCommander Fatal Error", 0);
-  SDL_Quit();
-  exit(-1);
-}
-
-void FatalError2(const char * message, const char * message2)
+void DoFatalError2(const char * message, const char * message2)
 {
   if (gIsShowingErrorMessage) return;
   gIsShowingErrorMessage++;
@@ -30,12 +19,40 @@ void FatalError2(const char * message, const char * message2)
   exit(-1);
 }
 
-void FatalError_Sdl(const char* message)
+void DoFatalError3(const char * message, const char * message2, const char * message3)
 {
   if (gIsShowingErrorMessage) return;
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message3);
+  MessageBox(0, gErrorMessageBuffer, "NateCommander Fatal Error", 0);
+  SDL_Quit();
+  exit(-1);
+}
+
+void DoFatalError4(const char * message, const char * message2, const char * message3, const char * message4)
+{
+  if (gIsShowingErrorMessage) return;
+  gIsShowingErrorMessage++;
+
+  strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message3);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message4);
+  MessageBox(0, gErrorMessageBuffer, "NateCommander Fatal Error", 0);
+  SDL_Quit();
+  exit(-1);
+}
+
+void DoFatalError_Sdl2(const char* message, const char* message2)
+{
+  if (gIsShowingErrorMessage) return;
+  gIsShowingErrorMessage++;
+
+  strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, SDL_GetError());
   MessageBox(0, gErrorMessageBuffer, "NateCommander Fatal Error", 0);
@@ -43,30 +60,32 @@ void FatalError_Sdl(const char* message)
   exit(-1);
 }
 
-void FatalError_OutOfMemory()
+void DoFatalError_OutOfMemory2(const char* message, const char * message2)
 {
-  FatalError("Out of memory (failed to allocate memory for something)");
+  DoFatalError3(message, message2, " Out of memory (failed to allocate memory for something)");
 }
 
-void NonFatalError(const char * message)
+void DoNonFatalError2(const char * message, const char * message2)
 {
   // FUTURE: append to log? display at top of screen? txt to your mother?
   if (gIsShowingErrorMessage) return;
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
   MessageBox(0, gErrorMessageBuffer, "NateCommander Non-Fatal Error", 0);
 
   gIsShowingErrorMessage--;
 }
 
-void NonFatalError_Sdl(const char * message)
+void DoNonFatalError_Sdl2(const char * message, const char * message2)
 {
   // FUTURE: append to log? display at top of screen? txt to your mother?
   if (gIsShowingErrorMessage) return;
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, SDL_GetError());
   MessageBox(0, gErrorMessageBuffer, "NateCommander Non-Fatal Error", 0);

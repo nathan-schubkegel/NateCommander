@@ -3,9 +3,9 @@
 #include "ResourceLoader.h"
 #include "FatalErrorHandler.h"
 
-WindowAndOpenGlContext CreateMainWindow(const char * title, const char * iconFileName, int fullscreen)
+CommonApp_WindowAndOpenGlContext CommonApp_CreateMainWindow(const char * title, const char * iconFileName, int fullscreen)
 {
-  WindowAndOpenGlContext result;
+  CommonApp_WindowAndOpenGlContext result;
   SDL_Surface * bmpSurface;
   Uint32 flags;
 

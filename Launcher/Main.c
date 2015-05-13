@@ -9,7 +9,7 @@
 #pragma warning(disable : 4127) // conditional expression is constant
 int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
-  MainApp_State * state;
+  MainAppHostStruct * hostStruct;
   static SDL_Event sdlEvent;
 
   // Initialize defaults, Video and Audio
@@ -22,7 +22,7 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
   atexit(SDL_Quit);
 
   // Initialize app state
-  MainApp_Initialize(&state);
+  hostStruct = MainApp_Initialize();
 
   while (1)
   {
@@ -38,7 +38,7 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
       if (!FatalError_IsDeliveringMessage())
       {
         // pass all events on to the app
-        MainApp_HandleEvent(state, &sdlEvent);
+        MainApp_HandleEvent(hostStruct, &sdlEvent);
       }
     }
 
@@ -46,10 +46,10 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
     if (!FatalError_IsDeliveringMessage())
     {
       // give the app a chance to increment its game state
-      MainApp_Process(state);
+      MainApp_Process(hostStruct);
 
       // give the app a chance to draw
-      MainApp_Draw(state);
+      MainApp_Draw(hostStruct);
     }
 
     Sleep(0); // give up execution to other threads that might want it

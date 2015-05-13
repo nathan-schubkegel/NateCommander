@@ -2,9 +2,65 @@
 
 #include "lauxlib.h"
 #include "FatalErrorHandler.h"
-#include <Windows.h>
+//#include <Windows.h>
 #include "MsCounter.h"
-#include "MainApp.h"
+#include "MainAppLua.h"
+#include "MainAppPhysics.h"
+
+// Design Hint: use this macro for every full userdata handed to lua
+// so we can verify userdata types passed to C from client lua scripts
+// Design Hint: TypeId is 'int' so structs remain DWORD-aligned 
+// (C/Win32 voodoo experience tells me this is a good idea)
+#define NateUserData(typeName, typeId, finalizeFunction) \
+  struct NateUserData_##typeName \
+  { \
+    int TypeId; \
+    typeName Value; \
+  }; \
+  typedef struct NateUserData_##typeName NateUserData_##typeName; \
+  const int NateUserDataTypeId_##typeName = typeId; \
+  typeName * CreateNateUserData_##typeName(lua_State * luaState) \
+  { \
+    NateUserData_##typeName * thing; \
+    NateCheck0(lua_checkstack(luaState, 4)); \
+    thing = lua_newuserdata(luaState, sizeof(NateUserData_##typeName)); \
+    thing->TypeId = NateUserDataTypeId_##typeName; \
+    memset(&thing->Value, 0, sizeof(typeName)); \
+    \
+    if (luaL_newmetatable(luaState, "NateUserData_" #typeName "_Metatable")) \
+    { \
+      lua_pushstring(luaState, "__gc"); \
+      lua_pushcfunction(luaState, finalizeFunction); \
+      lua_settable(luaState, -3); \
+    } \
+    lua_setmetatable(luaState, -2); \
+    \
+    return &thing->Value; \
+  } \
+  int IsNateUserData_##typeName(lua_State * luaState, int luaStackIndex, typeName ** value) \
+  { \
+    NateUserData_##typeName * thing; \
+    thing = lua_touserdata(luaState, luaStackIndex); \
+    if (thing == 0 || thing->TypeId != typeId) \
+    { \
+      *value = 0; \
+      return 0; \
+    } \
+    else \
+    { \
+      *value = &thing->Value; \
+      return 1; \
+    } \
+  }
+
+// use this if no finalization is needed for a NateUserData
+int noFinalizer(lua_State * luaState)
+{
+  (void)luaState;
+  return 0;
+}
+
+NateUserData(MsCounter, 55, noFinalizer);
 
 /*
 A C function receives its arguments from Lua in its stack in direct order 
@@ -18,131 +74,184 @@ results will be properly discarded by Lua. Like a Lua function, a C
 function called by Lua can also return many results.
 */
 
-int C_Exit(struct lua_State * luaState)
+int C_Exit(lua_State * luaState)
 {
-  lua_Number firstArg;
+  NateCheck(lua_gettop(luaState) == 1, "Expected 1 argument");
+  NateCheck(lua_isnumber(luaState, 1), "Expected argument 1 \"exitCode\" to be a number");
 
-  // this is nonsense, it just makes a compiler warning go away
-  if (luaState != 0)
-  {
-    if (lua_gettop(luaState) >= 1 && lua_isnumber(luaState, 1))
-    {
-      firstArg = lua_tonumber(luaState, 1);
-      exit((int)firstArg);
-    }
-    else
-    {
-      exit(0);
-    }
-  }
+  exit((int)lua_tonumber(luaState, 1));
+  
+  //return 0;
+}
+
+int C_FatalError(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 1, "Expected 1 argument");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"message\" to be a string");
+
+  FatalError(lua_tostring(luaState, 1));
+  
   return 0;
 }
 
-// This is how I would do a shared metatable, if I cared to
-/*
-int C_GC_MsCounter(struct lua_State * luaState)
+int C_NonFatalError(lua_State * luaState)
 {
+  NateCheck(lua_gettop(luaState) == 1, "Expected 1 argument");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"message\" to be a string");
+
+  NonFatalError(lua_tostring(luaState, 1));
+  
+  return 0;
 }
 
-int C_CreateMsCounter(struct lua_State * luaState)
+int C_NateAssert(lua_State * luaState)
 {
-  MsCounter * newCounter = lua_newuserdata(luaState, sizeof(MsCounter));
-  MsCounter_Init(newCounter);
+  NateCheck(lua_gettop(luaState) == 2, "Expected 2 arguments");
+  NateCheck(lua_isboolean(luaState, 1), "Expected argument 1 \"condition\" to be a boolean");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 2 \"message\" to be a string");
 
-  // get or create a shared metatable to be used to finalize MsCounter objects
-  if (luaL_newmetatable(luaState, "C_MsCounter_Metatable"))
-  {
-    lua_pushstring("__gc");
-    lua_pushcfunction(luaState, C_GC_MsCounter);
-    lua_settable(luaState, -3);
-  }
+  NateAssert(lua_toboolean(luaState, 1), lua_tostring(luaState, 2));
+  
+  return 0;
+}
 
-  // apply it to the new MsCounter object
-  lua_setmetatable(luaState, -2);
+int C_MsCounter_Create(lua_State * luaState)
+{
+  MsCounter * counter;
+
+  NateCheck(lua_gettop(luaState) == 0, "Expected exactly zero arguments");
+
+  counter = CreateNateUserData_MsCounter(luaState);
+  MsCounter_Init(counter);
 
   return 1;
 }
-*/
 
-int C_FatalError(struct lua_State * luaState)
+int C_MsCounter_Reset(lua_State * luaState)
 {
-  const char * message = lua_tostring(luaState, -1);
-  FatalError(message);
-  return 0;
-}
+  MsCounter * counter;
 
-int C_NonFatalError(struct lua_State * luaState)
-{
-  const char * message = lua_tostring(luaState, -1);
-  NonFatalError(message);
-  return 0;
-}
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one arguments");
+  NateCheck(IsNateUserData_MsCounter(luaState, 1, &counter), "Expected argument 1 to be MsCounter");
 
-int C_NateAssert(struct lua_State * luaState)
-{
-  const char * message = lua_tostring(luaState, -1);
-  int luaCondition = lua_toboolean(luaState, -2);
-  if (!luaCondition) 
-  { 
-    FatalError(message); 
-  }
-  return 0;
-}
-
-int C_MsCounter_Create(struct lua_State * luaState)
-{
-  MsCounter * newCounter = lua_newuserdata(luaState, sizeof(MsCounter));
-  MsCounter_Init(newCounter);
-  return 1;
-}
-
-int C_MsCounter_Reset(struct lua_State * luaState)
-{
-  MsCounter * counter = lua_touserdata(luaState, -1);
   MsCounter_Reset(counter);
+
   return 0;
 }
 
-int C_MsCounter_Update(struct lua_State * luaState)
+int C_MsCounter_Update(lua_State * luaState)
 {
-  MsCounter * counter = lua_touserdata(luaState, -1);
-  lua_Number newValue = (lua_Number)MsCounter_Update(counter);
-  lua_pushnumber(luaState, newValue);
+  MsCounter * counter;
+  Uint64 retValue;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one arguments");
+  NateCheck(IsNateUserData_MsCounter(luaState, 1, &counter), "Expected argument 1 to be MsCounter");
+
+  retValue = MsCounter_Update(counter);
+
+  NateCheck0(lua_checkstack(luaState, 1));
+  lua_pushnumber(luaState, (lua_Number)retValue);
   return 1;
 }
 
-int C_MsCounter_GetCount(struct lua_State * luaState)
+int C_MsCounter_GetCount(lua_State * luaState)
 {
-  MsCounter * counter = lua_touserdata(luaState, -1);
-  lua_Number newValue = (lua_Number)MsCounter_GetCount(counter);
-  lua_pushnumber(luaState, newValue);
+  MsCounter * counter;
+  Uint64 retValue;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one arguments");
+  NateCheck(IsNateUserData_MsCounter(luaState, 1, &counter), "Expected argument 1 to be MsCounter");
+
+  retValue = MsCounter_GetCount(counter);
+
+  NateCheck0(lua_checkstack(luaState, 1));
+  lua_pushnumber(luaState, (lua_Number)retValue);
   return 1;
 }
 
-int C_MsCounter_ResetToNewCount(struct lua_State * luaState)
+int C_MsCounter_ResetToNewCount(lua_State * luaState)
 {
-  MsCounter * counter = lua_touserdata(luaState, -2);
-  lua_Number newValue = lua_tonumber(luaState, -1);
-  MsCounter_ResetToNewCount(counter, (Uint64)newValue);
+  MsCounter * counter;
+
+  NateCheck(lua_gettop(luaState) == 2, "Expected exactly two arguments");
+  NateCheck(IsNateUserData_MsCounter(luaState, 1, &counter), "Expected argument 1 to be MsCounter");
+  NateCheck(lua_isnumber(luaState, 2), "Expected argument 2 to be number");
+
+  MsCounter_ResetToNewCount(counter, (Uint64)lua_tonumber(luaState, 2));
+
   return 0;
 }
 
-int C_MsCounter_ResetToCurrentCount(struct lua_State * luaState)
+int C_MsCounter_ResetToCurrentCount(lua_State * luaState)
 {
-  MsCounter * counter = lua_touserdata(luaState, -1);
+  MsCounter * counter;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
+  NateCheck(IsNateUserData_MsCounter(luaState, 1, &counter), "Expected argument 1 to be MsCounter");
+
   MsCounter_ResetToCurrentCount(counter);
+
   return 0;
 }
 
-int C_AdvanceGSIM(struct lua_State * luaState)
+int C_AdvanceGSIM(lua_State * luaState)
 {
-  // first argument is the FloorZOffset
-  lua_Number zoffset = lua_tonumber(luaState, -1);
-  MainApp_AdvanceGSIM(zoffset);
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
+  NateCheck(lua_isnumber(luaState, 1), "Expected argument 1 \"zoffset\" to be a number or string-number");
+
+  MainAppPhysics_AdvanceGSIM((float)lua_tonumber(luaState, 1));
+
   return 0;
 }
 
-void LuaExports_PublishCMethods(struct lua_State * luaState)
+int C_RegisterKeyDownHandler(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
+  NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
+  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 \"eventKey\" to be a number");
+  
+  MainAppLua_RegisterKeyDownHandler(luaState, 1, 2, 3);
+
+  return 0;
+}
+
+int C_RegisterKeyUpHandler(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
+  NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
+  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 \"eventKey\" to be a number");
+  
+  MainAppLua_RegisterKeyUpHandler(luaState, 1, 2, 3);
+
+  return 0;
+}
+
+int C_RegisterKeyResetHandler(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
+  NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
+  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 \"eventKey\" to be a number");
+  
+  MainAppLua_RegisterKeyResetHandler(luaState, 1, 2, 3);
+
+  return 0;
+}
+
+int C_RegisterMouseMotionHandler(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 2, "Expected exactly two arguments");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
+  NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
+  
+  MainAppLua_RegisterMouseMotionHandler(luaState, 1, 2);
+
+  return 0;
+}
+
+void LuaExports_PublishCMethods(lua_State * luaState)
 {
   //lua_pushnumber(lua_state, LUA_RIDX_GLOBALS);
   //lua_gettable(luaState, LUA_REGISTRYINDEX);
@@ -153,6 +262,8 @@ void LuaExports_PublishCMethods(struct lua_State * luaState)
 //  lua_pushstring(luaState, ##m##); \
 //  lua_pushcfunction(luaState, m); \
 //  lua_settable(luaState, -3);
+
+  NateCheck0(lua_checkstack(luaState, 1));
 
   PUBLISH_CMETHOD(C_Exit);
   PUBLISH_CMETHOD(C_FatalError);
@@ -165,6 +276,10 @@ void LuaExports_PublishCMethods(struct lua_State * luaState)
   PUBLISH_CMETHOD(C_MsCounter_ResetToNewCount);
   PUBLISH_CMETHOD(C_MsCounter_ResetToCurrentCount);
   PUBLISH_CMETHOD(C_AdvanceGSIM);
+  PUBLISH_CMETHOD(C_RegisterKeyDownHandler);
+  PUBLISH_CMETHOD(C_RegisterKeyUpHandler);
+  PUBLISH_CMETHOD(C_RegisterKeyResetHandler);
+  PUBLISH_CMETHOD(C_RegisterMouseMotionHandler);
 
   //lua_pop(luaState, 1);
 }

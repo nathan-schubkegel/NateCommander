@@ -3,14 +3,15 @@
 
 #include "SDL.h"
 
-typedef struct WindowAndOpenGlContext
+typedef struct CommonApp_WindowAndOpenGlContext
 {
+  // NOTE: this struct is only allowed to contain values that are safe to copy by-value.
   SDL_Window * Window;
   SDL_GLContext GlContext;
 } 
-WindowAndOpenGlContext;
+CommonApp_WindowAndOpenGlContext;
 
 // On failure, this performs a FatalError
-WindowAndOpenGlContext CreateMainWindow(const char * title, const char * iconFileName, int fullscreen);
+CommonApp_WindowAndOpenGlContext CommonApp_CreateMainWindow(const char * title, const char * iconFileName, int fullscreen);
 
 #endif

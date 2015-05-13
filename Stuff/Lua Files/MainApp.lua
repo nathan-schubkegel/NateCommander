@@ -1,80 +1,83 @@
 
-function MainApp_Initialize(state)
-  state.CurrentAngle = 0.0
-
+function Initialize(state)
+  state.SpinnyBoxAngle = 0.0
   state.FloorZSpeed = 3.5 -- in world units per second
   state.FloorZOffset = 0.0 -- this gets update in MainApp_Process once per game tick
   state.FloorZOffsetDirection = nil -- I know this is basically a noop, but I like the clarity
-  
+  -- TODO: keep track of "when the user first pressed the key down" and "what the zOffset was then"
+  -- so we can update without significant floating point arithmetic loss
   state.ViewAngleX = 0
   state.ViewAngleY = 0
-  
-  --state.KeyStates = {}
-  --state.KeysWhenPressed = {}
-
   state.ElapsedTime = C_MsCounter_Create()
   C_MsCounter_Reset(state.ElapsedTime)
-  
   state.ShouldRotate = true
-  
   state.LastSim60thSecondCount = 0
+  
+  -- register event handlers
+  C_RegisterKeyDownHandler("HandleKeyDown_Escape", HandleKeyDown_Escape, 27) -- SDLK_ESCAPE
+  C_RegisterKeyDownHandler("HandleKeyDown_Space", HandleKeyDown_Space, 32) -- SDLK_SPACE
+  C_RegisterKeyDownHandler("HandleKeyDown_a", HandleKeyDown_a, 97) -- SDLK_a
+
+  C_RegisterKeyDownHandler("HandleKeyDown_DownArrow", HandleKeyDown_DownArrow, 1073741905) -- SDLK_DOWN
+  C_RegisterKeyUpHandler("HandleKeyUp_DownArrow", HandleKeyUp_DownArrow, 1073741905) -- SDLK_DOWN
+
+  C_RegisterKeyDownHandler("HandleKeyDown_UpArrow", HandleKeyDown_UpArrow, 1073741906) -- SDLK_UP
+  C_RegisterKeyUpHandler("HandleKeyUp_UpArrow", HandleKeyUp_UpArrow, 1073741906) -- SDLK_UP  
+  
+  C_RegisterMouseMotionHandler("HandleMouseMotion", HandleMouseMotion)
+  
 end
 
-function MainApp_HandleEvent(state, e)
-  local type = e.type
-  if (type == 0x300) then -- SDL_KEYDOWN
-    local keySym = e.keySym
-    
-    -- record that this key is now pressed down
-    --state.KeyStates[keySym] = true
-    --state.KeysWhenPressed[keySym] = C_MsCounter_GetCount(state.ElapsedTime)
-
-    if (keySym == 27) then -- SDLK_ESCAPE
-      C_Exit(0)
-    elseif (keySym == 32) then -- SDLK_SPACE
-      state.ShouldRotate = not state.ShouldRotate
-    elseif (keySym == 97) then -- SDLK_a
-      C_NonFatalError("user-initiated non-fatal error")
-    elseif (keySym == 1073741905) then -- SDLK_DOWN
-      -- start counting anew
-      state.FloorZOffsetDirection = "closer"
-      -- todo: do a better job gracefully handling multiple keystrokes and "both keys held down"
-    elseif (keySym == 1073741906) then -- SDLK_UP
-      -- start counting anew
-      state.FloorZOffsetDirection = "farther"
-      -- todo: do a better job gracefully handling multiple keystrokes and "both keys held down"
-    end
-  elseif type == 0x301 then -- SDL_KEYUP
-    local keySym = e.keySym
-    if (keySym == 1073741905) then -- SDLK_DOWN
-      -- stop counting
-      state.FloorZOffsetDirection = nil
-      -- todo: do a better job gracefully handling multiple keystrokes and "both keys held down"
-    elseif (keySym == 1073741906) then -- SDLK_UP
-      -- stop counting
-      state.FloorZOffsetDirection = nil      
-      -- todo: do a better job gracefully handling multiple keystrokes and "both keys held down"
-    end
-    
-    -- record that this key is now released
-    --state.KeyStates[keySym] = nil
-    --state.KeysWhenPressed[keySym] = nil    
-  elseif type == 0x400 then -- SDL_MOUSEMOTION
-    --state.ViewAngleX = state.ViewAngleX + e.relx
-    --state.ViewAngleY = state.ViewAngleY + e.rely
-    state.ViewAngleX = e.x
-    state.ViewAngleY = e.y    
-  end
-  -- TODO: window management, more input handling, others?
+function HandleKeyDown_Escape(state, e)
+  C_Exit(0)
 end
 
-function MainApp_Process(state)
+function HandleKeyDown_Space(state, e)
+  state.ShouldRotate = not state.ShouldRotate
+end
+
+function HandleKeyDown_a(state, e)
+  C_NonFatalError("user-initiated non-fatal error")
+end
+
+function HandleKeyDown_DownArrow(state, e)
+  state.FloorZOffsetDirection = "closer"
+end
+
+function HandleKeyUp_DownArrow(state, e)
+  -- todo: do a better job gracefully handling spurious multiple keystrokes and "both keys held down"
+  state.FloorZOffsetDirection = nil
+end
+
+function HandleKeyDown_UpArrow(state, e)
+  state.FloorZOffsetDirection = "farther"
+end
+
+function HandleKeyUp_UpArrow(state, e)
+  state.FloorZOffsetDirection = nil
+end
+
+function HandleMouseMotion(state, e)
+  --state.ViewAngleX = state.ViewAngleX + e.relx
+  --state.ViewAngleY = state.ViewAngleY + e.rely
+  state.ViewAngleX = e.x
+  state.ViewAngleY = e.y      
+end
+
+-- TODO: handle left and right arrows
+--    if (keySym == 1073741903) then -- SDLK_RIGHT
+--    elseif (keySym == 1073741904) then -- SDLK_LEFT
+-- TODO: move window management into lua
+-- TODO: add joystick input handling
+-- TODO: add tablet input handling
+
+function Process(state)
   if state.ShouldRotate then
     -- update our sense of time
     local msCount = C_MsCounter_Update(state.ElapsedTime)
     
     -- produce a full rotation every 2 seconds
-    state.CurrentAngle = (msCount % 2000) * 360 / 2000
+    state.SpinnyBoxAngle = (msCount % 2000) * 360 / 2000
   else
     -- maintain a frozen sense of time
     C_MsCounter_ResetToCurrentCount(state.ElapsedTime)
@@ -110,7 +113,7 @@ function MainApp_Process(state)
   end
 end
 
-function MainApp_Draw(state)
+function Draw(state)
   -- TODO: more engine, less hacks
-  return state.CurrentAngle, state.ViewAngleX, state.ViewAngleY
+  return state.SpinnyBoxAngle, state.FloorZOffset, state.ViewAngleX, state.ViewAngleY
 end
