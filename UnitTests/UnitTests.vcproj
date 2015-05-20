@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\Stuff;&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;"
+				AdditionalIncludeDirectories="..\;..\Stuff;&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;$(NOINHERIT)"
 				MinimalRebuild="false"
 				ExceptionHandling="0"
@@ -191,6 +191,10 @@
 			</File>
 			<File
 				RelativePath=".\TestMsCounter.c"
+				>
+			</File>
+			<File
+				RelativePath=".\TestNateXml.c"
 				>
 			</File>
 			<File

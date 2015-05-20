@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;;&quot;..\tokamak&quot;"
+				AdditionalIncludeDirectories="..\;&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;;..\tokamak"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_LIB;$(NOINHERIT)"
 				MinimalRebuild="false"
 				ExceptionHandling="0"
@@ -202,6 +202,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NateMesh.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ResourceLoader.c"
 				>
 			</File>
@@ -269,6 +273,10 @@
 			</File>
 			<File
 				RelativePath=".\MsCounter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NateMesh.h"
 				>
 			</File>
 			<File

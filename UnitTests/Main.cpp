@@ -15,6 +15,7 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
 
   Test_MsCounter();
   Test_MeasuredString();
+  Test_NateXml();
 
   memset(&mbData, 0, sizeof(SDL_MessageBoxData));
   
