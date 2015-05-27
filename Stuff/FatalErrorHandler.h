@@ -19,8 +19,11 @@ void DoNonFatalError_Sdl2(const char * message, const char * message2);
 
 // these need runtime evaluation
 #define NateCheck0(condition) if (!(condition)) { FatalError(#condition); }
+#define NateCheck0_Sdl(condition) if (!(condition)) { FatalError_Sdl(#condition); }
 #define NateCheck(condition, message) if (!(condition)) { FatalError(#condition ", " message); }
-#define NateCheck2(condition, message1, message2) if (!(condition)) { FatalError(#condition ", " message1, (message2)); }
+#define NateCheck_Sdl(condition, message) if (!(condition)) { FatalError_Sdl(#condition ", " message); }
+#define NateCheck2(condition, message1, message2) if (!(condition)) { FatalError2(#condition ", " message1, (message2)); }
+#define NateCheck3(condition, message1, message2, message3) if (!(condition)) { FatalError3(#condition ", " message1, (message2), (message3)); }
 
 // these are theoretically compiled out at release time
 #define NateAssert0(condition) if (!(condition)) { FatalError(#condition); }

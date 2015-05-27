@@ -44,7 +44,7 @@
 				AdditionalIncludeDirectories="..\;..\Stuff;&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;$(NOINHERIT)"
 				MinimalRebuild="false"
-				ExceptionHandling="0"
+				ExceptionHandling="2"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="1"
 				EnableFunctionLevelLinking="true"
@@ -52,7 +52,7 @@
 				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				DebugInformationFormat="4"
-				CompileAs="1"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrtd.lib uuid.lib $(NOINHERIT)"
+				AdditionalDependencies="stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrtd.lib uuid.lib msvcprtd.lib $(NOINHERIT)"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\Stuff\Debug;&quot;..\lua-5.2.3\Debug&quot;;&quot;..\SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug;$(NOINHERIT)"
 				IgnoreAllDefaultLibraries="true"
@@ -191,6 +191,10 @@
 			</File>
 			<File
 				RelativePath=".\TestMsCounter.c"
+				>
+			</File>
+			<File
+				RelativePath=".\TestNateMinMaxHeap.cpp"
 				>
 			</File>
 			<File

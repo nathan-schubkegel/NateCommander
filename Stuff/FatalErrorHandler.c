@@ -13,6 +13,7 @@ void DoFatalError2(const char * message, const char * message2)
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
   MessageBox(0, gErrorMessageBuffer, "NateCommander Fatal Error", 0);
   SDL_Quit();
@@ -25,7 +26,9 @@ void DoFatalError3(const char * message, const char * message2, const char * mes
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message3);
   MessageBox(0, gErrorMessageBuffer, "NateCommander Fatal Error", 0);
   SDL_Quit();
@@ -38,8 +41,11 @@ void DoFatalError4(const char * message, const char * message2, const char * mes
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message3);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message4);
   MessageBox(0, gErrorMessageBuffer, "NateCommander Fatal Error", 0);
   SDL_Quit();
@@ -52,6 +58,7 @@ void DoFatalError_Sdl2(const char* message, const char* message2)
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, SDL_GetError());
@@ -72,6 +79,7 @@ void DoNonFatalError2(const char * message, const char * message2)
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
   MessageBox(0, gErrorMessageBuffer, "NateCommander Non-Fatal Error", 0);
 
@@ -85,6 +93,7 @@ void DoNonFatalError_Sdl2(const char * message, const char * message2)
   gIsShowingErrorMessage++;
 
   strcpy_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message);
+  strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, message2);
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, "\n");
   strcat_s(gErrorMessageBuffer, ERROR_MESSAGE_BUFFER_SIZE, SDL_GetError());

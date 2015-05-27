@@ -1,10 +1,19 @@
 
 #include "SDL.h"
 #include <Windows.h>
+
+// C stuff
+extern "C"
+{
 #include "TestUtils.h"
 
 extern void Test_MsCounter();
 extern void Test_MeasuredString();
+extern void Test_NateXml();
+}
+
+// C++ stuff
+extern void Test_NateMinMaxHeap();
 
 #pragma warning(disable : 4100) // unreferenced formal parameter
 #pragma warning(disable : 4702) // unreachable code
@@ -16,6 +25,7 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
   Test_MsCounter();
   Test_MeasuredString();
   Test_NateXml();
+  Test_NateMinMaxHeap();
 
   memset(&mbData, 0, sizeof(SDL_MessageBoxData));
   
