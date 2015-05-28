@@ -38,7 +38,7 @@ void TestEntireTree(NateMinMaxHeap * obj)
         if (i < count)
         {
           void * childValue = NateMinMaxHeap_Get(obj, i);
-          CHECK(level % 2 == 0 ? childValue >= value : childValue <= value, );
+          CHECK((level & 0x01) == 0 ? childValue >= value : childValue <= value, );
         }
       }
 
@@ -49,34 +49,49 @@ void TestEntireTree(NateMinMaxHeap * obj)
         if (i < count)
         {
           void * grandchildValue = NateMinMaxHeap_Get(obj, i);
-          CHECK(level % 2 == 0 ? grandchildValue >= value : grandchildValue <= value, );
+          CHECK((level & 0x01) == 0 ? grandchildValue >= value : grandchildValue <= value, );
         }
       }
     }
   }
 }
 
-void Test_MuchRandom_ForTargetSize(size_t targetSize)
+void Test_MuchRandom_ForTargetSize(size_t targetSize, size_t numOps, size_t testFullTreeEveryNumOps, int matchAgainstPriorityQueue)
 {
-  int i, numOps;
+  size_t i;
+  size_t count;
+  size_t iUntilNextFullTest;
   NateMinMaxHeap * obj;
   std::priority_queue<void*, std::vector<void*>, std::greater<void*> > q;
 
   obj = NateMinMaxHeap_Create2();
-  numOps = targetSize >= 1000000 ? 10000000 : 1000000;
+  iUntilNextFullTest = testFullTreeEveryNumOps;
 
-  // perform 1,000,000 random add/remove operations on a tree of the given height
-  // and verify it holds correct contents and no neighboring memory is bogus'd
+  // perform random add/remove operations on a tree 
+  // and verify it holds correct contents
+  // TODO: verify no neighboring memory is bogus'd
   for (i = 0; i < numOps; i++)
   {
-    CHECK(q.size() == NateMinMaxHeap_GetCount(obj), );
-    if (q.size() == 0)
+    iUntilNextFullTest--;
+    count = NateMinMaxHeap_GetCount(obj);
+
+    if (matchAgainstPriorityQueue)
+    {
+      CHECK(q.size() == count, );
+    }
+
+    if (count == 0)
     {
       // add
       int newValue = rand();
       NateMinMaxHeap_Add(obj, (void*)newValue);
-      q.push((void*)newValue);
-      CHECK(q.top() == NateMinMaxHeap_GetMin(obj, 0), "after first add");
+
+      if (matchAgainstPriorityQueue)
+      {
+        q.push((void*)newValue);
+        CHECK(q.top() == NateMinMaxHeap_GetMin(obj, 0), "after first add");
+      }
+      if (iUntilNextFullTest == 0) TestEntireTree(obj);
     }
     else 
     {
@@ -87,12 +102,12 @@ void Test_MuchRandom_ForTargetSize(size_t targetSize)
       int action = rand() & 0x07;
 
       // favor additions when not quite up to max size yet
-      if (q.size() < 0.90f * targetSize)
+      if (count < 0.80f * targetSize)
       {
         action = action >= 2 ? ACTION_ADD : ACTION_REMOVE;
       }
       // favor removals when leaving max size
-      else if (q.size() > (1.10f * targetSize))
+      else if (count > (1.20f * targetSize))
       {
         action = action >= 2 ? ACTION_REMOVE : ACTION_ADD;
       }
@@ -107,21 +122,30 @@ void Test_MuchRandom_ForTargetSize(size_t targetSize)
         // add
         int newValue = rand();
         NateMinMaxHeap_Add(obj, (void*)newValue);
-        q.push((void*)newValue);
-        CHECK(q.top() == NateMinMaxHeap_GetMin(obj, 0), "after add");
-        TestEntireTree(obj);
+
+        if (matchAgainstPriorityQueue)
+        {
+          q.push((void*)newValue);
+          CHECK(q.top() == NateMinMaxHeap_GetMin(obj, 0), "after add");
+        }
+        if (iUntilNextFullTest == 0) TestEntireTree(obj);
       }
       else
       {
         NateMinMaxHeap_RemoveMin(obj);
-        q.pop();
-        if (q.size() != 0)
+        if (matchAgainstPriorityQueue)
         {
-          CHECK(q.top() == NateMinMaxHeap_GetMin(obj, 0), "after remove");
+          q.pop();
+          if (q.size() != 0)
+          {
+            CHECK(q.top() == NateMinMaxHeap_GetMin(obj, 0), "after remove");
+          }
         }
-        TestEntireTree(obj);
+        if (iUntilNextFullTest == 0) TestEntireTree(obj);
       }
     }
+
+    if (iUntilNextFullTest == 0) iUntilNextFullTest = testFullTreeEveryNumOps;
   }
 
   NateMinMaxHeap_Destroy(obj);
@@ -129,15 +153,18 @@ void Test_MuchRandom_ForTargetSize(size_t targetSize)
 
 void Test_MuchRandom()
 {
-  Test_MuchRandom_ForTargetSize(7);
-  Test_MuchRandom_ForTargetSize(15);
-  Test_MuchRandom_ForTargetSize(31);
-  Test_MuchRandom_ForTargetSize(63);
-  Test_MuchRandom_ForTargetSize(1000000);
+  Test_MuchRandom_ForTargetSize(7, 5000, 1, 1);
+  Test_MuchRandom_ForTargetSize(15, 5000, 1, 1);
+  Test_MuchRandom_ForTargetSize(31, 5000, 1, 1);
+  Test_MuchRandom_ForTargetSize(63, 5000, 1, 1);
+  // these are cool to test, but they just take too much time to always leave on
+  //Test_MuchRandom_ForTargetSize(50000, 500000, 1000, 0);
+  //Test_MuchRandom_ForTargetSize(1000000, 5000000, 1000000, 0);
 }
 
 void Test_OtherMethods()
 {
+  // TODO: if someone cared, yay do this
 }
 
 void Test_NateMinMaxHeap()
