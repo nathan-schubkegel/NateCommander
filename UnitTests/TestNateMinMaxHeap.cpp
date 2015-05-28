@@ -1,3 +1,4 @@
+#undef _DEBUG
 #include <queue>
 #include <vector>
 #include <functional>
@@ -162,13 +163,47 @@ void Test_MuchRandom()
   //Test_MuchRandom_ForTargetSize(1000000, 5000000, 1000000, 0);
 }
 
-void Test_OtherMethods()
+static int numOps = 10000000;
+
+void Test_Million_NateMinMaxHeapOps()
 {
-  // TODO: if someone cared, yay do this
+  NateMinMaxHeap * obj = NateMinMaxHeap_Create2();
+
+  // Test a million random adds/removes (mostly adding) with a NateMinMaxHeap
+  for (int i = 0; i < numOps; i++)
+  {
+    if ((rand() & 0x02) < 3)
+    {
+      NateMinMaxHeap_Add(obj, (void*)rand);
+    }
+    else if (NateMinMaxHeap_GetCount(obj) > 0)
+    {
+      NateMinMaxHeap_RemoveMin(obj);
+    }
+  }
+  NateMinMaxHeap_Destroy(obj);
+}
+
+void Test_Million_PriorityQueueOps()
+{
+  // Test a million random adds/removes (mostly adding) with a priority_queue
+  std::priority_queue<void*, std::vector<void*>, std::greater<void*> > q;
+  for (int i = 0; i < numOps; i++)
+  {
+    if ((rand() & 0x02) < 3)
+    {
+      q.push((void*)rand());
+    }
+    else if (q.size() > 0)
+    {
+      q.pop();
+    }
+  }
 }
 
 void Test_NateMinMaxHeap()
 {
   Test_MuchRandom();
-  Test_OtherMethods();
+  Test_Million_NateMinMaxHeapOps();
+  Test_Million_PriorityQueueOps();
 }

@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\;..\Stuff;&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;$(NOINHERIT)"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;$(NOINHERIT)"
 				MinimalRebuild="false"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="0"
@@ -65,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrtd.lib uuid.lib msvcprtd.lib $(NOINHERIT)"
+				AdditionalDependencies="stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrt.lib uuid.lib msvcprt.lib $(NOINHERIT)"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\Stuff\Debug;&quot;..\lua-5.2.3\Debug&quot;;&quot;..\SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug;$(NOINHERIT)"
 				IgnoreAllDefaultLibraries="true"
@@ -125,12 +125,16 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="2"
+				AdditionalIncludeDirectories="..\;..\Stuff;&quot;..\lua-5.2.3\src&quot;;&quot;..\SDL2-2.0.3\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;$(NOINHERIT)"
+				ExceptionHandling="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
+				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="3"
 				DebugInformationFormat="3"
+				CompileAs="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -143,7 +147,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrt.lib uuid.lib msvcprt.lib $(NOINHERIT)"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="..\Stuff\Debug;&quot;..\lua-5.2.3\Debug&quot;;&quot;..\SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug;$(NOINHERIT)"
+				IgnoreAllDefaultLibraries="true"
+				DelayLoadDLLs="$(NOINHERIT)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -196,6 +204,14 @@
 			<File
 				RelativePath=".\TestNateMinMaxHeap.cpp"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						ShowIncludes="true"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\TestNateXml.c"
