@@ -202,7 +202,7 @@ void Test_NateXml()
   callbackNumber = 0;
   newXml1 = malloc(strlen(xml1) + 1);
   strcpy(newXml1, xml1);
-  result = NateXml_ParseFile(newXml1, strlen(xml1), errorBuffer, sizeof(errorBuffer), (void*)3, Xml1_MainCallback);
+  result = NateXml_Parse(newXml1, strlen(xml1), errorBuffer, sizeof(errorBuffer), (void*)3, Xml1_MainCallback);
   
   CHECK(result == 1, "Xml1 failed");
 }
