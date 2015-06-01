@@ -198,6 +198,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TestNateTStringList.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TestNateXml.c"
 				>
 			</File>
