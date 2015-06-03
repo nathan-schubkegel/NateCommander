@@ -218,7 +218,43 @@ static void Test_MuchRandom()
 
 static void Test_OtherMethods()
 {
-  // TODO: if someone cared, yay do this
+  // verify that each method correctly responds for 
+  // NateTStringList_LastIndex and NateTStringList_AddToEnd
+  NateTStringList * obj;
+  char * object;
+  obj = NateTStringList_Create();
+
+  NateTStringList_SetString_Memcpy(obj, NateTStringList_AddToEnd, "steve");
+  CHECK(NateTStringList_GetCount(obj) == 1, );
+  CHECK(0 == strcmp("steve", NateTStringList_GetString(obj, 0, 0)), );
+  CHECK(0 == NateTStringList_GetObject(obj, 0, 0), );
+
+  NateTStringList_SetString_Memcpy2(obj, NateTStringList_AddToEnd, "haldo!", 5);
+  CHECK(NateTStringList_GetCount(obj) == 2, );
+  CHECK(0 == strcmp("haldo", NateTStringList_GetString(obj, 1, 0)), );
+  CHECK(0 == NateTStringList_GetObject(obj, 1, 0), );
+
+  object = "awbject";
+  NateTStringList_SetObject_Memcpy(obj, NateTStringList_AddToEnd, object, 4);
+  CHECK(NateTStringList_GetCount(obj) == 3, );
+  CHECK(0 == NateTStringList_GetString(obj, 2, 0), );
+  CHECK(0 == strncmp("awbj", (char*)NateTStringList_GetObject(obj, 2, 0), 4), );
+
+  object = "durp";
+  NateTStringList_SetString_Ptr(obj, NateTStringList_AddToEnd, object);
+  CHECK(NateTStringList_GetCount(obj) == 4, );
+  CHECK(object == NateTStringList_GetString(obj, 3, 0), );
+  CHECK(0 == NateTStringList_GetObject(obj, 3, 0), );
+
+  object = "durka durka";
+  NateTStringList_SetObject_Ptr(obj, NateTStringList_AddToEnd, object);
+  CHECK(NateTStringList_GetCount(obj) == 5, );
+  CHECK(0 == NateTStringList_GetString(obj, 4, 0), );
+  CHECK(object == NateTStringList_GetObject(obj, 4, 0), );
+
+  // TODO: finish testing this, I'm tired of writing these
+
+  NateTStringList_Destroy(obj);
 }
 
 void Test_NateTStringList()

@@ -15,6 +15,7 @@ extern void Test_NateXml();
 // C++ stuff
 extern void Test_NateMinMaxHeap();
 extern void Test_NateTStringList();
+extern void Test_NateMesh();
 
 #pragma warning(disable : 4100) // unreferenced formal parameter
 #pragma warning(disable : 4702) // unreachable code
@@ -28,6 +29,7 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
   Test_NateXml();
   Test_NateMinMaxHeap();
   Test_NateTStringList();
+  Test_NateMesh();
 
   memset(&mbData, 0, sizeof(SDL_MessageBoxData));
   
