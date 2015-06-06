@@ -26,13 +26,55 @@ static void Test_ListsAreSame(NateTStringList * obj, std::vector<MyThing> &v)
 {
   size_t stringLength;
   size_t objectLength;
+  size_t i;
   char * string;
   void * object;
 
   CHECK(NateTStringList_GetCount(obj) == v.size(), );
   for (size_t index = 0; index < NateTStringList_GetCount(obj); index++)
   {
+    // check string
+    stringLength = 0xFFFFFFFF;
     string = NateTStringList_GetString(obj, index, &stringLength);
+    if (v[index].stringPtrOriginal == 0)
+    {
+      CHECK(string == 0,);
+      CHECK(stringLength == 0,);
+    }
+    else if (!v[index].stringCopied)
+    {
+      CHECK(string == v[index].stringPtrOriginal,);
+      CHECK(stringLength == 0,);
+    }
+    else
+    {
+      CHECK(strncmp(string, v[index].string.c_str(), v[index].string.size()) == 0, );
+      CHECK(stringLength == v[index].stringLength);
+    }
+
+    // check object
+    objectLength = 0xFFFFFFFF;
+    object = NateTStringList_GetObject(obj, index, &objectLength);
+    if (v[index].object == 0)
+    {
+      CHECK(object == 0, );
+      CHECK(objectLength == 0, );
+    }
+    else if (!v[index].objectCopied)
+    {
+      CHECK(object == v[index].object);
+      CHECK(objectLength == 0);
+    }
+    else
+    {
+      CHECK(object != v[index].object);
+      CHECK(objectLength == v[index].objectLength);
+      for (i = 0; i < objectLength; i++)
+      {
+        CHECK(((char*)object)[i] == ((char*)(v[index].object))[i], );
+      }
+    }
+    else
     CHECK((string == 0 && v[index].string == "") || (string == v[index].string), );
     CHECK(stringLength == v[index].stringLength, );
     if (!v[index].stringCopied)
@@ -77,6 +119,8 @@ static char * MahStrings[] =
   "durpa durpa"
 };
 
+static int MahStringsCount = 10;
+
 static void Test_MuchRandom_ForTargetSize(size_t targetSize, size_t numOps, size_t fullTestEveryNumOps)
 {
   size_t i;
@@ -86,6 +130,8 @@ static void Test_MuchRandom_ForTargetSize(size_t targetSize, size_t numOps, size
   std::vector<MyThing> v;
   MyThing myThing;
   char * object;
+  size_t index;
+  size_t partialLength;
 
   obj = NateTStringList_Create();
   iUntilNextFullTest = fullTestEveryNumOps;
@@ -122,70 +168,125 @@ static void Test_MuchRandom_ForTargetSize(size_t targetSize, size_t numOps, size
     }
 
     // perform a random 'set' action on the tree
-#define ACTION_SetStringMemcpy1 0
-#define ACTION_SetStringMemcpy2 1
-#define ACTION_SetObjectMemcpy 2
-#define ACTION_SetStringPtr 3
-#define ACTION_SetObjectPtr 4
-#define ACTION_Max 5
+#define ACTION_SetStringStrcpy 0
+#define ACTION_SetObjectStrcpy 1
+#define ACTION_SetStringMemcpy 2
+#define ACTION_SetObjectMemcpy 3
+#define ACTION_SetStringMallocInit 4
+#define ACTION_SetObjectMallocInit 5
+#define ACTION_SetStringPtr 6
+#define ACTION_SetObjectPtr 7
+#define ACTION_Modulo 8
 
     // action = random value
-    int action = rand() % ACTION_Max;
+    int action = rand() % ACTION_Modulo;
     switch (action)
     {
-    case ACTION_SetStringMemcpy1:
-      // action = index
-      action = rand() % count;
-      object = MahStrings[rand() % 10];
-      NateTStringList_SetString_Memcpy(obj, action, object);
-      v[action].string = object;
-      v[action].stringLength = strlen(object);
-      v[action].stringCopied = 1;
-      v[action].stringPtrOriginal = object;
+    case ACTION_SetStringStrcpy:
+      index = rand() % count;
+      object = MahStrings[rand() % MahStringsCount];
+      NateTStringList_SetString_Strcpy(obj, index, object);
+      v[index].string = object;
+      v[index].stringLength = strlen(object);
+      v[index].stringCopied = 1;
+      v[index].stringPtrOriginal = object;
       break;
 
-    case ACTION_SetStringMemcpy2:
-      // action = index
-      action = rand() % count;
-      object = MahStrings[rand() % 10];
-      NateTStringList_SetString_Memcpy2(obj, action, object, 5);
-      v[action].string = object;
-      v[action].string.erase(5);
-      assert(v[action].string.size() == 5);
-      v[action].stringLength = 5;
-      v[action].stringCopied = 1;
-      v[action].stringPtrOriginal = object;
+    case ACTION_SetObjectStrcpy:
+      index = rand() % count;
+      object = MahStrings[rand() % MahStringsCount];
+      NateTStringList_SetObject_Strcpy(obj, index, object);
+      v[index].object = object;
+      v[index].objectCopied = 1;
+      v[index].objectLength = strlen(object);
       break;
       
+    case ACTION_SetStringMemcpy:
+      index = rand() % count;
+      object = MahStrings[rand() % MahStringsCount];
+      if (rand() % 2 == 0)
+      {
+        // copy the whole string
+        NateTStringList_SetString_Memcpy(obj, index, object, strlen(object));
+        v[index].string = object;
+        v[index].stringLength = strlen(object);
+        v[index].stringCopied = 1;
+        v[index].stringPtrOriginal = object;
+      }
+      else
+      {
+        // copy only part of the string
+        partialLength = rand() % strlen(object);
+        NateTStringList_SetString_Memcpy(obj, index, object, partialLength);
+        v[index].string = object;
+        v[index].string.erase(partialLength);
+        assert(v[index].string.size() == partialLength);
+        v[index].stringLength = partialLength;
+        v[index].stringCopied = 1;
+        v[index].stringPtrOriginal = object;
+      }
+      break;
+
     case ACTION_SetObjectMemcpy:
-      // action = index
-      action = rand() % count;
-      object = MahStrings[rand() % 10];
-      NateTStringList_SetObject_Memcpy(obj, action, object, strlen(object) + 1);
-      v[action].object = object;
-      v[action].objectLength = strlen(object) + 1;
-      v[action].objectCopied = 1;
+      index = rand() % count;
+      object = MahStrings[rand() % MahStringsCount];
+      if (rand() % 2 == 0)
+      {
+        // copy the whole string
+        NateTStringList_SetObject_Memcpy(obj, index, object, strlen(object));
+        v[index].object = object;
+        v[index].objectCopied = 1;
+        v[index].objectLength = strlen(object);
+      }
+      else
+      {
+        // copy only part of the string
+        partialLength = rand() % strlen(object);
+        NateTStringList_SetObject_Memcpy(obj, index, object, partialLength);
+        v[index].object = object;
+        v[index].objectCopied = 1;
+        v[index].objectLength = partialLength;
+      }
       break;
       
+    case ACTION_SetStringMallocInit:
+      index = rand() % count;
+      partialLength = rand() % 10;
+      NateTStringList_SetString_MallocInit(obj, index, partialLength);
+      v[index].string = "\0\0\0\0\0\0\0\0\0\0";
+      v[index].stringCopied = 1;
+      v[index].stringLength = 0;
+      v[index].stringPtrOriginal = "";
+      break;
+
+    case ACTION_SetObjectMallocInit:
+      index = rand() % count;
+      partialLength = rand() % 10;
+      NateTStringList_SetObject_MallocInit(obj, index, partialLength);
+      v[index].object = "\0\0\0\0\0\0\0\0\0\0";
+      v[index].objectCopied = 1;
+      v[index].objectLength = partialLength;
+      break;
+
     case ACTION_SetStringPtr:
-      // action = index
-      action = rand() % count;
-      object = MahStrings[rand() % 10];
-      NateTStringList_SetString_Ptr(obj, action, object);
-      v[action].string = object;
-      v[action].stringLength = 0;
-      v[action].stringCopied = 0;
-      v[action].stringPtrOriginal = object;
+      index = rand() % count;
+      if (rand() % 5 == 0) object = 0;
+      else object = MahStrings[rand() % MahStringsCount];
+      NateTStringList_SetString_Ptr(obj, index, object);
+      v[index].string = object;
+      v[index].stringCopied = 0;
+      v[index].stringLength = 0;
+      v[index].stringPtrOriginal = object;
       break;
-      
+
     case ACTION_SetObjectPtr:
-      // action = index
-      action = rand() % count;
-      object = MahStrings[rand() % 10];
-      NateTStringList_SetObject_Ptr(obj, action, object);
-      v[action].object = object;
-      v[action].objectLength = 0;
-      v[action].objectCopied = 0;
+      index = rand() % count;
+      if (rand() % 5 == 0) object = 0;
+      else object = MahStrings[rand() % MahStringsCount];
+      NateTStringList_SetObject_Ptr(obj, index, object);
+      v[index].object = object;
+      v[index].objectLength = 0;
+      v[index].objectCopied = 0;
       break;
 
     default:
@@ -224,12 +325,12 @@ static void Test_OtherMethods()
   char * object;
   obj = NateTStringList_Create();
 
-  NateTStringList_SetString_Memcpy(obj, NateTStringList_AddToEnd, "steve");
+  NateTStringList_SetString_Strcpy(obj, NateTStringList_AddToEnd, "steve");
   CHECK(NateTStringList_GetCount(obj) == 1, );
   CHECK(0 == strcmp("steve", NateTStringList_GetString(obj, 0, 0)), );
   CHECK(0 == NateTStringList_GetObject(obj, 0, 0), );
 
-  NateTStringList_SetString_Memcpy2(obj, NateTStringList_AddToEnd, "haldo!", 5);
+  NateTStringList_SetString_Memcpy(obj, NateTStringList_AddToEnd, "haldo!", 5);
   CHECK(NateTStringList_GetCount(obj) == 2, );
   CHECK(0 == strcmp("haldo", NateTStringList_GetString(obj, 1, 0)), );
   CHECK(0 == NateTStringList_GetObject(obj, 1, 0), );
