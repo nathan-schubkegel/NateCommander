@@ -1,19 +1,23 @@
 #ifndef NATE_COMMANDER_FATAL_ERROR_HANDLER
 #define NATE_COMMANDER_FATAL_ERROR_HANDLER
 
-#define FatalError(message) DoFatalError2((message), " in " __FUNCTION__ " in file: " __FILE__)
-#define FatalError2(message, message2) DoFatalError3((message), (message2), " in " __FUNCTION__ " in file: " __FILE__)
-#define FatalError3(message, message2, message3) DoFatalError4((message), (message2), (message3), " in " __FUNCTION__ " in file: " __FILE__)
-#define FatalError_Sdl(message) DoFatalError_Sdl2((message), " in " __FUNCTION__ " in file: " __FILE__)
-#define FatalError_OutOfMemory(message) DoFatalError_OutOfMemory2((message), " in " __FUNCTION__ " in file: " __FILE__)
+// google says this is how I can get __LINE__ to be a string
+#define STRINGIFY1(s) #s
+#define STRINGIFY2(s) STRINGIFY1(s)
+
+#define FatalError(message) DoFatalError2((message), " at line " STRINGIFY2(__LINE__) " in " __FUNCTION__ " in file: " __FILE__)
+#define FatalError2(message, message2) DoFatalError3((message), (message2), " at line " STRINGIFY2(__LINE__) " in " __FUNCTION__ " in file: " __FILE__)
+#define FatalError3(message, message2, message3) DoFatalError4((message), (message2), (message3), " at line " STRINGIFY2(__LINE__) " in " __FUNCTION__ " in file: " __FILE__)
+#define FatalError_Sdl(message) DoFatalError_Sdl2((message), " at line " STRINGIFY2(__LINE__) " in " __FUNCTION__ " in file: " __FILE__)
+#define FatalError_OutOfMemory(message) DoFatalError_OutOfMemory2((message), " at line " STRINGIFY2(__LINE__) " in " __FUNCTION__ " in file: " __FILE__)
 void DoFatalError2(const char * message, const char * message2);
 void DoFatalError3(const char * message, const char * message2, const char * message3);
 void DoFatalError4(const char * message, const char * message2, const char * message3, const char * message4);
 void DoFatalError_Sdl2(const char * message, const char * message2);
 void DoFatalError_OutOfMemory2(const char * message, const char * message2);
 
-#define NonFatalError(message) DoNonFatalError2((message), " in " __FUNCTION__ " in file: " __FILE__)
-#define NonFatalError_Sdl(message) DoNonFatalError_Sdl2((message), " in " __FUNCTION__ " in file: " __FILE__)
+#define NonFatalError(message) DoNonFatalError2((message), " at line " STRINGIFY2(__LINE__) " in " __FUNCTION__ " in file: " __FILE__)
+#define NonFatalError_Sdl(message) DoNonFatalError_Sdl2((message), " at line " STRINGIFY2(__LINE__) " in " __FUNCTION__ " in file: " __FILE__)
 void DoNonFatalError2(const char * message, const char * message2);
 void DoNonFatalError_Sdl2(const char * message, const char * message2);
 
