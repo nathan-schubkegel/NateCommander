@@ -194,15 +194,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TestNateList.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\TestNateMesh.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\TestNateMinMaxHeap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TestNateTStringList.cpp"
 				>
 			</File>
 			<File
