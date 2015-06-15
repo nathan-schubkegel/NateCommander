@@ -55,8 +55,14 @@ typedef struct NateMesh
   //size_t numChildMeshes;
 } NateMesh;
 
+// These methods malloc/free a NateMesh and its internals
 NateMesh * NateMesh_Create();
 void NateMesh_Destroy(NateMesh * obj);
+
+// These methods do not malloc/free the NateMesh, but they malloc/free its internals
+void NateMesh_Init(NateMesh * obj);
+void NateMesh_Uninit(NateMesh * obj);
+
 void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t colladaFileLength, char * colladaFileDebugIdentifier);
 
 #endif

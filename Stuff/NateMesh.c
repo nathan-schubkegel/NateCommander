@@ -3,66 +3,86 @@
 //#include "ResourceLoader.h"
 #include <string.h>
 #include "ccan/NateXml/NateXml.h"
-#include "ccan/NateTStringList/NateTStringList.h"
+#include "ccan/NateList/NateList.h"
 #include "FatalErrorHandler.h"
 
 NateMesh * NateMesh_Create()
 {
   NateMesh * obj = malloc(sizeof(NateMesh));
-  memset(obj, 0, sizeof(NateMesh));
+  if (obj == 0) return 0;
+  NateMesh_Init(obj);
   return obj;
 }
 
 void NateMesh_Destroy(NateMesh * obj)
 {
-  // TODO: free dynamically allocated internals
+  NateMesh_Uninit(obj);
   free(obj);
 }
+
+void NateMesh_Init(NateMesh * obj)
+{
+  memset(obj, 0, sizeof(NateMesh));
+}
+
+void NateMesh_Uninit(NateMesh * obj)
+{
+  size_t i;
+
+  if (obj->sources != 0)
+  {
+    for (i = 0; i < obj->numSources; i++)
+    {
+      free(obj->sources[i].data);
+    }
+    free(obj->sources);
+  }
+  obj->sources = 0;
+  obj->numSources = 0;
+
+  if (obj->inputs != 0)
+  {
+    free(obj->inputs);
+  }
+  obj->inputs = 0;
+  obj->numInputs = 0;
+
+  if (obj->dataIndexes != 0)
+  {
+    free(obj->dataIndexes);
+  }
+  obj->dataIndexes = 0;
+  obj->numDataIndexes = 0;
+  obj->numDataCoordinates = 0;
+}
+
+typedef struct MyNamedSource
+{
+  char * name;
+  NateMeshSource * source;
+} MyNamedSource;
+
+typedef struct MyNamedVertice
+{
+  char * name;
+  char * sourceName;
+} MyNamedVertice;
+
+typedef struct MyNamedPolyListInput
+{
+  char * sourceName;
+  NateMeshPolyListInput * input;
+} MyNamedPolyListInput;
 
 typedef struct NateMeshLoadInfo
 {
   NateMesh * mesh;
   char * fileName;
   int step;
-  NateTStringList * sources;
+  NateList * sources; // holds struct MyNamedSource
+  NateList * vertices; // holds struct MyNamedVertice
+  NateList * polyListInputs; // holds struct MyNamedPolyListInput
 } NateMeshLoadInfo;
-
-// root element must be COLLADA
-// child element <library_geometries>
-
-//<geometry id="Cube-mesh" name="Cube">
-//  <mesh>
-//    <source id="Cube-mesh-positions">
-//      <float_array id="Cube-mesh-positions-array" count="51">1 1 -1 1 -1 -1 -1 -0.9999998 -1 -0.9999997 1 -1 1 0.9999995 1 0.9999994 -1.000001 1 -1 -0.9999997 1 -1 1 1 1.898619 -2.98023e-7 0 -0.2260947 0.473471 0.6302432 0.2260953 0.4734714 -0.6302431 0.6302432 0.4734712 0.2260949 -0.6302429 0.4734712 -0.2260951 0.3533501 1.587853 1.409261 0.353349 -0.4121473 1.409261 -1.646651 -0.4121463 1.409261 -1.64665 1.587853 1.409261</float_array>
-//      <technique_common>
-//        <accessor source="#Cube-mesh-positions-array" count="17" stride="3">
-//          <param name="X" type="float"/>
-//          <param name="Y" type="float"/>
-//          <param name="Z" type="float"/>
-//        </accessor>
-//      </technique_common>
-//    </source>
-//    <source id="Cube-mesh-normals">
-//      <float_array id="Cube-mesh-normals-array" count="90">0 0 -1 1.7028e-7 0.5713651 -0.820696 -4.76837e-7 -1 0 -1 2.08616e-7 -1.19209e-7 1.54146e-7 0.5746995 -0.8183646 1.19892e-7 0.5746998 0.8183644 -0.8183641 0.5747001 3.32132e-7 0.8183646 0.5746995 2.2471e-7 0 1 2.79834e-7 0.7438046 -0.6683971 0 0.7438047 -4.21175e-7 0.668397 0.7438049 0.6683969 0 0.7438047 0 -0.6683969 0 0 1 0.5347867 -3.0282e-7 0.844987 -0.5347869 0 -0.844987 -2.72448e-7 -0.5713651 0.8206959 0 0 -1 1.53252e-7 0.5713651 -0.820696 0 -1 -2.98023e-7 -1 2.38419e-7 -1.49012e-7 0.4731297 0.8522257 -0.2232928 -0.4731293 0.8522258 0.2232931 -0.2232931 0.8522261 -0.4731288 0.223293 0.8522256 0.4731297 0 1 3.63624e-7 0 0 1 0.5347867 -3.0282e-7 0.8449872 -0.5347868 0 -0.844987 -2.70444e-7 -0.5713652 0.8206959</float_array>
-//      <technique_common>
-//        <accessor source="#Cube-mesh-normals-array" count="30" stride="3">
-//          <param name="X" type="float"/>
-//          <param name="Y" type="float"/>
-//          <param name="Z" type="float"/>
-//        </accessor>
-//      </technique_common>
-//    </source>
-//    <vertices id="Cube-mesh-vertices">
-//      <input semantic="POSITION" source="#Cube-mesh-positions"/>
-//    </vertices>
-//    <polylist material="Material-material" count="30">
-//      <input semantic="VERTEX" source="#Cube-mesh-vertices" offset="0"/>
-//      <input semantic="NORMAL" source="#Cube-mesh-normals" offset="1"/>
-//      <vcount>3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 </vcount>
-//      <p>0 0 1 0 2 0 7 1 16 1 13 1 5 2 6 2 2 2 2 3 6 3 7 3 7 4 4 4 9 4 0 5 3 5 10 5 4 6 0 6 11 6 3 7 7 7 12 7 11 8 10 8 12 8 5 9 1 9 8 9 4 10 5 10 8 10 0 11 4 11 8 11 1 12 0 12 8 12 13 13 16 13 15 13 4 14 13 14 14 14 7 15 6 15 15 15 6 16 5 16 14 16 3 17 0 17 2 17 4 18 7 18 13 18 1 19 5 19 2 19 3 20 2 20 7 20 12 21 7 21 9 21 11 22 0 22 10 22 9 23 4 23 11 23 10 24 3 24 12 24 9 25 11 25 12 25 14 26 13 26 15 26 5 27 4 27 14 27 16 28 7 28 15 28 15 29 6 29 14 29</p>
-//    </polylist>
-//  </mesh>
-//</geometry>
 
 void MyLoadFromColladaFileCallback(
   char * elementName,
@@ -75,8 +95,13 @@ void MyLoadFromColladaFileCallback(
   NateMeshLoadInfo * loadInfo;
   NateMeshSource * source;
   char * next;
+  char * oldNext;
   size_t i;
   size_t count;
+  int * dataIndexes;
+  MyNamedSource* namedSource;
+  MyNamedVertice* namedVertice;
+  MyNamedPolyListInput* namedInput;
   
   (void)elementText;
   loadInfo = (NateMeshLoadInfo*)userData;
@@ -85,14 +110,16 @@ MyLoadFromColladaFileCallback_Reevaluate:
   switch (loadInfo->step)
   {
 
-#define NateCheckXml(condition) NateCheck2(condition, "", loadInfo->fileName)
+#define NateCheckXml(condition) NateCheck2(condition, "while parsing xml file", loadInfo->fileName)
 #define STEP_ROOT_COLLADA_NODE 0
 #define STEP_WAIT_FOR_LIBRARY_GEOMETRIES 1
 #define STEP_WAIT_FOR_GEMOETRY 2
 #define STEP_WAIT_FOR_MESH 3
 #define STEP_PROCESS_MESH_GUTS 4
-#define STEP_PROCESS_SOURCE_GUTS 6
-#define STEP_IGNORE_REMAINING 5
+#define STEP_PROCESS_SOURCE_GUTS 5
+#define STEP_IGNORE_REMAINING 6
+#define STEP_PROCESS_VERTICES_GUTS 7
+#define STEP_PROCESS_POLYLIST_GUTS 8
 
     case STEP_ROOT_COLLADA_NODE:
       NateCheckXml(strcmp(elementName, "COLLADA") == 0);
@@ -123,9 +150,6 @@ MyLoadFromColladaFileCallback_Reevaluate:
       break;
 
     case STEP_PROCESS_MESH_GUTS:
-      // <source id="Cube-mesh-positions">
-      // <vertices id="Cube-mesh-vertices">
-      // <polylist material="Material-material" count="12">
       if (depth < 5)
       {
         // TODO: this means we only support loading 1 mesh right now
@@ -133,29 +157,54 @@ MyLoadFromColladaFileCallback_Reevaluate:
         goto MyLoadFromColladaFileCallback_Reevaluate;
       }
       NateCheckXml(depth == 5);
+      // <source id="Cube-mesh-positions">
       if (strcmp(elementName, "source") == 0)
       {
         NateCheckXml(attributeCount >= 1);
+        // save id attribute, it's used later
         NateCheckXml(strcmp(attributes, "id") == 0);
         attributes += strlen(attributes) + 1;
-        // store the source identifier, it's used later
-        NateTStringList_SetString_Memcpy(loadInfo->sources, NateTStringList_AddToEnd, attributes);
-        // allocate memory for a NateMeshSource struct and store a pointer to it in loadInfo->sources
-        // (it will be our responsibility to free that memory on failure)
-        source = malloc(sizeof(NateMeshSource));
-        NateCheckXml(source != 0);
-        memset(source, 0, sizeof(NateMeshSource));
-        NateTStringList_SetObject_Ptr(loadInfo->sources, NateTStringList_LastIndex, source);
+        namedSource = (MyNamedSource*)NateList_AddZeroedData(loadInfo->sources);
+        NateCheckXml(namedSource != 0);
+        namedSource->name = attributes;
+        // allocate NateMeshSource while we're at it
+        namedSource->source = malloc(sizeof(NateMeshSource));
+        NateCheckXml(namedSource->source != 0);
+        memset(namedSource->source, 0, sizeof(NateMeshSource));
         loadInfo->step = STEP_PROCESS_SOURCE_GUTS;
         break;
       }
+      // <vertices id="Cube-mesh-vertices">
       else if (strcmp(elementName, "vertices") == 0)
       {
-        loadInfo->step = STEP_IGNORE_REMAINING;
+        NateCheckXml(attributeCount >= 1);
+        // save id attribute, it's used later
+        NateCheckXml(strcmp(attributes, "id") == 0);
+        attributes += strlen(attributes) + 1;
+        namedVertice = (MyNamedVertice*)NateList_AddZeroedData(loadInfo->vertices);
+        NateCheckXml(namedVertice != 0);
+        namedVertice->name = attributes;
+        loadInfo->step = STEP_PROCESS_VERTICES_GUTS;
+        break;
       }
+      // <polylist material="Material-material" count="12">
       else if (strcmp(elementName, "polylist") == 0)
       {
-        loadInfo->step = STEP_IGNORE_REMAINING;
+        NateCheckXml(attributeCount >= 2);
+        // skip 'material' attribute (TODO: someday consume these)
+        NateCheckXml(strcmp(attributes, "material") == 0);
+        attributes += strlen(attributes) + 1;
+        attributes += strlen(attributes) + 1;
+        // save 'count' attribute
+        NateCheckXml(strcmp(attributes, "count") == 0);
+        attributes += strlen(attributes) + 1;
+        count = strtoul(attributes, 0, 10);
+        NateCheckXml(count > 0);
+        // only 1 polylist is currently supported
+        NateCheckXml(loadInfo->mesh->numDataCoordinates == 0);
+        loadInfo->mesh->numDataCoordinates = count;
+        loadInfo->step = STEP_PROCESS_POLYLIST_GUTS;
+        break;
       }
       else
       {
@@ -180,21 +229,24 @@ MyLoadFromColladaFileCallback_Reevaluate:
       NateCheckXml(depth >= 6);
       if (strcmp(elementName, "float_array") == 0)
       {
+        // get the associated NateMeshSource struct 
+        // (it was just created when we processed the parent <source> XML element)
+        namedSource = (MyNamedSource*)NateList_GetData(loadInfo->sources, NateList_LastIndex);
+        source = namedSource->source;
+        // only one <float_array> is currently allowed per source
+        NateCheckXml(source->data == 0);
+        // skip "id" value, looks like it's only meaningful inside the <source>
+        // and only when there are multiple <float_array> (which we currently don't support)
         NateCheckXml(attributeCount >= 2);
         NateCheckXml(strcmp(attributes, "id") == 0);
         attributes += strlen(attributes) + 1;
-        // skip id value, we assume there's just one float_array
         attributes += strlen(attributes) + 1;
-        // count attribute
+        // save 'count' attribute
         NateCheckXml(strcmp(attributes, "count") == 0);
         attributes += strlen(attributes) + 1;
-        // store count
         count = strtoul(attributes, 0, 10);
         NateCheckXml(count > 0);
-        // get the associated NateMeshSource struct and
         // allocate space for that many floats
-        source = NateTStringList_GetObject(loadInfo->sources, NateTStringList_LastIndex, 0);
-        NateCheckXml(source->totalLength == 0); // only one float_array is currently allowed per source
         source->totalLength = count;
         source->data = malloc(count * sizeof(float));
         NateCheckXml(source->data != 0);
@@ -205,6 +257,10 @@ MyLoadFromColladaFileCallback_Reevaluate:
           NateCheckXml(next[0] != '\0');
           source->data[i] = (float)strtod(next, &next);
         }
+        oldNext = next;
+        count = (size_t)strtod(next, &next);
+        NateCheckXml(count == 0);
+        NateCheckXml(oldNext == next || next[0] == '\0');
       }
       else if (strcmp(elementName, "technique_common") == 0)
       {
@@ -213,12 +269,13 @@ MyLoadFromColladaFileCallback_Reevaluate:
       else if (strcmp(elementName, "accessor") == 0)
       {
         // <accessor source="#Cube-mesh-positions-array" count="8" stride="3">
+        NateCheckXml(attributeCount >= 3);
         // get source struct
-        source = NateTStringList_GetObject(loadInfo->sources, NateTStringList_LastIndex, 0);
+        namedSource = (MyNamedSource*)NateList_GetData(loadInfo->sources, NateList_LastIndex);
+        source = namedSource->source;
         NateCheckXml(source->count == 0); // only one accessor is currently allowed per source
         NateCheckXml(source->stride == 0);
-        // skip 'source' attribute and value
-        NateCheckXml(attributeCount >= 3);
+        // skip 'source' attribute and value (it just refers to the single <float_array>
         NateCheckXml(strcmp(attributes, "source") == 0);
         attributes += strlen(attributes) + 1;
         attributes += strlen(attributes) + 1;
@@ -238,6 +295,130 @@ MyLoadFromColladaFileCallback_Reevaluate:
       else if (strcmp(elementName, "param") == 0)
       {
         // nothing special to do
+      }
+      else
+      {
+        NateCheckXml(strcmp(elementName, "Unrecognized element name") == 0);
+      }
+      break;
+
+    case STEP_PROCESS_VERTICES_GUTS:
+      if (depth < 6)
+      {
+        loadInfo->step = STEP_PROCESS_MESH_GUTS;
+        goto MyLoadFromColladaFileCallback_Reevaluate;
+      }
+      NateCheckXml(depth == 6);
+      if (strcmp(elementName, "input") == 0)
+      {
+        NateCheckXml(attributeCount >= 2);
+        // verify 'semantic' attribute is POSITION (it's arbitrary - that's just what I see blender exporting)
+        NateCheckXml(strcmp(attributes, "semantic") == 0);
+        attributes += strlen(attributes) + 1;
+        NateCheckXml(strcmp(attributes, "POSITION") == 0);
+        attributes += strlen(attributes) + 1;
+        // save 'source' attribute, it's used later
+        // it starts with # to indicate it's referencing something else (but don't save that character)
+        NateCheckXml(strcmp(attributes, "source") == 0);
+        attributes += strlen(attributes) + 1;
+        NateCheckXml(attributes[0] == '#');
+        attributes++;
+        // Get the struct MyNamedVertice which was created when the parent XML element was processed
+        namedVertice = (MyNamedVertice*)NateList_GetData(loadInfo->vertices, NateList_LastIndex);
+        // only one <input> is currently supported per single <vertices> element
+        NateCheckXml(namedVertice->sourceName == 0);
+        namedVertice->sourceName = attributes;
+        break;
+      }
+      else
+      {
+        NateCheckXml(strcmp(elementName, "Unrecognized element name") == 0);
+      }
+      break;
+
+    case STEP_PROCESS_POLYLIST_GUTS:
+      if (depth < 6)
+      {
+        loadInfo->step = STEP_PROCESS_MESH_GUTS;
+        goto MyLoadFromColladaFileCallback_Reevaluate;
+      }
+      NateCheckXml(depth == 6);
+      if (strcmp(elementName, "input") == 0)
+      {
+        NateCheckXml(attributeCount >= 2);
+        // create a MyNamedPolyListInput for this <input>
+        namedInput = (MyNamedPolyListInput*)NateList_AddZeroedData(loadInfo->polyListInputs);
+        NateCheckXml(namedInput != 0);
+        namedInput->input = malloc(sizeof(NateMeshPolyListInput));
+        NateCheckXml(namedInput->input != 0);
+        memset(namedInput->input, 0, sizeof(NateMeshPolyListInput));
+        // verify 'semantic' attribute is VERTEX or NORMAL (that's all we support now)
+        NateCheckXml(strcmp(attributes, "semantic") == 0);
+        attributes += strlen(attributes) + 1;
+        if (strcmp(attributes, "VERTEX") == 0) namedInput->input->dataType = NateMesh_DataType_Vertex;
+        else if (strcmp(attributes, "NORMAL") == 0) namedInput->input->dataType = NateMesh_DataType_Normal;
+        else NateCheckXml(0 == strcmp(attributes, "Unrecognized 'semantic' attribute value"));
+        attributes += strlen(attributes) + 1;
+        // save 'source' attribute 
+        // it starts with # to indicate it's referencing something else (but don't save that part)
+        NateCheckXml(strcmp(attributes, "source") == 0);
+        attributes += strlen(attributes) + 1;
+        NateCheckXml(attributes[0] == '#');
+        attributes++;
+        namedInput->sourceName = attributes;
+        attributes += strlen(attributes) + 1;
+        // get 'offset' attribute if it exists (when it doesn't exist, offset is 0)
+        if (attributeCount >= 3)
+        {
+          NateCheckXml(strcmp(attributes, "offset") == 0);
+          attributes += strlen(attributes) + 1;
+          i = strtoul(attributes, 0, 10);
+        }
+        else i = 0;
+        // hack - assume order of <input> in XML is same as offset, so we don't have to store offset explicitly
+        NateCheckXml(i == (NateList_GetCount(loadInfo->polyListInputs) - 1));
+        break;
+      }
+      else if (strcmp(elementName, "vcount") == 0)
+      {
+        // only one <vcount> is allowed
+        // TODO: not really enforcing this since I'm not storing the vcount data
+        // I see n 3's here, where n = the <polylist> 'count' attribute
+        // I guess I'm assuming it's always 3s for now, and that there's exactly n of them
+        next = elementText;
+        for (i = 0; i < loadInfo->mesh->numDataCoordinates; i++)
+        {
+          NateCheckXml(next[0] != '\0');
+          count = strtoul(next, &next, 10);
+          NateCheckXml(count == 3);
+        }
+        oldNext = next;
+        count = strtoul(next, &next, 10);
+        NateCheckXml(count == 0);
+        NateCheckXml(oldNext == next || next[0] == '\0');
+      }
+      else if (strcmp(elementName, "p") == 0)
+      {
+        // only one <p> allowed
+        NateCheckXml(loadInfo->mesh->dataIndexes == 0);
+        // there's going to be ([numOffsets] * 3 * count) indexes here,
+        // see comments on NateMesh.dataIndexes for what it means
+        count = NateList_GetCount(loadInfo->polyListInputs) * 3 * loadInfo->mesh->numDataCoordinates;
+        dataIndexes = malloc(count * sizeof(int));
+        NateCheckXml(dataIndexes != 0);
+        loadInfo->mesh->numDataIndexes = count;
+        loadInfo->mesh->dataIndexes = dataIndexes;
+        next = elementText;
+        for (i = 0; i < count; i++)
+        {
+          NateCheckXml(next[0] != '\0');
+          *dataIndexes = strtoul(next, &next, 10);
+          dataIndexes++;
+        }
+        oldNext = next;
+        count = strtoul(next, &next, 10);
+        NateCheckXml(count == 0);
+        NateCheckXml(oldNext == next || next[0] == '\0');
       }
       else
       {
@@ -274,6 +455,20 @@ void NateMesh_LoadFromColladaResourceFile(NateMesh * obj, char * meshFileName)
 }
 */
 
+int MyFindVertice(void * userData, void * item)
+{
+  MyNamedVertice* namedVertice = (MyNamedVertice*)item;
+  char * desiredName = (char*)userData;
+  return (strcmp(desiredName, namedVertice->name) == 0);
+}
+
+int MyFindSource(void * userData, void * item)
+{
+  MyNamedSource* namedSource = (MyNamedSource*)item;
+  char * desiredName = (char*)userData;
+  return (strcmp(desiredName, namedSource->name) == 0);
+}
+
 void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t colladaFileLength, char * colladaFileDebugIdentifier)
 {
   NateMeshLoadInfo loadInfo;
@@ -282,27 +477,32 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
   size_t count, i;
   NateMeshSource * source1;
   NateMeshSource * source2;
+  NateMeshPolyListInput * input1;
+  NateMeshPolyListInput * input2;
+  char * sourceName;
+  size_t sourceIndex;
+  MyNamedPolyListInput* namedInput;
 
   // first free everything in 'obj'
-  if (obj->sources != 0)
-  {
-    for (i = 0; i < obj->numSources; i++)
-    {
-      source1 = &obj->sources[0];
-      free(source1->data);
-    }
-    free(obj->sources);
-    obj->sources = 0;
-    obj->numSources = 0;
-  }
+  NateMesh_Uninit(obj);
 
-  // create a 'NateMeshLoadInfo' for parsing assistance
+  // init a 'NateMeshLoadInfo' and malloc its data structures for parsing assistance
   memset(&loadInfo, 0, sizeof(NateMeshLoadInfo));
   loadInfo.mesh = obj;
   if (colladaFileDebugIdentifier == 0) { colladaFileDebugIdentifier = "unspecified collada file data"; }
   loadInfo.fileName = colladaFileDebugIdentifier;
-  loadInfo.sources = NateTStringList_Create();
+  
+  loadInfo.sources = NateList_Create();
   NateCheck(loadInfo.sources != 0, "out of memory");
+  NateList_SetBytesPerItem(loadInfo.sources, sizeof(MyNamedSource));
+
+  loadInfo.vertices = NateList_Create();
+  NateCheck(loadInfo.vertices != 0, "out of memory");
+  NateList_SetBytesPerItem(loadInfo.vertices, sizeof(MyNamedVertice));
+
+  loadInfo.polyListInputs = NateList_Create();
+  NateCheck(loadInfo.polyListInputs != 0, "out of memory");
+  NateList_SetBytesPerItem(loadInfo.polyListInputs, sizeof(MyNamedPolyListInput));
 
   // parse the collada file
   parseResult = NateXml_Parse(colladaFileData, colladaFileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
@@ -310,19 +510,65 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
   NateCheck3(parseResult, "failed to parse collada mesh xml: ", colladaFileDebugIdentifier, errorBuffer);
 
   // copy/move sources into 'obj'
-  count = NateTStringList_GetCount(loadInfo.sources);
+  count = NateList_GetCount(loadInfo.sources);
   obj->numSources = count;
-  obj->sources = malloc(count * sizeof(NateMeshSource));
-  NateCheck(obj->sources, "out of memory");
-  memset(obj->sources, 0, count * sizeof(NateMeshSource));
-  for (i = 0; i < count; i++)
+  if (count == 0)
   {
-    source1 = &obj->sources[i];
-    source2 = NateTStringList_GetObject(loadInfo.sources, i, 0);
-    memcpy(source1, source2, sizeof(NateMeshSource));
-    free(source2);
+    obj->sources = 0;
+  }
+  else
+  {
+    obj->sources = malloc(count * sizeof(NateMeshSource));
+    NateCheck(obj->sources, "out of memory");
+    memset(obj->sources, 0, count * sizeof(NateMeshSource));
+    for (i = 0; i < count; i++)
+    {
+      source1 = &obj->sources[i];
+      source2 = ((MyNamedSource*)NateList_GetData(loadInfo.sources, i))->source;
+      memcpy(source1, source2, sizeof(NateMeshSource));
+      // may as well free the dynamically allocated 'source' while we're here
+      free(source2);
+    }
   }
 
-  // final cleanup
-  NateTStringList_Destroy(loadInfo.sources);
+  // copy/move polyListInputs into 'obj'
+  count = NateList_GetCount(loadInfo.polyListInputs);
+  obj->numInputs = count;
+  if (count == 0)
+  {
+    obj->inputs = 0;
+  }
+  else
+  {
+    obj->inputs = malloc(count * sizeof(NateMeshPolyListInput));
+    NateCheck(obj->inputs, "out of memory");
+    memset(obj->inputs, 0, count * sizeof(NateMeshPolyListInput));
+    for (i = 0; i < count; i++)
+    {
+      input1 = &obj->inputs[i];
+      namedInput = (MyNamedPolyListInput*)NateList_GetData(loadInfo.polyListInputs, i);
+      input2 = namedInput->input;
+      memcpy(input1, input2, sizeof(NateMeshPolyListInput));
+      // may as well free the dynamically allocated 'input' while we're here
+      free(input2);
+
+      // look up the source in 'vertices'
+      if (NateList_FindData(loadInfo.vertices, MyFindVertice, namedInput->sourceName, &sourceIndex))
+      {
+        sourceName = ((MyNamedVertice*)NateList_GetData(loadInfo.vertices, sourceIndex))->sourceName;
+      }
+      else
+      {
+        sourceName = namedInput->sourceName;
+      }
+
+      NateCheck(NateList_FindData(loadInfo.sources, MyFindSource, sourceName, &sourceIndex), "invalid collada data");
+      input1->source = &obj->sources[sourceIndex];
+    }
+  }
+
+  // clean up 'NateMeshLoadInfo' data structures
+  NateList_Destroy(loadInfo.sources);
+  NateList_Destroy(loadInfo.vertices);
+  NateList_Destroy(loadInfo.polyListInputs);
 }
