@@ -87,9 +87,9 @@ typedef struct NateMeshLoadInfo
 void MyLoadFromColladaFileCallback(
   char * elementName,
   char * attributes,
-  int attributeCount,
+  size_t attributeCount,
   char * elementText,
-  int depth,
+  size_t depth,
   void * userData)
 {
   NateMeshLoadInfo * loadInfo;
@@ -505,7 +505,7 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
   NateList_SetBytesPerItem(loadInfo.polyListInputs, sizeof(MyNamedPolyListInput));
 
   // parse the collada file
-  parseResult = NateXml_Parse(colladaFileData, colladaFileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
+  parseResult = NateXml_ParseStreaming(colladaFileData, colladaFileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
   errorBuffer[199] = 0;
   NateCheck3(parseResult, "failed to parse collada mesh xml: ", colladaFileDebugIdentifier, errorBuffer);
 
