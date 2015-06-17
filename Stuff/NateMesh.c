@@ -78,382 +78,425 @@ typedef struct NateMeshLoadInfo
 {
   NateMesh * mesh;
   char * fileName;
-  int step;
   NateList * sources; // holds struct MyNamedSource
   NateList * vertices; // holds struct MyNamedVertice
   NateList * polyListInputs; // holds struct MyNamedPolyListInput
 } NateMeshLoadInfo;
 
+#define NateCheckXml(condition) NateCheck2(condition, "while parsing xml file", loadInfo->fileName)
+void MyProcessRoot(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessLibraryGeometries(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessGeometry(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessMesh(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessSource(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessSourceFloatArray(NateMeshLoadInfo * loadInfo, NateXmlNode * node, NateMeshSource * source);
+void MyProcessSourceTechniqueCommon(NateMeshLoadInfo * loadInfo, NateXmlNode * node, NateMeshSource * source);
+void MyProcessVertices(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessVerticesInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node, MyNamedVertice * namedVertice);
+void MyProcessPolylist(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessPolylistInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessPolylistVcount(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessPolylistP(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+int MyFindVertice(void * userData, void * item);
+int MyFindSource(void * userData, void * item);
+
 void MyLoadFromColladaFileCallback(
-  char * elementName,
-  char * attributes,
-  size_t attributeCount,
-  char * elementText,
-  size_t depth,
+  NateXmlNode * fakeRoot,
   void * userData)
 {
   NateMeshLoadInfo * loadInfo;
-  NateMeshSource * source;
-  char * next;
-  char * oldNext;
   size_t i;
-  size_t count;
-  int * dataIndexes;
-  MyNamedSource* namedSource;
-  MyNamedVertice* namedVertice;
-  MyNamedPolyListInput* namedInput;
+  NateXmlNode * child;
   
-  (void)elementText;
   loadInfo = (NateMeshLoadInfo*)userData;
-  
-MyLoadFromColladaFileCallback_Reevaluate:
-  switch (loadInfo->step)
+  for (i = 0; i < NateXmlNode_GetCount(fakeRoot); i++)
   {
-
-#define NateCheckXml(condition) NateCheck2(condition, "while parsing xml file", loadInfo->fileName)
-#define STEP_ROOT_COLLADA_NODE 0
-#define STEP_WAIT_FOR_LIBRARY_GEOMETRIES 1
-#define STEP_WAIT_FOR_GEMOETRY 2
-#define STEP_WAIT_FOR_MESH 3
-#define STEP_PROCESS_MESH_GUTS 4
-#define STEP_PROCESS_SOURCE_GUTS 5
-#define STEP_IGNORE_REMAINING 6
-#define STEP_PROCESS_VERTICES_GUTS 7
-#define STEP_PROCESS_POLYLIST_GUTS 8
-
-    case STEP_ROOT_COLLADA_NODE:
-      NateCheckXml(strcmp(elementName, "COLLADA") == 0);
-      loadInfo->step = STEP_WAIT_FOR_LIBRARY_GEOMETRIES;
-      break;
-
-    case STEP_WAIT_FOR_LIBRARY_GEOMETRIES:
-      // <library_geometries>
-      NateCheckXml(depth > 1); // no multiple root nodes
-      if (depth > 2) return; // ignore children of other nodes
-      if (strcmp(elementName, "library_geometries") != 0) return;
-      loadInfo->step = STEP_WAIT_FOR_GEMOETRY;
-      break;
-
-    case STEP_WAIT_FOR_GEMOETRY:
-      // <geometry id="Cube-mesh" name="Cube">
-      NateCheckXml(depth == 3);
-      NateCheckXml(strcmp(elementName, "geometry") == 0);
-      // TODO: could harvest mesh name someday (it's only meaningful at the application level, not the data level)
-      loadInfo->step = STEP_WAIT_FOR_MESH;
-      break;
-
-    case STEP_WAIT_FOR_MESH:
-      // <mesh>
-      NateCheckXml(depth == 4);
-      NateCheckXml(strcmp(elementName, "mesh") == 0);
-      loadInfo->step = STEP_PROCESS_MESH_GUTS;
-      break;
-
-    case STEP_PROCESS_MESH_GUTS:
-      if (depth < 5)
-      {
-        // TODO: this means we only support loading 1 mesh right now
-        loadInfo->step = STEP_IGNORE_REMAINING;
-        goto MyLoadFromColladaFileCallback_Reevaluate;
-      }
-      NateCheckXml(depth == 5);
-      // <source id="Cube-mesh-positions">
-      if (strcmp(elementName, "source") == 0)
-      {
-        NateCheckXml(attributeCount >= 1);
-        // save id attribute, it's used later
-        NateCheckXml(strcmp(attributes, "id") == 0);
-        attributes += strlen(attributes) + 1;
-        namedSource = (MyNamedSource*)NateList_AddZeroedData(loadInfo->sources);
-        NateCheckXml(namedSource != 0);
-        namedSource->name = attributes;
-        // allocate NateMeshSource while we're at it
-        namedSource->source = malloc(sizeof(NateMeshSource));
-        NateCheckXml(namedSource->source != 0);
-        memset(namedSource->source, 0, sizeof(NateMeshSource));
-        loadInfo->step = STEP_PROCESS_SOURCE_GUTS;
-        break;
-      }
-      // <vertices id="Cube-mesh-vertices">
-      else if (strcmp(elementName, "vertices") == 0)
-      {
-        NateCheckXml(attributeCount >= 1);
-        // save id attribute, it's used later
-        NateCheckXml(strcmp(attributes, "id") == 0);
-        attributes += strlen(attributes) + 1;
-        namedVertice = (MyNamedVertice*)NateList_AddZeroedData(loadInfo->vertices);
-        NateCheckXml(namedVertice != 0);
-        namedVertice->name = attributes;
-        loadInfo->step = STEP_PROCESS_VERTICES_GUTS;
-        break;
-      }
-      // <polylist material="Material-material" count="12">
-      else if (strcmp(elementName, "polylist") == 0)
-      {
-        NateCheckXml(attributeCount >= 2);
-        // skip 'material' attribute (TODO: someday consume these)
-        NateCheckXml(strcmp(attributes, "material") == 0);
-        attributes += strlen(attributes) + 1;
-        attributes += strlen(attributes) + 1;
-        // save 'count' attribute
-        NateCheckXml(strcmp(attributes, "count") == 0);
-        attributes += strlen(attributes) + 1;
-        count = strtoul(attributes, 0, 10);
-        NateCheckXml(count > 0);
-        // only 1 polylist is currently supported
-        NateCheckXml(loadInfo->mesh->numDataCoordinates == 0);
-        loadInfo->mesh->numDataCoordinates = count;
-        loadInfo->step = STEP_PROCESS_POLYLIST_GUTS;
-        break;
-      }
-      else
-      {
-        NateCheckXml(strcmp(elementName, "Unrecognized element name") == 0);
-      }
-      break;
-
-    case STEP_PROCESS_SOURCE_GUTS:
-      // <float_array id="Cube-mesh-positions-array" count="3">2.607685 3.291105 -0.2332705</float_array>
-      // <technique_common>
-      //   <accessor source="#Cube-mesh-positions-array" count="8" stride="3">
-      //     <param name="X" type="float"/>
-      //     <param name="Y" type="float"/>
-      //     <param name="Z" type="float"/>
-      //   </accessor>
-      // </technique_common
-      if (depth < 6)
-      {
-        loadInfo->step = STEP_PROCESS_MESH_GUTS;
-        goto MyLoadFromColladaFileCallback_Reevaluate;
-      }
-      NateCheckXml(depth >= 6);
-      if (strcmp(elementName, "float_array") == 0)
-      {
-        // get the associated NateMeshSource struct 
-        // (it was just created when we processed the parent <source> XML element)
-        namedSource = (MyNamedSource*)NateList_GetData(loadInfo->sources, NateList_LastIndex);
-        source = namedSource->source;
-        // only one <float_array> is currently allowed per source
-        NateCheckXml(source->data == 0);
-        // skip "id" value, looks like it's only meaningful inside the <source>
-        // and only when there are multiple <float_array> (which we currently don't support)
-        NateCheckXml(attributeCount >= 2);
-        NateCheckXml(strcmp(attributes, "id") == 0);
-        attributes += strlen(attributes) + 1;
-        attributes += strlen(attributes) + 1;
-        // save 'count' attribute
-        NateCheckXml(strcmp(attributes, "count") == 0);
-        attributes += strlen(attributes) + 1;
-        count = strtoul(attributes, 0, 10);
-        NateCheckXml(count > 0);
-        // allocate space for that many floats
-        source->totalLength = count;
-        source->data = malloc(count * sizeof(float));
-        NateCheckXml(source->data != 0);
-        // store numbers
-        next = elementText;
-        for (i = 0; i < count; i++)
-        {
-          NateCheckXml(next[0] != '\0');
-          source->data[i] = (float)strtod(next, &next);
-        }
-        oldNext = next;
-        count = (size_t)strtod(next, &next);
-        NateCheckXml(count == 0);
-        NateCheckXml(oldNext == next || next[0] == '\0');
-      }
-      else if (strcmp(elementName, "technique_common") == 0)
-      {
-        // nothing special to do
-      }
-      else if (strcmp(elementName, "accessor") == 0)
-      {
-        // <accessor source="#Cube-mesh-positions-array" count="8" stride="3">
-        NateCheckXml(attributeCount >= 3);
-        // get source struct
-        namedSource = (MyNamedSource*)NateList_GetData(loadInfo->sources, NateList_LastIndex);
-        source = namedSource->source;
-        NateCheckXml(source->count == 0); // only one accessor is currently allowed per source
-        NateCheckXml(source->stride == 0);
-        // skip 'source' attribute and value (it just refers to the single <float_array>
-        NateCheckXml(strcmp(attributes, "source") == 0);
-        attributes += strlen(attributes) + 1;
-        attributes += strlen(attributes) + 1;
-        // store 'count' value
-        NateCheckXml(strcmp(attributes, "count") == 0);
-        attributes += strlen(attributes) + 1;
-        source->count = strtoul(attributes, 0, 10);
-        NateCheckXml(source->count > 0);
-        attributes += strlen(attributes) + 1;
-        // store 'stride' value
-        NateCheckXml(strcmp(attributes, "stride") == 0);
-        attributes += strlen(attributes) + 1;
-        source->stride = strtoul(attributes, 0, 10);
-        NateCheckXml(source->stride > 0);
-        NateCheckXml(source->stride * source->count == source->totalLength);
-      }
-      else if (strcmp(elementName, "param") == 0)
-      {
-        // nothing special to do
-      }
-      else
-      {
-        NateCheckXml(strcmp(elementName, "Unrecognized element name") == 0);
-      }
-      break;
-
-    case STEP_PROCESS_VERTICES_GUTS:
-      if (depth < 6)
-      {
-        loadInfo->step = STEP_PROCESS_MESH_GUTS;
-        goto MyLoadFromColladaFileCallback_Reevaluate;
-      }
-      NateCheckXml(depth == 6);
-      if (strcmp(elementName, "input") == 0)
-      {
-        NateCheckXml(attributeCount >= 2);
-        // verify 'semantic' attribute is POSITION (it's arbitrary - that's just what I see blender exporting)
-        NateCheckXml(strcmp(attributes, "semantic") == 0);
-        attributes += strlen(attributes) + 1;
-        NateCheckXml(strcmp(attributes, "POSITION") == 0);
-        attributes += strlen(attributes) + 1;
-        // save 'source' attribute, it's used later
-        // it starts with # to indicate it's referencing something else (but don't save that character)
-        NateCheckXml(strcmp(attributes, "source") == 0);
-        attributes += strlen(attributes) + 1;
-        NateCheckXml(attributes[0] == '#');
-        attributes++;
-        // Get the struct MyNamedVertice which was created when the parent XML element was processed
-        namedVertice = (MyNamedVertice*)NateList_GetData(loadInfo->vertices, NateList_LastIndex);
-        // only one <input> is currently supported per single <vertices> element
-        NateCheckXml(namedVertice->sourceName == 0);
-        namedVertice->sourceName = attributes;
-        break;
-      }
-      else
-      {
-        NateCheckXml(strcmp(elementName, "Unrecognized element name") == 0);
-      }
-      break;
-
-    case STEP_PROCESS_POLYLIST_GUTS:
-      if (depth < 6)
-      {
-        loadInfo->step = STEP_PROCESS_MESH_GUTS;
-        goto MyLoadFromColladaFileCallback_Reevaluate;
-      }
-      NateCheckXml(depth == 6);
-      if (strcmp(elementName, "input") == 0)
-      {
-        NateCheckXml(attributeCount >= 2);
-        // create a MyNamedPolyListInput for this <input>
-        namedInput = (MyNamedPolyListInput*)NateList_AddZeroedData(loadInfo->polyListInputs);
-        NateCheckXml(namedInput != 0);
-        namedInput->input = malloc(sizeof(NateMeshPolyListInput));
-        NateCheckXml(namedInput->input != 0);
-        memset(namedInput->input, 0, sizeof(NateMeshPolyListInput));
-        // verify 'semantic' attribute is VERTEX or NORMAL (that's all we support now)
-        NateCheckXml(strcmp(attributes, "semantic") == 0);
-        attributes += strlen(attributes) + 1;
-        if (strcmp(attributes, "VERTEX") == 0) namedInput->input->dataType = NateMesh_DataType_Vertex;
-        else if (strcmp(attributes, "NORMAL") == 0) namedInput->input->dataType = NateMesh_DataType_Normal;
-        else NateCheckXml(0 == strcmp(attributes, "Unrecognized 'semantic' attribute value"));
-        attributes += strlen(attributes) + 1;
-        // save 'source' attribute 
-        // it starts with # to indicate it's referencing something else (but don't save that part)
-        NateCheckXml(strcmp(attributes, "source") == 0);
-        attributes += strlen(attributes) + 1;
-        NateCheckXml(attributes[0] == '#');
-        attributes++;
-        namedInput->sourceName = attributes;
-        attributes += strlen(attributes) + 1;
-        // get 'offset' attribute if it exists (when it doesn't exist, offset is 0)
-        if (attributeCount >= 3)
-        {
-          NateCheckXml(strcmp(attributes, "offset") == 0);
-          attributes += strlen(attributes) + 1;
-          i = strtoul(attributes, 0, 10);
-        }
-        else i = 0;
-        // hack - assume order of <input> in XML is same as offset, so we don't have to store offset explicitly
-        NateCheckXml(i == (NateList_GetCount(loadInfo->polyListInputs) - 1));
-        break;
-      }
-      else if (strcmp(elementName, "vcount") == 0)
-      {
-        // only one <vcount> is allowed
-        // TODO: not really enforcing this since I'm not storing the vcount data
-        // I see n 3's here, where n = the <polylist> 'count' attribute
-        // I guess I'm assuming it's always 3s for now, and that there's exactly n of them
-        next = elementText;
-        for (i = 0; i < loadInfo->mesh->numDataCoordinates; i++)
-        {
-          NateCheckXml(next[0] != '\0');
-          count = strtoul(next, &next, 10);
-          NateCheckXml(count == 3);
-        }
-        oldNext = next;
-        count = strtoul(next, &next, 10);
-        NateCheckXml(count == 0);
-        NateCheckXml(oldNext == next || next[0] == '\0');
-      }
-      else if (strcmp(elementName, "p") == 0)
-      {
-        // only one <p> allowed
-        NateCheckXml(loadInfo->mesh->dataIndexes == 0);
-        // there's going to be ([numOffsets] * 3 * count) indexes here,
-        // see comments on NateMesh.dataIndexes for what it means
-        count = NateList_GetCount(loadInfo->polyListInputs) * 3 * loadInfo->mesh->numDataCoordinates;
-        dataIndexes = malloc(count * sizeof(int));
-        NateCheckXml(dataIndexes != 0);
-        loadInfo->mesh->numDataIndexes = count;
-        loadInfo->mesh->dataIndexes = dataIndexes;
-        next = elementText;
-        for (i = 0; i < count; i++)
-        {
-          NateCheckXml(next[0] != '\0');
-          *dataIndexes = strtoul(next, &next, 10);
-          dataIndexes++;
-        }
-        oldNext = next;
-        count = strtoul(next, &next, 10);
-        NateCheckXml(count == 0);
-        NateCheckXml(oldNext == next || next[0] == '\0');
-      }
-      else
-      {
-        NateCheckXml(strcmp(elementName, "Unrecognized element name") == 0);
-      }
-      break;
-
-    case STEP_IGNORE_REMAINING:
-      break;
+    child = NateXmlNode_GetChild(fakeRoot, i);
+    NateCheckXml(strcmp(child->ElementName, "COLLADA") == 0);
+    MyProcessRoot(loadInfo, child);
   }
 }
-/*
-void NateMesh_LoadFromColladaResourceFile(NateMesh * obj, char * meshFileName)
+
+void MyProcessRoot(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
 {
-  size_t fileLength;
-  char * fileData;
-  NateMeshLoadInfo loadInfo;
-  int parseResult;
-  char errorBuffer[200];
+  size_t i;
+  NateXmlNode * child;
 
-  fileData = ResourceLoader_LoadMeshFile(meshFileName, &fileLength);
-  NateCheck_Sdl(fileData != 0, "failed to load collada mesh");
-
-  memset(&loadInfo, 0, sizeof(NateMeshLoadInfo));
-  loadInfo.mesh = obj;
-  loadInfo.fileName = meshFileName;
-  loadInfo.sources = NateTStringList_Create();
-  NateCheck(loadInfo.sources != 0, "out of memory");
-
-  parseResult = NateXml_Parse(fileData, fileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
-  errorBuffer[199] = 0;
-  NateTStringList_Destroy(loadInfo.sources);
-  NateCheck3(parseResult, "failed to parse collada mesh xml: ", meshFileName, errorBuffer);
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "library_geometries") == 0)
+    {
+      MyProcessLibraryGeometries(loadInfo, child);
+    }
+    // ignore other elements for now
+  }
 }
-*/
+
+void MyProcessLibraryGeometries(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i;
+  NateXmlNode * child;
+
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    // only 1 <geometry> is supported for now
+    NateCheckXml(i == 0);
+    NateCheckXml(strcmp(child->ElementName, "geometry") == 0);
+    MyProcessGeometry(loadInfo, child);
+  }
+}
+
+void MyProcessGeometry(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i;
+  NateXmlNode * child;
+
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    // only 1 <mesh> is supported for now
+    NateCheckXml(i == 0);
+    NateCheckXml(strcmp(child->ElementName, "mesh") == 0);
+    MyProcessMesh(loadInfo, child);
+  }
+}
+
+void MyProcessMesh(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i;
+  NateXmlNode * child;
+  int numPolylists;
+
+  numPolylists = 0;
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "source") == 0)
+    {
+      MyProcessSource(loadInfo, child);
+    }
+    else if (strcmp(child->ElementName, "vertices") == 0)
+    {
+      MyProcessVertices(loadInfo, child);
+    }
+    else if (strcmp(child->ElementName, "polylist") == 0)
+    {
+      // only 1 polylist is supported for now
+      numPolylists++;
+      NateCheckXml(numPolylists == 1);
+      MyProcessPolylist(loadInfo, child);
+    }
+  }
+}
+
+void MyProcessSource(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i;
+  NateXmlNode * child;
+  char * names[4];
+  char * values[4];
+  MyNamedSource * namedSource;
+  NateMeshSource * source;
+  int numFloatArrays;
+  int numTechniqueCommons;
+
+  // <source id="Cube-mesh-normals">
+  NateCheckXml(node->AttributeCount >= 1);
+  NateXml_GetAttributes(node->Attributes, 1, names, values);
+  // save id attribute, it's used later
+  NateCheckXml(strcmp(names[0], "id") == 0);
+  // (make sure it's not in use already)
+  NateCheckXml(!NateList_FindData(loadInfo->sources, MyFindSource, values[0], 0));
+  // (allocate a MyNamedSource to store this name)
+  namedSource = (MyNamedSource*)NateList_AddZeroedData(loadInfo->sources);
+  NateCheckXml(namedSource != 0);
+  namedSource->name = values[0];
+  // allocate NateMeshSource while we're at it
+  namedSource->source = malloc(sizeof(NateMeshSource));
+  NateCheckXml(namedSource->source != 0);
+  memset(namedSource->source, 0, sizeof(NateMeshSource));
+  source = namedSource->source;
+
+  numFloatArrays = 0;
+  numTechniqueCommons = 0;
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "float_array") == 0)
+    {
+      numFloatArrays++;
+      NateCheckXml(numFloatArrays == 1); // only 1 float_array is supported for now
+      MyProcessSourceFloatArray(loadInfo, child, source);
+    }
+    else if (strcmp(child->ElementName, "technique_common") == 0)
+    {
+      numTechniqueCommons++;
+      NateCheckXml(numTechniqueCommons == 1); // only 1 technique_common is supported for now
+      MyProcessSourceTechniqueCommon(loadInfo, child, source);
+    }
+  }
+}
+
+void MyProcessSourceFloatArray(NateMeshLoadInfo * loadInfo, NateXmlNode * node, NateMeshSource * source)
+{
+  char * names[4];
+  char * values[4];
+  size_t i, count;
+  char * next;
+  char * oldNext;
+
+  // <float_array id="Cube-mesh-normals-array" count="36">0 0 -1 </float_array>
+  NateCheckXml(node->AttributeCount >= 2);
+  NateXml_GetAttributes(node->Attributes, 2, names, values);
+  // only one <float_array> is currently allowed per source
+  NateCheckXml(source->data == 0);
+  // skip "id" value, looks like it's only meaningful inside the <source>
+  // and only when there are multiple <float_array> (which we currently don't support)
+  NateCheckXml(strcmp(names[0], "id") == 0);
+  // save 'count' attribute
+  NateCheckXml(strcmp(names[1], "count") == 0);
+  count = strtoul(values[1], 0, 10);
+  NateCheckXml(count > 0);
+  // allocate space for that many floats
+  source->totalLength = count;
+  source->data = malloc(count * sizeof(float));
+  NateCheckXml(source->data != 0);
+  // store numbers
+  next = node->ElementText;
+  for (i = 0; i < count; i++)
+  {
+    oldNext = next;
+    source->data[i] = (float)strtod(next, &next);
+    NateCheckXml(oldNext != next);
+  }
+  oldNext = next;
+  count = (size_t)strtod(next, &next);
+  NateCheckXml(count == 0);
+  NateCheckXml(oldNext == next);
+}
+
+void MyProcessSourceTechniqueCommon(NateMeshLoadInfo * loadInfo, NateXmlNode * node, NateMeshSource * source)
+{
+  char * names[4];
+  char * values[4];
+  NateXmlNode * accessor;
+
+  // <technique_common>
+  //   <accessor source="#Cube-mesh-normals-array" count="12" stride="3">
+  NateCheckXml(NateXmlNode_GetCount(node) == 1); // only one accessor is currently allowed per source
+  accessor = NateXmlNode_GetChild(node, 0);
+  NateCheckXml(strcmp(accessor->ElementName, "accessor") == 0);
+  NateCheckXml(accessor->AttributeCount >= 3);
+  NateCheckXml(source->count == 0); // only one technique_common and accessor is currently supported per source
+  NateCheckXml(source->stride == 0);
+  NateCheckXml(accessor->AttributeCount >= 3);
+  NateXml_GetAttributes(accessor->Attributes, 3, names, values);
+  // skip 'source' attribute and value (it just refers to the single <float_array>)
+  NateCheckXml(strcmp(names[0], "source") == 0);
+  // store 'count' value
+  NateCheckXml(strcmp(names[1], "count") == 0);
+  source->count = strtoul(values[1], 0, 10);
+  NateCheckXml(source->count > 0);
+  // store 'stride' value
+  NateCheckXml(strcmp(names[2], "stride") == 0);
+  source->stride = strtoul(values[2], 0, 10);
+  NateCheckXml(source->stride > 0);
+  NateCheckXml(source->stride * source->count == source->totalLength);
+}
+
+void MyProcessVertices(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i;
+  NateXmlNode * child;
+  char * names[4];
+  char * values[4];
+  MyNamedVertice * namedVertice;
+  int numInputs;
+
+  // <vertices id="Cube-mesh-vertices">
+  NateCheckXml(node->AttributeCount >= 1);
+  NateXml_GetAttributes(node->Attributes, 1, names, values);
+  // save id attribute, it's used later
+  NateCheckXml(strcmp(names[0], "id") == 0);
+  // (make sure it's not in use already)
+  NateCheckXml(!NateList_FindData(loadInfo->vertices, MyFindVertice, values[0], 0));
+  // (allocate a MyNamedVertice to store the name)
+  namedVertice = (MyNamedVertice*)NateList_AddZeroedData(loadInfo->vertices);
+  NateCheckXml(namedVertice != 0);
+  namedVertice->name = values[0];
+
+  numInputs = 0;
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "input") == 0)
+    {
+      numInputs++;
+      NateCheckXml(numInputs == 1); // only 1 input per <vertices> is supported for now
+      MyProcessVerticesInput(loadInfo, child, namedVertice);
+    }
+  }
+  NateCheckXml(numInputs == 1); // exactly 1 is required
+}
+
+void MyProcessVerticesInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node, MyNamedVertice * namedVertice)
+{
+  char * names[2];
+  char * values[2];
+
+  // <input semantic="POSITION" source="#Cube-mesh-positions"/>
+  NateCheckXml(node->AttributeCount >= 2);
+  NateXml_GetAttributes(node->Attributes, 2, names, values);
+  // verify 'semantic' attribute is POSITION (it's arbitrary - that's just what I see blender exporting)
+  NateCheckXml(strcmp(names[0], "semantic") == 0);
+  NateCheckXml(strcmp(values[0], "POSITION") == 0);
+  // save 'source' attribute, it's used later
+  // it starts with # to indicate it's referencing something else (but don't save that character)
+  NateCheckXml(strcmp(names[1], "source") == 0);
+  NateCheckXml(values[1][0] == '#');
+  // only one <input> is currently supported per single <vertices> element
+  NateCheckXml(namedVertice->sourceName == 0);
+  namedVertice->sourceName = values[1] + 1; // +1 is to skip the # character
+}
+
+void MyProcessPolylist(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i, count;
+  NateXmlNode * child;
+  char * names[4];
+  char * values[4];
+  int numVcounts;
+  int numPs;
+
+  // <polylist material="Material-material" count="12">
+  NateCheckXml(node->AttributeCount >= 2);
+  NateXml_GetAttributes(node->Attributes, 2, names, values);
+  // skip 'material' attribute (TODO: someday consume these)
+  NateCheckXml(strcmp(names[0], "material") == 0);
+  // save 'count' attribute
+  NateCheckXml(strcmp(names[1], "count") == 0);
+  count = strtoul(values[1], 0, 10);
+  NateCheckXml(count > 0);
+  // only 1 polylist is currently supported
+  NateCheckXml(loadInfo->mesh->numDataCoordinates == 0);
+  loadInfo->mesh->numDataCoordinates = count;
+
+  numVcounts = 0;
+  numPs = 0;
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "input") == 0)
+    {
+      MyProcessPolylistInput(loadInfo, child);
+    }
+    else if (strcmp(child->ElementName, "vcount") == 0)
+    {
+      numVcounts++;
+      NateCheckXml(numVcounts == 1); // only 1 is supported for now
+      MyProcessPolylistVcount(loadInfo, child);
+    }
+    else if (strcmp(child->ElementName, "p") == 0)
+    {
+      numPs++;
+      NateCheckXml(numPs == 1); // only 1 is supported for now
+      MyProcessPolylistP(loadInfo, child);
+    }
+  }
+}
+
+void MyProcessPolylistInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i;
+  char * names[3];
+  char * values[3];
+  MyNamedPolyListInput * namedInput;
+
+  // <input semantic="NORMAL" source="#Cube-mesh-normals" offset="1"/>
+  NateCheckXml(node->AttributeCount >= 2);
+  NateXml_GetAttributes(node->Attributes, (node->AttributeCount >= 3 ? 3 : 2), names, values);
+  // create a MyNamedPolyListInput for this <input>
+  namedInput = (MyNamedPolyListInput*)NateList_AddZeroedData(loadInfo->polyListInputs);
+  NateCheckXml(namedInput != 0);
+  namedInput->input = malloc(sizeof(NateMeshPolyListInput));
+  NateCheckXml(namedInput->input != 0);
+  memset(namedInput->input, 0, sizeof(NateMeshPolyListInput));
+  // verify 'semantic' attribute is VERTEX or NORMAL (that's all we support now)
+  NateCheckXml(strcmp(names[0], "semantic") == 0);
+  if (strcmp(values[0], "VERTEX") == 0) namedInput->input->dataType = NateMesh_DataType_Vertex;
+  else if (strcmp(values[0], "NORMAL") == 0) namedInput->input->dataType = NateMesh_DataType_Normal;
+  else NateCheckXml(0 == strcmp(names[0], "Unrecognized 'semantic' attribute value"));
+  // save 'source' attribute 
+  // it starts with # to indicate it's referencing something else (but don't save that part)
+  NateCheckXml(strcmp(names[1], "source") == 0);
+  NateCheckXml(values[1][0] == '#');
+  namedInput->sourceName = values[1] + 1; // + 1 to skip # character
+  // get 'offset' attribute if it exists (when it doesn't exist, offset is 0)
+  if (node->AttributeCount >= 3)
+  {
+    NateCheckXml(strcmp(names[2], "offset") == 0);
+    i = strtoul(values[2], 0, 10);
+  }
+  else i = 0;
+  // hack - assume order of <input> in XML is same as offset, so we don't have to store offset explicitly
+  NateCheckXml(i == (NateList_GetCount(loadInfo->polyListInputs) - 1));
+}
+
+void MyProcessPolylistVcount(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i, count;
+  char * next;
+  char * oldNext;
+
+  // <vcount>3 3 3 3 3 3 3 3 3 3 3 3 </vcount>
+  // only one <vcount> is allowed
+  // TODO: not really enforcing this since I'm not storing the vcount data
+  // I see n 3's here, where n = the <polylist> 'count' attribute
+  // I guess I'm assuming it's always 3s for now, and that there's exactly n of them
+  next = node->ElementText;
+  for (i = 0; i < loadInfo->mesh->numDataCoordinates; i++)
+  {
+    count = strtoul(next, &next, 10);
+    NateCheckXml(count == 3);
+  }
+  oldNext = next;
+  count = strtoul(next, &next, 10);
+  NateCheckXml(count == 0);
+  NateCheckXml(oldNext == next);
+}
+
+void MyProcessPolylistP(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i, count;
+  char * next;
+  char * oldNext;
+  int * dataIndexes;
+
+  // <p>1 0 2 0 3 0 4 1 7 1 6 1 4 2 5 2 1 2 1 3 5 3 6 3 2 4 6 4 7 4 4 5 0 5 3 5 0 6 1 6 3 6 5 7 4 7 6 7 0 8 4 8 1 8 2 9 1 9 6 9 3 10 2 10 7 10 7 11 4 11 3 11</p>
+  // only one <p> allowed
+  NateCheckXml(loadInfo->mesh->dataIndexes == 0);
+  // there's going to be ([numOffsets] * 3 * count) indexes here,
+  // see comments on NateMesh.dataIndexes for what it means
+  count = NateList_GetCount(loadInfo->polyListInputs) * 3 * loadInfo->mesh->numDataCoordinates;
+  dataIndexes = malloc(count * sizeof(int));
+  NateCheckXml(dataIndexes != 0);
+  loadInfo->mesh->numDataIndexes = count;
+  loadInfo->mesh->dataIndexes = dataIndexes;
+  next = node->ElementText;
+  for (i = 0; i < count; i++)
+  {
+    oldNext = next;
+    *dataIndexes = strtoul(next, &next, 10);
+    NateCheckXml(oldNext != next);
+    dataIndexes++;
+  }
+  oldNext = next;
+  count = strtoul(next, &next, 10);
+  NateCheckXml(count == 0);
+  NateCheckXml(oldNext == next);
+}
 
 int MyFindVertice(void * userData, void * item)
 {
@@ -505,7 +548,7 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
   NateList_SetBytesPerItem(loadInfo.polyListInputs, sizeof(MyNamedPolyListInput));
 
   // parse the collada file
-  parseResult = NateXml_ParseStreaming(colladaFileData, colladaFileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
+  parseResult = NateXml_ParseDom(colladaFileData, colladaFileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
   errorBuffer[199] = 0;
   NateCheck3(parseResult, "failed to parse collada mesh xml: ", colladaFileDebugIdentifier, errorBuffer);
 
