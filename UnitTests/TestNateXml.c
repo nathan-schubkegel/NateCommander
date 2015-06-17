@@ -254,7 +254,7 @@ char * xml1 = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
   NateXml_GetAttributes(node->Attributes, 1, names, values);
   CHECK(strcmp(names[0], "Value") == 0, );
   CHECK(strcmp(values[0], "825\"?03&<````=````=````=````=`````&>@@@@@") == 0, );
-  CHECK(strcmp(node->ElementText, "\n  ") == 0, );
+  CHECK(strcmp(node->ElementText, "") == 0, );
   CHECK(node->Depth == 2, );
   CHECK(node->UserData == 0, );
   CHECK(NateXmlNode_GetCount(node) == 0, );
@@ -275,7 +275,7 @@ char * xml1 = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
   CHECK(strcmp(values[3], "yes") == 0, );
   CHECK(strcmp(names[4], "Hidden") == 0, );
   CHECK(strcmp(values[4], "yes") == 0, );
-  CHECK(strcmp(node->ElementText, "\n\t") == 0, );
+  CHECK(strcmp(node->ElementText, "") == 0, );
   CHECK(node->Depth == 2, );
   CHECK(node->UserData == 0, );
   CHECK(NateXmlNode_GetCount(node) == 0, );
@@ -337,7 +337,7 @@ char * xml1 = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
   CHECK(child != 0, );
   CHECK(strcmp(child->ElementName, "Huh") == 0, );
   CHECK(child->AttributeCount == 0, );
-  CHECK(strcmp(child->ElementText, "\n  ") == 0, );
+  CHECK(strcmp(child->ElementText, "") == 0, );
   CHECK(child->Depth == 3, );
   CHECK(child->UserData == 0, );
   CHECK(NateXmlNode_GetCount(child) == 0, );
