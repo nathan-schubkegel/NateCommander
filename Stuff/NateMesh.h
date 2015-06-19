@@ -44,7 +44,6 @@ typedef struct NateMesh
   //   coord1_y_input0, coord1_y_input1,
   //   coord1_z_input0, coord1_z_input1,
   //   etc... ]
-
   // and every 3 of those represents a single coordinate
   int * dataIndexes;
   size_t numDataIndexes; // length of 'dataIndexes'
@@ -63,6 +62,7 @@ void NateMesh_Destroy(NateMesh * obj);
 void NateMesh_Init(NateMesh * obj);
 void NateMesh_Uninit(NateMesh * obj);
 
-void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t colladaFileLength, char * colladaFileDebugIdentifier);
+void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t colladaFileLength, const char * colladaFileDebugIdentifier);
+void NateMesh_LoadFromColladaResourceFile(NateMesh * obj, const char * meshFileName);
 
 #endif

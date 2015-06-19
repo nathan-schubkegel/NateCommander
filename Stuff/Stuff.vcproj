@@ -206,6 +206,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NateMeshDrawing.c"
+				>
+			</File>
+			<File
 				RelativePath=".\ResourceLoader.c"
 				>
 			</File>
@@ -277,6 +281,10 @@
 			</File>
 			<File
 				RelativePath=".\NateMesh.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NateMeshDrawing.h"
 				>
 			</File>
 			<File

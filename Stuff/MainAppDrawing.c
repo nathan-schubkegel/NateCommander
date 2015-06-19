@@ -6,6 +6,7 @@
 #include <GL\glu.h>
 #include "BoxGraphics.h"
 #include "ViewGraphics.h"
+#include "NateMeshDrawing.h"
 
 // TODO: make these less global
 // The number of cubes to render in the simulation (try values between 2 and about 50) 
@@ -14,6 +15,9 @@
 float floorDimensions[] = { 3, 0.3f, 3};
 float floorLocation[] = { 0, -3, 0 };
 float cameraPosition[] = { 3, 3, 15 };
+float durpMetronomePosition[] = { -2, 2, 2 };
+float durpMetronomeRotation[] = { 0, 0, 0 };
+float durpMetronomeScale[] = { 1, 1, 1 };
 
 void MySetupView(MainAppHostStruct * hostStruct, lua_Number viewAngleX, lua_Number viewAngleY);
 
@@ -23,9 +27,10 @@ void MainAppDrawing_Draw(MainAppHostStruct * hostStruct)
   lua_Number floorZOffset;
   lua_Number viewAngleX;
   lua_Number viewAngleY;
+  NateMesh * durpMetronome;
 
   // call the lua function to get needed drawing info
-  MainAppLua_CallDraw(hostStruct, &spinnyCubeAngle, &floorZOffset, &viewAngleX, &viewAngleY);
+  MainAppLua_CallDraw(hostStruct, &spinnyCubeAngle, &floorZOffset, &viewAngleX, &viewAngleY, &durpMetronome);
   floorLocation[2] = (float)floorZOffset;
 
   // setup view matrix
@@ -40,6 +45,7 @@ void MainAppDrawing_Draw(MainAppHostStruct * hostStruct)
   DrawAxisLineZ();
   DrawYAngledCube((float)spinnyCubeAngle);
   DrawSizedLocatedBox(floorDimensions, floorLocation);
+  NateMesh_DrawUpright(durpMetronome, durpMetronomePosition, durpMetronomeRotation, durpMetronomeScale);
 
   // Swap the buffers. This this tells the driver to
   // render the next frame from the contents of the

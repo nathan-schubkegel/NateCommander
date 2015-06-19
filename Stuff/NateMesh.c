@@ -5,6 +5,7 @@
 #include "ccan/NateXml/NateXml.h"
 #include "ccan/NateList/NateList.h"
 #include "FatalErrorHandler.h"
+#include "ResourceLoader.h"
 
 NateMesh * NateMesh_Create()
 {
@@ -25,6 +26,7 @@ void NateMesh_Init(NateMesh * obj)
   memset(obj, 0, sizeof(NateMesh));
 }
 
+// This method must survive being called multiple times for a single object
 void NateMesh_Uninit(NateMesh * obj)
 {
   size_t i;
@@ -77,7 +79,7 @@ typedef struct MyNamedPolyListInput
 typedef struct NateMeshLoadInfo
 {
   NateMesh * mesh;
-  char * fileName;
+  const char * fileName;
   NateList * sources; // holds struct MyNamedSource
   NateList * vertices; // holds struct MyNamedVertice
   NateList * polyListInputs; // holds struct MyNamedPolyListInput
@@ -512,7 +514,7 @@ int MyFindSource(void * userData, void * item)
   return (strcmp(desiredName, namedSource->name) == 0);
 }
 
-void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t colladaFileLength, char * colladaFileDebugIdentifier)
+void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t colladaFileLength, const char * colladaFileDebugIdentifier)
 {
   NateMeshLoadInfo loadInfo;
   int parseResult;
@@ -614,4 +616,16 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
   NateList_Destroy(loadInfo.sources);
   NateList_Destroy(loadInfo.vertices);
   NateList_Destroy(loadInfo.polyListInputs);
+}
+
+void NateMesh_LoadFromColladaResourceFile(NateMesh * obj, const char * meshFileName)
+{
+  size_t fileLength;
+  char * fileData;
+
+  fileData = ResourceLoader_LoadMeshFile(meshFileName, &fileLength);
+  NateCheck_Sdl(fileData != 0, "failed to read collada mesh file");
+
+  NateMesh_LoadFromColladaData(obj, fileData, fileLength, meshFileName);
+  free(fileData);
 }

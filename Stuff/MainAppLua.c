@@ -334,12 +334,13 @@ void MainAppLua_CallDraw(MainAppHostStruct * hostStruct,
                          lua_Number * spinnyCubeAngle, 
                          lua_Number * floorZOffset, 
                          lua_Number * viewAngleX, 
-                         lua_Number * viewAngleY)
+                         lua_Number * viewAngleY,
+                         NateMesh ** durpMetronome)
 {
   lua_State * luaState = hostStruct->luaState;
   int originalStackIndex = lua_gettop(luaState);
 
-  NateCheck0(lua_checkstack(luaState, 4));
+  NateCheck0(lua_checkstack(luaState, 5));
 
   // Get the 'Draw' method
   lua_getglobal(luaState, "Draw");
@@ -349,16 +350,17 @@ void MainAppLua_CallDraw(MainAppHostStruct * hostStruct,
     MyGetClientTable2(hostStruct);
 
     // call the lua function
-    if (LUA_OK != lua_pcall(luaState, 1, 4, 0))
+    if (LUA_OK != lua_pcall(luaState, 1, 5, 0))
     {
       FatalError2("Failure while running lua Draw() method: ", lua_tostring(luaState, -1));
     }
 
-    // the return values are the spinny cube angle and the view angles
-    *spinnyCubeAngle = lua_tonumber(luaState, -4);
-    *floorZOffset = lua_tonumber(luaState, -3);
-    *viewAngleX = lua_tonumber(luaState, -2);
-    *viewAngleY = lua_tonumber(luaState, -1);
+    // the return values
+    *spinnyCubeAngle = lua_tonumber(luaState, -5);
+    *floorZOffset = lua_tonumber(luaState, -4);
+    *viewAngleX = lua_tonumber(luaState, -3);
+    *viewAngleY = lua_tonumber(luaState, -2);
+    IsNateUserData_NateMesh(luaState, -1, durpMetronome);
   }
   else
   {
@@ -367,6 +369,7 @@ void MainAppLua_CallDraw(MainAppHostStruct * hostStruct,
     *floorZOffset = 0;
     *viewAngleX = 0;
     *viewAngleY = 0;
+    *durpMetronome = 0;
   }
 
   // restore stack

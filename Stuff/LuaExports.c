@@ -4,11 +4,12 @@
 #include "FatalErrorHandler.h"
 //#include <Windows.h>
 #include "MsCounter.h"
+#include "NateMesh.h"
 #include "MainAppLua.h"
 #include "MainAppPhysics.h"
 
 // Design Hint: use this macro for every full userdata handed to lua
-// so we can verify userdata types passed to C from client lua scripts
+// so we can check the types of userdata passed from client lua scripts to C
 // Design Hint: TypeId is 'int' so structs remain DWORD-aligned 
 // (C/Win32 voodoo experience tells me this is a good idea)
 #define NateUserData(typeName, typeId, finalizeFunction) \
@@ -60,7 +61,20 @@ int noFinalizer(lua_State * luaState)
   return 0;
 }
 
+int NateMeshFinalizer(lua_State * luaState)
+{
+  NateMesh * mesh;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
+  NateCheck(IsNateUserData_NateMesh(luaState, 1, &mesh), "Expected argument 1 to be NateMesh");
+
+  NateMesh_Uninit(mesh);
+
+  return 0;
+}
+
 NateUserData(MsCounter, 55, noFinalizer);
+NateUserData(NateMesh, 66, NateMeshFinalizer);
 
 /*
 A C function receives its arguments from Lua in its stack in direct order 
@@ -251,6 +265,47 @@ int C_RegisterMouseMotionHandler(lua_State * luaState)
   return 0;
 }
 
+/*
+int C_NateMesh_Create(lua_State * luaState)
+{
+  NateMesh * mesh;
+
+  NateCheck(lua_gettop(luaState) == 0, "Expected exactly zero arguments");
+  mesh = CreateNateUserData_NateMesh(luaState);
+  NateMesh_Init(mesh);
+
+  return 1;
+}
+*/
+
+int C_NateMesh_Uninit(lua_State * luaState)
+{
+  NateMesh * mesh;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
+  NateCheck(IsNateUserData_NateMesh(luaState, 1, &mesh), "Expected argument 1 to be NateMesh");
+
+  NateMesh_Uninit(mesh);
+
+  return 0;
+}
+
+int C_NateMesh_LoadFromColladaResourceFile(lua_State * luaState)
+{
+  NateMesh * mesh;
+  const char * fileName;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 to be string");
+  
+  fileName = lua_tostring(luaState, 1);
+  mesh = CreateNateUserData_NateMesh(luaState);
+  NateMesh_Init(mesh);
+  NateMesh_LoadFromColladaResourceFile(mesh, fileName);
+
+  return 1;
+}
+
 void LuaExports_PublishCMethods(lua_State * luaState)
 {
   //lua_pushnumber(lua_state, LUA_RIDX_GLOBALS);
@@ -280,6 +335,9 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_RegisterKeyUpHandler);
   PUBLISH_CMETHOD(C_RegisterKeyResetHandler);
   PUBLISH_CMETHOD(C_RegisterMouseMotionHandler);
+  //PUBLISH_CMETHOD(C_NateMesh_Create);
+  PUBLISH_CMETHOD(C_NateMesh_Uninit);
+  PUBLISH_CMETHOD(C_NateMesh_LoadFromColladaResourceFile);
 
   //lua_pop(luaState, 1);
 }

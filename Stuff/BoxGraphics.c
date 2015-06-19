@@ -23,6 +23,7 @@ const GLubyte yellow[] = {   0, 255, 255, 255 };
 const GLubyte black[]  = {   0,   0,   0, 255 };
 const GLubyte orange[] = { 255, 255,   0, 255 };
 const GLubyte purple[] = { 255,   0, 255,   0 };
+const GLubyte * colors[] = { red, green, blue, white, yellow, black, orange, purple };
 
 void DrawAxisLineX(void)
 {
