@@ -4,7 +4,7 @@
 #include "lua.h"
 #include "SDL.h"
 #include "MainAppHostStruct.h"
-#include "NateMesh.h"
+#include "NateMash.h"
 
 // These are invoked by C code to execute Lua client code
 void MainAppLua_InitLua(MainAppHostStruct * hostStruct);
@@ -18,7 +18,7 @@ void MainAppLua_CallDraw(MainAppHostStruct * hostStruct,
                          lua_Number * floorZOffset, 
                          lua_Number * viewAngleX, 
                          lua_Number * viewAngleY,
-                         NateMesh ** durpMetronome);
+                         NateMash ** durpMetronome);
 
 // these are exported and invoked by Lua client code
 void MainAppLua_RegisterKeyDownHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex);

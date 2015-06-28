@@ -6,7 +6,7 @@
 #include <GL\glu.h>
 #include "BoxGraphics.h"
 #include "ViewGraphics.h"
-#include "NateMeshDrawing.h"
+#include "NateMashDrawing.h"
 
 // TODO: make these less global
 // The number of cubes to render in the simulation (try values between 2 and about 50) 
@@ -27,7 +27,7 @@ void MainAppDrawing_Draw(MainAppHostStruct * hostStruct)
   lua_Number floorZOffset;
   lua_Number viewAngleX;
   lua_Number viewAngleY;
-  NateMesh * durpMetronome;
+  NateMash * durpMetronome;
 
   // call the lua function to get needed drawing info
   MainAppLua_CallDraw(hostStruct, &spinnyCubeAngle, &floorZOffset, &viewAngleX, &viewAngleY, &durpMetronome);
@@ -45,7 +45,7 @@ void MainAppDrawing_Draw(MainAppHostStruct * hostStruct)
   DrawAxisLineZ();
   DrawYAngledCube((float)spinnyCubeAngle);
   DrawSizedLocatedBox(floorDimensions, floorLocation);
-  NateMesh_DrawUpright(durpMetronome, durpMetronomePosition, durpMetronomeRotation, durpMetronomeScale);
+  NateMash_DrawUpright(durpMetronome, durpMetronomePosition, durpMetronomeRotation, durpMetronomeScale);
 
   // Swap the buffers. This this tells the driver to
   // render the next frame from the contents of the

@@ -12,8 +12,8 @@ function Initialize(state)
   C_MsCounter_Reset(state.ElapsedTime)
   state.ShouldRotate = true
   state.LastSim60thSecondCount = 0
-  state.Meshes = {}
-  state.Meshes.DurpMetronome = C_NateMesh_LoadFromColladaResourceFile("durp_metronome.dae")
+  state.Mashes = {}
+  state.Mashes.DurpMetronome = C_NateMash_LoadFromColladaResourceFile("durp_metronome.dae")
   
   -- register event handlers
   C_RegisterKeyDownHandler("HandleKeyDown_Escape", HandleKeyDown_Escape, 27) -- SDLK_ESCAPE
@@ -116,5 +116,5 @@ end
 
 function Draw(state)
   -- TODO: more engine, less hacks
-  return state.SpinnyBoxAngle, state.FloorZOffset, state.ViewAngleX, state.ViewAngleY, state.Meshes.DurpMetronome
+  return state.SpinnyBoxAngle, state.FloorZOffset, state.ViewAngleX, state.ViewAngleY, state.Mashes.DurpMetronome
 end

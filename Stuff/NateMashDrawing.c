@@ -1,4 +1,4 @@
-#include "NateMeshDrawing.h"
+#include "NateMashDrawing.h"
 
 #include <Windows.h>
 #include <GL\gl.h>
@@ -6,7 +6,7 @@
 #include "BoxGraphics.h"
 #include "FatalErrorHandler.h"
 
-void NateMesh_Draw(NateMesh * mesh)
+void NateMash_Draw(NateMash * mash)
 {
   size_t i, j, k, i2;
   size_t count;
@@ -16,21 +16,21 @@ void NateMesh_Draw(NateMesh * mesh)
   int vertIndexes[3];
   float vertParts[3];
   //size_t dataCoordinatesStride;
-  NateMeshSource * source;
+  NateMashSource * source;
   float * sourceData;
   int * dataIndexes;
 
   glBegin( GL_TRIANGLES );
 
   // find the "VERTEX" input
-  // (I guess we just assume every mesh has a single "VERTEX" input)
+  // (I guess we just assume every mash has a single "VERTEX" input)
   // and count the data coordinate stride
   //dataCoordinatesStride = 0;
   vertexInputIndex = 0xFFFFFFFF;
-  for (i = 0; i < mesh->numInputs; i++)
+  for (i = 0; i < mash->numInputs; i++)
   {
-    //dataCoordinatesStride += mesh->inputs[i].source->stride;
-    if (mesh->inputs[i].dataType == NateMesh_DataType_Vertex)
+    //dataCoordinatesStride += mash->inputs[i].source->stride;
+    if (mash->inputs[i].dataType == NateMash_DataType_Vertex)
     {
       NateCheck(vertexInputIndex == 0xFFFFFFFF, "there can be only one!");
       vertexInputIndex = i;
@@ -40,18 +40,18 @@ void NateMesh_Draw(NateMesh * mesh)
   
   // get source
   // (I guess we just assume the source is using 3 floats to make a vertex)
-  source = mesh->inputs[vertexInputIndex].source;
+  source = mash->inputs[vertexInputIndex].source;
   sourceData = source->data;
   NateAssert(source->stride == 3, "we assume sources depict triangles");
 
   // iterate through data coordinates
   // (I guess we just assume every 3 of these is a triangle that needs to be drawn)
-  //NateAssert(mesh->numDataCoordinates == , "we assume numDataCoordinates depicts triangles");
-  count = mesh->numDataCoordinates;
-  stride = 3 * mesh->numInputs;
-  dataIndexes = mesh->dataIndexes;
-  numInputs = mesh->numInputs;
-  NateAssert(count * stride == mesh->numDataIndexes, "right?");
+  //NateAssert(mash->numDataCoordinates == , "we assume numDataCoordinates depicts triangles");
+  count = mash->numDataCoordinates;
+  stride = 3 * mash->numInputs;
+  dataIndexes = mash->dataIndexes;
+  numInputs = mash->numInputs;
+  NateAssert(count * stride == mash->numDataIndexes, "right?");
   for (i = 0; i < count; i++)
   {
     i2 = i * stride + vertexInputIndex; // get to index of first vertex data index for this triangle
@@ -78,7 +78,7 @@ void NateMesh_Draw(NateMesh * mesh)
   glEnd( );
 }
 
-void NateMesh_DrawUpright(NateMesh * mesh, float * position, float * rotation, float * scale)
+void NateMash_DrawUpright(NateMash * mash, float * position, float * rotation, float * scale)
 {
   glMatrixMode( GL_MODELVIEW );
   glLoadIdentity( );
@@ -105,5 +105,5 @@ void NateMesh_DrawUpright(NateMesh * mesh, float * position, float * rotation, f
   // rotation[0] is the left-right angle
   glRotated(rotation[0], 0.0f, 1.0f, 0.0f);
 
-  NateMesh_Draw(mesh);
+  NateMash_Draw(mash);
 }

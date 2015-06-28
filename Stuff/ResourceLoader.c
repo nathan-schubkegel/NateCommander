@@ -162,13 +162,13 @@ void * ResourceLoader_LoadLuaFile(const char * luaFileName, long * lengthOut)
 }
 
 // returns null and populates SDL_GetError() on failure
-char * ResourceLoader_LoadMeshFile(const char * meshFileName, size_t * lengthOut)
+char * ResourceLoader_LoadMashFile(const char * mashFileName, size_t * lengthOut)
 {
   void * data;
   long length;
 
   // Load file data
-  ResourceLoader_LoadBinaryFile("Meshes", meshFileName, &data, &length);
+  ResourceLoader_LoadBinaryFile("Mashes", mashFileName, &data, &length);
   if (data == 0)
   {
     *lengthOut = 0;

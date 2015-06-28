@@ -1,8 +1,8 @@
-#ifndef NATE_MESH_DRAWING_H
-#define NATE_MESH_DRAWING_H
+#ifndef NATE_MASH_DRAWING_H
+#define NATE_MASH_DRAWING_H
 
-#include "NateMesh.h"
+#include "NateMash.h"
 
-void NateMesh_DrawUpright(NateMesh * mesh, float * durpMetronomePosition, float * durpMetronomeRotation, float * durpMetronomeScale);
+void NateMash_DrawUpright(NateMash * mash, float * durpMetronomePosition, float * durpMetronomeRotation, float * durpMetronomeScale);
 
 #endif

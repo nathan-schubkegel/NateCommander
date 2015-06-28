@@ -335,7 +335,7 @@ void MainAppLua_CallDraw(MainAppHostStruct * hostStruct,
                          lua_Number * floorZOffset, 
                          lua_Number * viewAngleX, 
                          lua_Number * viewAngleY,
-                         NateMesh ** durpMetronome)
+                         NateMash ** durpMetronome)
 {
   lua_State * luaState = hostStruct->luaState;
   int originalStackIndex = lua_gettop(luaState);
@@ -360,7 +360,7 @@ void MainAppLua_CallDraw(MainAppHostStruct * hostStruct,
     *floorZOffset = lua_tonumber(luaState, -4);
     *viewAngleX = lua_tonumber(luaState, -3);
     *viewAngleY = lua_tonumber(luaState, -2);
-    IsNateUserData_NateMesh(luaState, -1, durpMetronome);
+    IsNateUserData_NateMash(luaState, -1, durpMetronome);
   }
   else
   {

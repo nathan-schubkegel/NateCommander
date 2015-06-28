@@ -4,7 +4,7 @@
 #include "FatalErrorHandler.h"
 //#include <Windows.h>
 #include "MsCounter.h"
-#include "NateMesh.h"
+#include "NateMash.h"
 #include "MainAppLua.h"
 #include "MainAppPhysics.h"
 
@@ -61,20 +61,20 @@ int noFinalizer(lua_State * luaState)
   return 0;
 }
 
-int NateMeshFinalizer(lua_State * luaState)
+int NateMashFinalizer(lua_State * luaState)
 {
-  NateMesh * mesh;
+  NateMash * mash;
 
   NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
-  NateCheck(IsNateUserData_NateMesh(luaState, 1, &mesh), "Expected argument 1 to be NateMesh");
+  NateCheck(IsNateUserData_NateMash(luaState, 1, &mash), "Expected argument 1 to be NateMash");
 
-  NateMesh_Uninit(mesh);
+  NateMash_Uninit(mash);
 
   return 0;
 }
 
 NateUserData(MsCounter, 55, noFinalizer);
-NateUserData(NateMesh, 66, NateMeshFinalizer);
+NateUserData(NateMash, 66, NateMashFinalizer);
 
 /*
 A C function receives its arguments from Lua in its stack in direct order 
@@ -266,42 +266,42 @@ int C_RegisterMouseMotionHandler(lua_State * luaState)
 }
 
 /*
-int C_NateMesh_Create(lua_State * luaState)
+int C_NateMash_Create(lua_State * luaState)
 {
-  NateMesh * mesh;
+  NateMash * mash;
 
   NateCheck(lua_gettop(luaState) == 0, "Expected exactly zero arguments");
-  mesh = CreateNateUserData_NateMesh(luaState);
-  NateMesh_Init(mesh);
+  mash = CreateNateUserData_NateMash(luaState);
+  NateMash_Init(mash);
 
   return 1;
 }
 */
 
-int C_NateMesh_Uninit(lua_State * luaState)
+int C_NateMash_Uninit(lua_State * luaState)
 {
-  NateMesh * mesh;
+  NateMash * mash;
 
   NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
-  NateCheck(IsNateUserData_NateMesh(luaState, 1, &mesh), "Expected argument 1 to be NateMesh");
+  NateCheck(IsNateUserData_NateMash(luaState, 1, &mash), "Expected argument 1 to be NateMash");
 
-  NateMesh_Uninit(mesh);
+  NateMash_Uninit(mash);
 
   return 0;
 }
 
-int C_NateMesh_LoadFromColladaResourceFile(lua_State * luaState)
+int C_NateMash_LoadFromColladaResourceFile(lua_State * luaState)
 {
-  NateMesh * mesh;
+  NateMash * mash;
   const char * fileName;
 
   NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
   NateCheck(lua_isstring(luaState, 1), "Expected argument 1 to be string");
   
   fileName = lua_tostring(luaState, 1);
-  mesh = CreateNateUserData_NateMesh(luaState);
-  NateMesh_Init(mesh);
-  NateMesh_LoadFromColladaResourceFile(mesh, fileName);
+  mash = CreateNateUserData_NateMash(luaState);
+  NateMash_Init(mash);
+  NateMash_LoadFromColladaResourceFile(mash, fileName);
 
   return 1;
 }
@@ -335,9 +335,9 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_RegisterKeyUpHandler);
   PUBLISH_CMETHOD(C_RegisterKeyResetHandler);
   PUBLISH_CMETHOD(C_RegisterMouseMotionHandler);
-  //PUBLISH_CMETHOD(C_NateMesh_Create);
-  PUBLISH_CMETHOD(C_NateMesh_Uninit);
-  PUBLISH_CMETHOD(C_NateMesh_LoadFromColladaResourceFile);
+  //PUBLISH_CMETHOD(C_NateMash_Create);
+  PUBLISH_CMETHOD(C_NateMash_Uninit);
+  PUBLISH_CMETHOD(C_NateMash_LoadFromColladaResourceFile);
 
   //lua_pop(luaState, 1);
 }

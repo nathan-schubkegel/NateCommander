@@ -1,4 +1,4 @@
-#include "NateMesh.h"
+#include "NateMash.h"
 
 //#include "ResourceLoader.h"
 #include <string.h>
@@ -7,27 +7,27 @@
 #include "FatalErrorHandler.h"
 #include "ResourceLoader.h"
 
-NateMesh * NateMesh_Create()
+NateMash * NateMash_Create()
 {
-  NateMesh * obj = malloc(sizeof(NateMesh));
+  NateMash * obj = malloc(sizeof(NateMash));
   if (obj == 0) return 0;
-  NateMesh_Init(obj);
+  NateMash_Init(obj);
   return obj;
 }
 
-void NateMesh_Destroy(NateMesh * obj)
+void NateMash_Destroy(NateMash * obj)
 {
-  NateMesh_Uninit(obj);
+  NateMash_Uninit(obj);
   free(obj);
 }
 
-void NateMesh_Init(NateMesh * obj)
+void NateMash_Init(NateMash * obj)
 {
-  memset(obj, 0, sizeof(NateMesh));
+  memset(obj, 0, sizeof(NateMash));
 }
 
 // This method must survive being called multiple times for a single object
-void NateMesh_Uninit(NateMesh * obj)
+void NateMash_Uninit(NateMash * obj)
 {
   size_t i;
 
@@ -61,7 +61,7 @@ void NateMesh_Uninit(NateMesh * obj)
 typedef struct MyNamedSource
 {
   char * name;
-  NateMeshSource * source;
+  NateMashSource * source;
 } MyNamedSource;
 
 typedef struct MyNamedVertice
@@ -73,32 +73,32 @@ typedef struct MyNamedVertice
 typedef struct MyNamedPolyListInput
 {
   char * sourceName;
-  NateMeshPolyListInput * input;
+  NateMashPolyListInput * input;
 } MyNamedPolyListInput;
 
-typedef struct NateMeshLoadInfo
+typedef struct NateMashLoadInfo
 {
-  NateMesh * mesh;
+  NateMash * mash;
   const char * fileName;
   NateList * sources; // holds struct MyNamedSource
   NateList * vertices; // holds struct MyNamedVertice
   NateList * polyListInputs; // holds struct MyNamedPolyListInput
-} NateMeshLoadInfo;
+} NateMashLoadInfo;
 
 #define NateCheckXml(condition) NateCheck2(condition, "while parsing xml file", loadInfo->fileName)
-void MyProcessRoot(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessLibraryGeometries(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessGeometry(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessMesh(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessSource(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessSourceFloatArray(NateMeshLoadInfo * loadInfo, NateXmlNode * node, NateMeshSource * source);
-void MyProcessSourceTechniqueCommon(NateMeshLoadInfo * loadInfo, NateXmlNode * node, NateMeshSource * source);
-void MyProcessVertices(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessVerticesInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node, MyNamedVertice * namedVertice);
-void MyProcessPolylist(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessPolylistInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessPolylistVcount(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessPolylistP(NateMeshLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessLibraryGeometries(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessGeometry(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessMesh(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessSource(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessSourceFloatArray(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashSource * source);
+void MyProcessSourceTechniqueCommon(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashSource * source);
+void MyProcessVertices(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessVerticesInput(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedVertice * namedVertice);
+void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessPolylistInput(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessPolylistVcount(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessPolylistP(NateMashLoadInfo * loadInfo, NateXmlNode * node);
 int MyFindVertice(void * userData, void * item);
 int MyFindSource(void * userData, void * item);
 
@@ -106,11 +106,11 @@ void MyLoadFromColladaFileCallback(
   NateXmlNode * fakeRoot,
   void * userData)
 {
-  NateMeshLoadInfo * loadInfo;
+  NateMashLoadInfo * loadInfo;
   size_t i;
   NateXmlNode * child;
   
-  loadInfo = (NateMeshLoadInfo*)userData;
+  loadInfo = (NateMashLoadInfo*)userData;
   for (i = 0; i < NateXmlNode_GetCount(fakeRoot); i++)
   {
     child = NateXmlNode_GetChild(fakeRoot, i);
@@ -119,7 +119,7 @@ void MyLoadFromColladaFileCallback(
   }
 }
 
-void MyProcessRoot(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i;
   NateXmlNode * child;
@@ -135,7 +135,7 @@ void MyProcessRoot(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   }
 }
 
-void MyProcessLibraryGeometries(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessLibraryGeometries(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i;
   NateXmlNode * child;
@@ -150,7 +150,7 @@ void MyProcessLibraryGeometries(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   }
 }
 
-void MyProcessGeometry(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessGeometry(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i;
   NateXmlNode * child;
@@ -165,7 +165,7 @@ void MyProcessGeometry(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   }
 }
 
-void MyProcessMesh(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessMesh(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i;
   NateXmlNode * child;
@@ -193,14 +193,14 @@ void MyProcessMesh(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   }
 }
 
-void MyProcessSource(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessSource(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i;
   NateXmlNode * child;
   char * names[4];
   char * values[4];
   MyNamedSource * namedSource;
-  NateMeshSource * source;
+  NateMashSource * source;
   int numFloatArrays;
   int numTechniqueCommons;
 
@@ -215,10 +215,10 @@ void MyProcessSource(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   namedSource = (MyNamedSource*)NateList_AddZeroedData(loadInfo->sources);
   NateCheckXml(namedSource != 0);
   namedSource->name = values[0];
-  // allocate NateMeshSource while we're at it
-  namedSource->source = malloc(sizeof(NateMeshSource));
+  // allocate NateMashSource while we're at it
+  namedSource->source = malloc(sizeof(NateMashSource));
   NateCheckXml(namedSource->source != 0);
-  memset(namedSource->source, 0, sizeof(NateMeshSource));
+  memset(namedSource->source, 0, sizeof(NateMashSource));
   source = namedSource->source;
 
   numFloatArrays = 0;
@@ -241,7 +241,7 @@ void MyProcessSource(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   }
 }
 
-void MyProcessSourceFloatArray(NateMeshLoadInfo * loadInfo, NateXmlNode * node, NateMeshSource * source)
+void MyProcessSourceFloatArray(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashSource * source)
 {
   char * names[4];
   char * values[4];
@@ -279,7 +279,7 @@ void MyProcessSourceFloatArray(NateMeshLoadInfo * loadInfo, NateXmlNode * node, 
   NateCheckXml(oldNext == next);
 }
 
-void MyProcessSourceTechniqueCommon(NateMeshLoadInfo * loadInfo, NateXmlNode * node, NateMeshSource * source)
+void MyProcessSourceTechniqueCommon(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashSource * source)
 {
   char * names[4];
   char * values[4];
@@ -308,7 +308,7 @@ void MyProcessSourceTechniqueCommon(NateMeshLoadInfo * loadInfo, NateXmlNode * n
   NateCheckXml(source->stride * source->count == source->totalLength);
 }
 
-void MyProcessVertices(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessVertices(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i;
   NateXmlNode * child;
@@ -343,7 +343,7 @@ void MyProcessVertices(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   NateCheckXml(numInputs == 1); // exactly 1 is required
 }
 
-void MyProcessVerticesInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node, MyNamedVertice * namedVertice)
+void MyProcessVerticesInput(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedVertice * namedVertice)
 {
   char * names[2];
   char * values[2];
@@ -363,7 +363,7 @@ void MyProcessVerticesInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node, MyN
   namedVertice->sourceName = values[1] + 1; // +1 is to skip the # character
 }
 
-void MyProcessPolylist(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i, count;
   NateXmlNode * child;
@@ -382,8 +382,8 @@ void MyProcessPolylist(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   count = strtoul(values[1], 0, 10);
   NateCheckXml(count > 0);
   // only 1 polylist is currently supported
-  NateCheckXml(loadInfo->mesh->numDataCoordinates == 0);
-  loadInfo->mesh->numDataCoordinates = count;
+  NateCheckXml(loadInfo->mash->numDataCoordinates == 0);
+  loadInfo->mash->numDataCoordinates = count;
 
   numVcounts = 0;
   numPs = 0;
@@ -409,7 +409,7 @@ void MyProcessPolylist(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   }
 }
 
-void MyProcessPolylistInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessPolylistInput(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i;
   char * names[3];
@@ -422,13 +422,13 @@ void MyProcessPolylistInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   // create a MyNamedPolyListInput for this <input>
   namedInput = (MyNamedPolyListInput*)NateList_AddZeroedData(loadInfo->polyListInputs);
   NateCheckXml(namedInput != 0);
-  namedInput->input = malloc(sizeof(NateMeshPolyListInput));
+  namedInput->input = malloc(sizeof(NateMashPolyListInput));
   NateCheckXml(namedInput->input != 0);
-  memset(namedInput->input, 0, sizeof(NateMeshPolyListInput));
+  memset(namedInput->input, 0, sizeof(NateMashPolyListInput));
   // verify 'semantic' attribute is VERTEX or NORMAL (that's all we support now)
   NateCheckXml(strcmp(names[0], "semantic") == 0);
-  if (strcmp(values[0], "VERTEX") == 0) namedInput->input->dataType = NateMesh_DataType_Vertex;
-  else if (strcmp(values[0], "NORMAL") == 0) namedInput->input->dataType = NateMesh_DataType_Normal;
+  if (strcmp(values[0], "VERTEX") == 0) namedInput->input->dataType = NateMash_DataType_Vertex;
+  else if (strcmp(values[0], "NORMAL") == 0) namedInput->input->dataType = NateMash_DataType_Normal;
   else NateCheckXml(0 == strcmp(names[0], "Unrecognized 'semantic' attribute value"));
   // save 'source' attribute 
   // it starts with # to indicate it's referencing something else (but don't save that part)
@@ -446,7 +446,7 @@ void MyProcessPolylistInput(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   NateCheckXml(i == (NateList_GetCount(loadInfo->polyListInputs) - 1));
 }
 
-void MyProcessPolylistVcount(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessPolylistVcount(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i, count;
   char * next;
@@ -458,7 +458,7 @@ void MyProcessPolylistVcount(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   // I see n 3's here, where n = the <polylist> 'count' attribute
   // I guess I'm assuming it's always 3s for now, and that there's exactly n of them
   next = node->ElementText;
-  for (i = 0; i < loadInfo->mesh->numDataCoordinates; i++)
+  for (i = 0; i < loadInfo->mash->numDataCoordinates; i++)
   {
     count = strtoul(next, &next, 10);
     NateCheckXml(count == 3);
@@ -469,7 +469,7 @@ void MyProcessPolylistVcount(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
   NateCheckXml(oldNext == next);
 }
 
-void MyProcessPolylistP(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessPolylistP(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   size_t i, count;
   char * next;
@@ -478,14 +478,14 @@ void MyProcessPolylistP(NateMeshLoadInfo * loadInfo, NateXmlNode * node)
 
   // <p>1 0 2 0 3 0 4 1 7 1 6 1 4 2 5 2 1 2 1 3 5 3 6 3 2 4 6 4 7 4 4 5 0 5 3 5 0 6 1 6 3 6 5 7 4 7 6 7 0 8 4 8 1 8 2 9 1 9 6 9 3 10 2 10 7 10 7 11 4 11 3 11</p>
   // only one <p> allowed
-  NateCheckXml(loadInfo->mesh->dataIndexes == 0);
+  NateCheckXml(loadInfo->mash->dataIndexes == 0);
   // there's going to be ([numOffsets] * 3 * count) indexes here,
-  // see comments on NateMesh.dataIndexes for what it means
-  count = NateList_GetCount(loadInfo->polyListInputs) * 3 * loadInfo->mesh->numDataCoordinates;
+  // see comments on NateMash.dataIndexes for what it means
+  count = NateList_GetCount(loadInfo->polyListInputs) * 3 * loadInfo->mash->numDataCoordinates;
   dataIndexes = malloc(count * sizeof(int));
   NateCheckXml(dataIndexes != 0);
-  loadInfo->mesh->numDataIndexes = count;
-  loadInfo->mesh->dataIndexes = dataIndexes;
+  loadInfo->mash->numDataIndexes = count;
+  loadInfo->mash->dataIndexes = dataIndexes;
   next = node->ElementText;
   for (i = 0; i < count; i++)
   {
@@ -514,26 +514,26 @@ int MyFindSource(void * userData, void * item)
   return (strcmp(desiredName, namedSource->name) == 0);
 }
 
-void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t colladaFileLength, const char * colladaFileDebugIdentifier)
+void NateMash_LoadFromColladaData(NateMash * obj, char * colladaFileData, size_t colladaFileLength, const char * colladaFileDebugIdentifier)
 {
-  NateMeshLoadInfo loadInfo;
+  NateMashLoadInfo loadInfo;
   int parseResult;
   char errorBuffer[200];
   size_t count, i;
-  NateMeshSource * source1;
-  NateMeshSource * source2;
-  NateMeshPolyListInput * input1;
-  NateMeshPolyListInput * input2;
+  NateMashSource * source1;
+  NateMashSource * source2;
+  NateMashPolyListInput * input1;
+  NateMashPolyListInput * input2;
   char * sourceName;
   size_t sourceIndex;
   MyNamedPolyListInput* namedInput;
 
   // first free everything in 'obj'
-  NateMesh_Uninit(obj);
+  NateMash_Uninit(obj);
 
-  // init a 'NateMeshLoadInfo' and malloc its data structures for parsing assistance
-  memset(&loadInfo, 0, sizeof(NateMeshLoadInfo));
-  loadInfo.mesh = obj;
+  // init a 'NateMashLoadInfo' and malloc its data structures for parsing assistance
+  memset(&loadInfo, 0, sizeof(NateMashLoadInfo));
+  loadInfo.mash = obj;
   if (colladaFileDebugIdentifier == 0) { colladaFileDebugIdentifier = "unspecified collada file data"; }
   loadInfo.fileName = colladaFileDebugIdentifier;
   
@@ -552,7 +552,7 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
   // parse the collada file
   parseResult = NateXml_ParseDom(colladaFileData, colladaFileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
   errorBuffer[199] = 0;
-  NateCheck3(parseResult, "failed to parse collada mesh xml: ", colladaFileDebugIdentifier, errorBuffer);
+  NateCheck3(parseResult, "failed to parse collada mash xml: ", colladaFileDebugIdentifier, errorBuffer);
 
   // copy/move sources into 'obj'
   count = NateList_GetCount(loadInfo.sources);
@@ -563,14 +563,14 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
   }
   else
   {
-    obj->sources = malloc(count * sizeof(NateMeshSource));
+    obj->sources = malloc(count * sizeof(NateMashSource));
     NateCheck(obj->sources, "out of memory");
-    memset(obj->sources, 0, count * sizeof(NateMeshSource));
+    memset(obj->sources, 0, count * sizeof(NateMashSource));
     for (i = 0; i < count; i++)
     {
       source1 = &obj->sources[i];
       source2 = ((MyNamedSource*)NateList_GetData(loadInfo.sources, i))->source;
-      memcpy(source1, source2, sizeof(NateMeshSource));
+      memcpy(source1, source2, sizeof(NateMashSource));
       // may as well free the dynamically allocated 'source' while we're here
       free(source2);
     }
@@ -585,15 +585,15 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
   }
   else
   {
-    obj->inputs = malloc(count * sizeof(NateMeshPolyListInput));
+    obj->inputs = malloc(count * sizeof(NateMashPolyListInput));
     NateCheck(obj->inputs, "out of memory");
-    memset(obj->inputs, 0, count * sizeof(NateMeshPolyListInput));
+    memset(obj->inputs, 0, count * sizeof(NateMashPolyListInput));
     for (i = 0; i < count; i++)
     {
       input1 = &obj->inputs[i];
       namedInput = (MyNamedPolyListInput*)NateList_GetData(loadInfo.polyListInputs, i);
       input2 = namedInput->input;
-      memcpy(input1, input2, sizeof(NateMeshPolyListInput));
+      memcpy(input1, input2, sizeof(NateMashPolyListInput));
       // may as well free the dynamically allocated 'input' while we're here
       free(input2);
 
@@ -612,20 +612,20 @@ void NateMesh_LoadFromColladaData(NateMesh * obj, char * colladaFileData, size_t
     }
   }
 
-  // clean up 'NateMeshLoadInfo' data structures
+  // clean up 'NateMashLoadInfo' data structures
   NateList_Destroy(loadInfo.sources);
   NateList_Destroy(loadInfo.vertices);
   NateList_Destroy(loadInfo.polyListInputs);
 }
 
-void NateMesh_LoadFromColladaResourceFile(NateMesh * obj, const char * meshFileName)
+void NateMash_LoadFromColladaResourceFile(NateMash * obj, const char * mashFileName)
 {
   size_t fileLength;
   char * fileData;
 
-  fileData = ResourceLoader_LoadMeshFile(meshFileName, &fileLength);
-  NateCheck_Sdl(fileData != 0, "failed to read collada mesh file");
+  fileData = ResourceLoader_LoadMashFile(mashFileName, &fileLength);
+  NateCheck_Sdl(fileData != 0, "failed to read collada mash file");
 
-  NateMesh_LoadFromColladaData(obj, fileData, fileLength, meshFileName);
+  NateMash_LoadFromColladaData(obj, fileData, fileLength, mashFileName);
   free(fileData);
 }

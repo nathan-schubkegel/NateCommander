@@ -7,7 +7,7 @@
 extern "C"
 {
   #include "TestUtils.h"
-  #include "NateMesh.h"
+  #include "NateMash.h"
 }
 
 char * durpMetronome = "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
@@ -286,29 +286,29 @@ void CheckFloatArray(float * data, float * expected, size_t count)
   }
 }
 
-void Test_NateMesh()
+void Test_NateMash()
 {
   char * newXml1;
-  NateMeshSource * source;
+  NateMashSource * source;
   
   newXml1 = (char*)malloc(strlen(durpMetronome) + 1);
   strcpy_s(newXml1, strlen(durpMetronome) + 1, durpMetronome);
 
-  NateMesh * mesh = NateMesh_Create();
-  NateMesh_LoadFromColladaData(mesh, newXml1, strlen(durpMetronome) + 1, "durpMetronome");
+  NateMash * mash = NateMash_Create();
+  NateMash_LoadFromColladaData(mash, newXml1, strlen(durpMetronome) + 1, "durpMetronome");
 
   // verify that 2 sources were loaded and they have reasonable-looking data
-  CHECK(mesh->numSources == 2, );
-  CHECK(mesh->sources != 0, );
+  CHECK(mash->numSources == 2, );
+  CHECK(mash->sources != 0, );
 
-  source = &mesh->sources[0];
+  source = &mash->sources[0];
   CHECK(source != 0, );
   CHECK(source->count == 8, );
   CHECK(source->stride == 3, );
   CHECK(source->totalLength == 24, );
   CheckFloatArray(source->data, source1floats, 24);
 
-  source = &mesh->sources[1];
+  source = &mash->sources[1];
   CHECK(source != 0, );
   CHECK(source->count == 12, );
   CHECK(source->stride == 3, );
