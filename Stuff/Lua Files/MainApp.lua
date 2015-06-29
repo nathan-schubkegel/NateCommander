@@ -13,7 +13,7 @@ function Initialize(state)
   state.ShouldRotate = true
   state.LastSim60thSecondCount = 0
   state.Mashes = {}
-  state.Mashes.DurpMetronome = C_NateMash_LoadFromColladaResourceFile("durp_metronome.dae")
+  state.Mashes.DurpMetronome = C_NateMash_LoadFromColladaResourceFile("two_boxes_parented.dae")
   
   -- register event handlers
   C_RegisterKeyDownHandler("HandleKeyDown_Escape", HandleKeyDown_Escape, 27) -- SDLK_ESCAPE

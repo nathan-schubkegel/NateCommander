@@ -278,7 +278,17 @@ float source2floats[] =
   0.0976516f 
 };
 
+int pDataIndexes[] = { 1, 0, 2, 0, 3, 0, 4, 1, 7, 1, 6, 1, 4, 2, 5, 2, 1, 2, 1, 3, 5, 3, 6, 3, 2, 4, 6, 4, 7, 4, 4, 5, 0, 5, 3, 5, 0, 6, 1, 6, 3, 6, 5, 7, 4, 7, 6, 7, 0, 8, 4, 8, 1, 8, 2, 9, 1, 9, 6, 9, 3, 10, 2, 10, 7, 10, 7, 11, 4, 11, 3, 11 };
+
 void CheckFloatArray(float * data, float * expected, size_t count)
+{
+  for (size_t i = 0; i < count; i++)
+  {
+    CHECK(data[i] == expected[i], );
+  }
+}
+
+void CheckIntArray(int * data, int * expected, size_t count)
 {
   for (size_t i = 0; i < count; i++)
   {
@@ -314,4 +324,25 @@ void Test_NateMash()
   CHECK(source->stride == 3, );
   CHECK(source->totalLength == 36, );
   CheckFloatArray(source->data, source2floats, 36);
+
+  // verify that 1 geometry was loaded and it has reasonable-looking data
+  CHECK(mash->numGeometries == 1, );
+  CHECK(mash->geometries != 0, );
+
+  NateMashGeometry * geometry = &mash->geometries[0];
+  CHECK(geometry != 0, );
+  CHECK(geometry->numInputs == 2, );
+  CHECK(geometry->inputs != 0, );
+  NateMashPolyListInput * input = &geometry->inputs[0];
+  CHECK(input != 0, );
+  CHECK(input->dataType == NateMash_DataType_Vertex, );
+  CHECK(input->source == &mash->sources[0], );
+  input = &geometry->inputs[1];
+  CHECK(input != 0, );
+  CHECK(input->dataType == NateMash_DataType_Normal, );
+  CHECK(input->source == &mash->sources[1], );
+
+  CHECK(geometry->numDataIndexes == 12 * 3 * 2, );
+  CheckIntArray(geometry->dataIndexes, pDataIndexes, 12 * 3 * 2);
+  CHECK(geometry->numDataCoordinates == 12, );
 }

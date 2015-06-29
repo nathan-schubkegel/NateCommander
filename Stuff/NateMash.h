@@ -20,13 +20,8 @@ typedef struct NateMashPolyListInput
   NateMashSource * source;
 } NateMashPolyListInput;
 
-typedef struct NateMash
+typedef struct NateMashGeometry
 {
-  // could hold vertex data
-  // could hold normal data
-  NateMashSource * sources;
-  size_t numSources;
-
   // <input semantic="VERTEX" source="#Cube-mesh-vertices" offset="0"/>
   // <input semantic="NORMAL" source="#Cube-mesh-normals" offset="1"/>
   NateMashPolyListInput * inputs;
@@ -48,6 +43,18 @@ typedef struct NateMash
   int * dataIndexes;
   size_t numDataIndexes; // length of 'dataIndexes'
   size_t numDataCoordinates; // numDataIndexes / (numInputs * 3)
+
+} NateMashGeometry;
+
+typedef struct NateMash
+{
+  // could hold vertex data
+  // could hold normal data
+  NateMashSource * sources;
+  size_t numSources;
+
+  NateMashGeometry * geometries;
+  size_t numGeometries;
 
   // TODO: bones?
   //NateMash * childMeshes;
