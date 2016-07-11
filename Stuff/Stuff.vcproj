@@ -311,6 +311,14 @@
 				RelativePath=".\Lua Files\MainApp.lua"
 				>
 			</File>
+			<File
+				RelativePath=".\Lua Files\NicoTanks.lua"
+				>
+			</File>
+			<File
+				RelativePath=".\Lua Files\SpinnyBoxApp.lua"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>

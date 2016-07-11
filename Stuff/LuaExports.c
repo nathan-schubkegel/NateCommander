@@ -122,9 +122,19 @@ int C_NateAssert(lua_State * luaState)
 {
   NateCheck(lua_gettop(luaState) == 2, "Expected 2 arguments");
   NateCheck(lua_isboolean(luaState, 1), "Expected argument 1 \"condition\" to be a boolean");
-  NateCheck(lua_isstring(luaState, 1), "Expected argument 2 \"message\" to be a string");
+  NateCheck(lua_isstring(luaState, 2), "Expected argument 2 \"message\" to be a string");
 
   NateAssert(lua_toboolean(luaState, 1), lua_tostring(luaState, 2));
+  
+  return 0;
+}
+
+int C_LoadLuaFile(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 1, "Expected 1 argument");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"fileName\" to be a string");
+
+  MainAppLua_LoadAndRunLuaFile(luaState, lua_tostring(luaState, 1));
   
   return 0;
 }
@@ -324,6 +334,7 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_FatalError);
   PUBLISH_CMETHOD(C_NonFatalError);
   PUBLISH_CMETHOD(C_NateAssert);
+  PUBLISH_CMETHOD(C_LoadLuaFile);
   PUBLISH_CMETHOD(C_MsCounter_Create);
   PUBLISH_CMETHOD(C_MsCounter_Reset);
   PUBLISH_CMETHOD(C_MsCounter_Update);

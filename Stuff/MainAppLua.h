@@ -25,5 +25,6 @@ void MainAppLua_RegisterKeyDownHandler(lua_State * luaState, int handlerNameInde
 void MainAppLua_RegisterKeyUpHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex);
 void MainAppLua_RegisterKeyResetHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex);
 void MainAppLua_RegisterMouseMotionHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex);
+void MainAppLua_LoadAndRunLuaFile(lua_State * luaState, const char * luaFileName);
 
 #endif

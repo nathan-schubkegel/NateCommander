@@ -587,3 +587,9 @@ void MainAppLua_RegisterMouseMotionHandler(lua_State * luaState, int handlerName
   MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, lua_gettop(luaState),
     "MouseMotionNames", "MouseMotionHandlers");
 }
+
+void MainAppLua_LoadAndRunLuaFile(lua_State * luaState, const char * luaFileName)
+{
+  MainAppHostStruct * hostStruct = MyGetHostStruct(luaState);
+  MyLoadAndRunLuaFile(hostStruct->luaState, luaFileName);
+}
