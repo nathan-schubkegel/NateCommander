@@ -1,10 +1,11 @@
 #include "MainAppPhysics.h"
 
-extern float floorLocation[];
+//extern float floorLocation[];
 
 void MainAppPhysics_AdvanceGSIM(float floorZOffset)
 {
-  floorLocation[2] = floorZOffset;
+  (void)floorZOffset;
+  //floorLocation[2] = floorZOffset;
 
   // TODO: move the simulation along
 }

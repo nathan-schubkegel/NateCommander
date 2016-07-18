@@ -14,11 +14,8 @@ void MainAppLua_CallKeyUpEvent(MainAppHostStruct * hostStruct, SDL_KeyboardEvent
 void MainAppLua_CallMouseMotionEvent(MainAppHostStruct * hostStruct, SDL_MouseMotionEvent * e);
 void MainAppLua_CallProcess(MainAppHostStruct * hostStruct);
 void MainAppLua_CallDraw(MainAppHostStruct * hostStruct, 
-                         lua_Number * spinnyCubeAngle, 
-                         lua_Number * floorZOffset, 
-                         lua_Number * viewAngleX, 
-                         lua_Number * viewAngleY,
-                         NateMash ** durpMetronome);
+                         int windowWidth,
+                         int windowHeight);
 
 // these are exported and invoked by Lua client code
 void MainAppLua_RegisterKeyDownHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex);

@@ -10,7 +10,7 @@
 void SetView_CameraAtPoint_LookingAtAngle(
   float * xyzCameraPosition, float leftRightAngle, float upDownAngle);
 
-void SetView_CameraAtDistance_LookingAtPoint(
-  float leftRightAngle, float upDownAngle, float * xyzFocalPoint, float distance);
+void SetView_CameraLookingAtPoint_FromDistance_AtAngle(
+  float * xyzFocalPoint, float distanceFromFocalPoint, float leftRightAngle, float upDownAngle);
 
 #endif

@@ -5,6 +5,8 @@ void MsCounter_Init(MsCounter * counter)
 {
   NateAssert(counter != 0, "MsCounter_Init");
   counter->GetSystemTimeMs = SDL_GetTicks;
+  // TODO: seems bogus not to just do this automatically...?
+  //MsCounter_Reset(counter);
 }
 
 void MsCounter_Reset(MsCounter * counter)

@@ -26,14 +26,12 @@ void SetView_CameraAtPoint_LookingAtAngle(float * xyzCameraPosition, float leftR
   glTranslatef(-xyzCameraPosition[0], -xyzCameraPosition[1], -xyzCameraPosition[2]);
 }
 
-void SetView_CameraAtAngle_LookingAtPoint_FromDistance(
-  float leftRightAngle, float upDownAngle, 
-  float * xyzFocalPoint, float distance)
+void SetView_CameraLookingAtPoint_FromDistance_AtAngle(
+  float * xyzFocalPoint, float distanceFromFocalPoint, float leftRightAngle, float upDownAngle)
 {
-  // TODO: this method is not tested at all
-
   // VERY FIRST do the distance thing
-  glTranslatef(0.0f, 0.0f, distance);
+  // TODO: why? 
+  glTranslatef(0.0f, 0.0f, -distanceFromFocalPoint);
   
   // then rotate and translate to the desired point
   SetView_CameraAtPoint_LookingAtAngle(xyzFocalPoint, leftRightAngle, upDownAngle);

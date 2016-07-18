@@ -30,6 +30,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				CommandLine="echo Copying changed files to $(OutDir)\Resources&#x0D;&#x0A;if not exist &quot;$(OutDir)\Resources&quot; mkdir &quot;$(OutDir)\Resources&quot;&#x0D;&#x0A;xcopy ..\Resources\* &quot;$(OutDir)\Resources&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;echo Copying changed files to $(OutDir)\Lua Files&#x0D;&#x0A;if not exist &quot;$(OutDir)\Lua Files&quot; mkdir &quot;$(OutDir)\Lua Files&quot;&#x0D;&#x0A;xcopy &quot;..\Stuff\Lua Files\*.lua&quot; &quot;$(OutDir)\Lua Files&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;echo Copying changed files to $(OutDir)\Mashes&#x0D;&#x0A;if not exist &quot;$(OutDir)\Mashes&quot; mkdir &quot;$(OutDir)\Mashes&quot;&#x0D;&#x0A;xcopy &quot;..\Mashes\*.dae&quot; &quot;$(OutDir)\Mashes&quot; /D /S /R /Y"
+				AdditionalDependencies=""
+				Outputs="&quot;$(OutDir)\Resources\*&quot;;&quot;$(OutDir)\Lua Files\*&quot;;&quot;$(OutDir)\Mashes\*&quot;"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -68,7 +71,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="tokamak.lib stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrtd.lib uuid.lib $(NOINHERIT)"
+				AdditionalDependencies="tokamak.lib stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrtd.lib uuid.lib libcmtd.lib $(NOINHERIT)"
 				OutputFile="$(OutDir)\NateCommander.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\tokamak\Debug;..\Stuff\Debug;&quot;..\lua-5.2.3\Debug&quot;;&quot;..\SDL2-2.0.3\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug;$(NOINHERIT)"
@@ -103,7 +106,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="if not exist &quot;$(OutDir)\Resources&quot; mkdir &quot;$(OutDir)\Resources&quot;&#x0D;&#x0A;xcopy ..\Resources\* &quot;$(OutDir)\Resources&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;if not exist &quot;$(OutDir)\Lua Files&quot; mkdir &quot;$(OutDir)\Lua Files&quot;&#x0D;&#x0A;xcopy &quot;..\Stuff\Lua Files\*.lua&quot; &quot;$(OutDir)\Lua Files&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;if not exist &quot;$(OutDir)\Mashes&quot; mkdir &quot;$(OutDir)\Mashes&quot;&#x0D;&#x0A;xcopy &quot;..\Mashes\*.dae&quot; &quot;$(OutDir)\Mashes&quot; /D /S /R /Y&#x0D;&#x0A;"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration

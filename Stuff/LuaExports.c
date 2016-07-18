@@ -7,6 +7,11 @@
 #include "NateMash.h"
 #include "MainAppLua.h"
 #include "MainAppPhysics.h"
+#include <GL\gl.h>
+#include <GL\glu.h>
+#include "ViewGraphics.h"
+#include "BoxGraphics.h"
+#include "Vectors2d.h"
 
 // Design Hint: use this macro for every full userdata handed to lua
 // so we can check the types of userdata passed from client lua scripts to C
@@ -233,7 +238,7 @@ int C_RegisterKeyDownHandler(lua_State * luaState)
   NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
   NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
   NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
-  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 \"eventKey\" to be a number");
+  NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"eventKey\" to be a number or nil");
   
   MainAppLua_RegisterKeyDownHandler(luaState, 1, 2, 3);
 
@@ -245,7 +250,7 @@ int C_RegisterKeyUpHandler(lua_State * luaState)
   NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
   NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
   NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
-  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 \"eventKey\" to be a number");
+  NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"eventKey\" to be a number or nil");
   
   MainAppLua_RegisterKeyUpHandler(luaState, 1, 2, 3);
 
@@ -257,7 +262,7 @@ int C_RegisterKeyResetHandler(lua_State * luaState)
   NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
   NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
   NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
-  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 \"eventKey\" to be a number");
+  NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"eventKey\" to be a number or nil");
   
   MainAppLua_RegisterKeyResetHandler(luaState, 1, 2, 3);
 
@@ -274,19 +279,6 @@ int C_RegisterMouseMotionHandler(lua_State * luaState)
 
   return 0;
 }
-
-/*
-int C_NateMash_Create(lua_State * luaState)
-{
-  NateMash * mash;
-
-  NateCheck(lua_gettop(luaState) == 0, "Expected exactly zero arguments");
-  mash = CreateNateUserData_NateMash(luaState);
-  NateMash_Init(mash);
-
-  return 1;
-}
-*/
 
 int C_NateMash_Uninit(lua_State * luaState)
 {
@@ -316,6 +308,292 @@ int C_NateMash_LoadFromColladaResourceFile(lua_State * luaState)
   return 1;
 }
 
+int C_PolarVector2dAdd(lua_State * luaState)
+{
+  PolarVector2d v1;
+  PolarVector2d v2;
+  PolarVector2d v3;
+
+  NateCheck(lua_gettop(luaState) == 2, "Expected exactly two arguments");
+  NateCheck(lua_istable(luaState, 1), "Expected argument 1 to be table");
+  NateCheck(lua_istable(luaState, 2), "Expected argument 2 to be table");
+
+  // inputs are
+  // table { Angle = a1, Magnitude = m1 }
+  // table { Angle = a2, Magnitude = m2 }
+
+  lua_pushstring(luaState, "Angle");
+  lua_gettable(luaState, 1);
+  v1.Angle = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "Magnitude");
+  lua_gettable(luaState, 1);
+  v1.Magnitude = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "Angle");
+  lua_gettable(luaState, 2);
+  v2.Angle = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "Magnitude");
+  lua_gettable(luaState, 2);
+  v2.Magnitude = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  v3 = PolarVector2dAdd(v1, v2);
+
+  // return value is 
+  // table { Angle = v3.Angle, Magnitude = v3.Magnitude }
+  lua_createtable(luaState, 0, 2);
+  lua_pushstring(luaState, "Angle");
+  lua_pushnumber(luaState, v3.Angle);
+  lua_settable(luaState, -3);
+  lua_pushstring(luaState, "Magnitude");
+  lua_pushnumber(luaState, v3.Magnitude);
+  lua_settable(luaState, -3);
+
+  return 1;
+}
+
+int C_PolarVector2dDup(lua_State * luaState)
+{
+  double a1, m1;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
+  NateCheck(lua_istable(luaState, 1), "Expected argument 1 to be table");
+
+  // inputs are
+  // table { Angle = a1, Magnitude = m1 }
+
+  lua_pushstring(luaState, "Angle");
+  lua_gettable(luaState, 1);
+  a1 = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "Magnitude");
+  lua_gettable(luaState, 1);
+  m1 = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  // return value is 
+  // table { Angle = a1, Magnitude = m1 }
+  lua_createtable(luaState, 0, 2);
+  lua_pushstring(luaState, "Angle");
+  lua_pushnumber(luaState, a1);
+  lua_settable(luaState, -3);
+  lua_pushstring(luaState, "Magnitude");
+  lua_pushnumber(luaState, m1);
+  lua_settable(luaState, -3);
+
+  return 1;
+}
+
+int C_PolarVector2dToCartesian(lua_State * luaState)
+{
+  PolarVector2d v1;
+  CartesianVector2d v2;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
+  NateCheck(lua_istable(luaState, 1), "Expected argument 1 to be table");
+
+  // inputs are
+  // table { Angle = a1, Magnitude = m1 }
+
+  lua_pushstring(luaState, "Angle");
+  lua_gettable(luaState, 1);
+  v1.Angle = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "Magnitude");
+  lua_gettable(luaState, 1);
+  v1.Magnitude = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  v2 = PolarVector2dToCartesian(v1);
+
+  // return value is 
+  // table { X = x1, Y = y1 }
+  lua_createtable(luaState, 0, 2);
+  lua_pushstring(luaState, "X");
+  lua_pushnumber(luaState, v2.X);
+  lua_settable(luaState, -3);
+  lua_pushstring(luaState, "Y");
+  lua_pushnumber(luaState, v2.Y);
+  lua_settable(luaState, -3);
+
+  return 1;
+}
+
+int C_CartesianVector2dAdd(lua_State * luaState)
+{
+  CartesianVector2d v1, v2, v3;
+
+  NateCheck(lua_gettop(luaState) == 2, "Expected exactly two arguments");
+  NateCheck(lua_istable(luaState, 1), "Expected argument 1 to be table");
+  NateCheck(lua_istable(luaState, 2), "Expected argument 2 to be table");
+
+  // inputs are
+  // table { X = x1, Y = y1 }
+  // table { X = x2, Y = y2 }
+
+  lua_pushstring(luaState, "X");
+  lua_gettable(luaState, 1);
+  v1.X = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "Y");
+  lua_gettable(luaState, 1);
+  v1.Y = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "X");
+  lua_gettable(luaState, 2);
+  v2.X = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "Y");
+  lua_gettable(luaState, 2);
+  v2.Y = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  v3 = CartesianVector2dAdd(v1, v2);
+
+  // return value is 
+  // table { X = x1 + x2, Y = y1 + y2 }
+  lua_createtable(luaState, 0, 2);
+  lua_pushstring(luaState, "X");
+  lua_pushnumber(luaState, v3.X);
+  lua_settable(luaState, -3);
+  lua_pushstring(luaState, "Y");
+  lua_pushnumber(luaState, v3.Y);
+  lua_settable(luaState, -3);
+
+  return 1;
+}
+
+int C_CartesianVector2dDup(lua_State * luaState)
+{
+  double x1, y1;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly one argument");
+  NateCheck(lua_istable(luaState, 1), "Expected argument 1 to be table");
+
+  // inputs are
+  // table { X = x1, Y = y1 }
+
+  lua_pushstring(luaState, "X");
+  lua_gettable(luaState, 1);
+  x1 = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  lua_pushstring(luaState, "Y");
+  lua_gettable(luaState, 1);
+  y1 = lua_tonumber(luaState, -1);
+  lua_pop(luaState, 1);
+
+  // return value is 
+  // table { X = x1, Y = y1 }
+  lua_createtable(luaState, 0, 2);
+  lua_pushstring(luaState, "X");
+  lua_pushnumber(luaState, x1);
+  lua_settable(luaState, -3);
+  lua_pushstring(luaState, "Y");
+  lua_pushnumber(luaState, y1);
+  lua_settable(luaState, -3);
+
+  return 1;
+}
+
+int C_gluPerspective(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 4, "Expected exactly 4 arguments");
+  NateCheck(lua_isnumber(luaState, 1), "Expected argument 1 to be number");
+  NateCheck(lua_isnumber(luaState, 2), "Expected argument 2 to be number");
+  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 to be number");
+  NateCheck(lua_isnumber(luaState, 4), "Expected argument 4 to be number");
+
+  gluPerspective(
+    lua_tonumber(luaState, 1),
+    lua_tonumber(luaState, 2),
+    lua_tonumber(luaState, 3),
+    lua_tonumber(luaState, 4));
+
+  return 0;
+}
+
+int C_glMatrixMode(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly 1 argument");
+  NateCheck(lua_isnumber(luaState, 1), "Expected argument 1 to be number");
+
+  glMatrixMode((GLenum)(int)lua_tonumber(luaState, 1));
+
+  return 0;
+}
+
+int C_glLoadIdentity(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 0, "Expected exactly 0 arguments");
+
+  glLoadIdentity();
+
+  return 0;
+}
+
+int C_SetView_CameraLookingAtPoint_FromDistance_AtAngle(lua_State * luaState)
+{
+  float xyzFocalPoint[3];
+
+  NateCheck(lua_gettop(luaState) == 6, "Expected exactly 6 arguments");
+  NateCheck(lua_isnumber(luaState, 1), "Expected argument 1 to be number");
+  NateCheck(lua_isnumber(luaState, 2), "Expected argument 2 to be number");
+  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 to be number");
+  NateCheck(lua_isnumber(luaState, 4), "Expected argument 4 to be number");
+  NateCheck(lua_isnumber(luaState, 5), "Expected argument 5 to be number");
+  NateCheck(lua_isnumber(luaState, 6), "Expected argument 6 to be number");
+
+  xyzFocalPoint[0] = (float)lua_tonumber(luaState, 1);
+  xyzFocalPoint[1] = (float)lua_tonumber(luaState, 2);
+  xyzFocalPoint[2] = (float)lua_tonumber(luaState, 3);
+
+  SetView_CameraLookingAtPoint_FromDistance_AtAngle(xyzFocalPoint,
+    (float)lua_tonumber(luaState, 4),
+    (float)lua_tonumber(luaState, 5),
+    (float)lua_tonumber(luaState, 6));
+
+  return 0;
+}
+
+int C_glClear(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly 1 argument");
+  NateCheck(lua_isnumber(luaState, 1), "Expected argument 1 to be number");
+
+  glClear((GLbitfield)(int)lua_tonumber(luaState, 1));
+
+  return 0;
+}
+
+int C_DrawAxisLines(lua_State * luaState)
+{
+  (void)luaState;
+
+  DrawAxisLineX();
+  DrawAxisLineY();
+  DrawAxisLineZ();
+
+  return 0;
+}
+
+int C_DrawYAngledCube(lua_State * luaState)
+{
+  DrawYAngledCube((float)lua_tonumber(luaState, 1));
+
+  return 0;
+}
+
 void LuaExports_PublishCMethods(lua_State * luaState)
 {
   //lua_pushnumber(lua_state, LUA_RIDX_GLOBALS);
@@ -324,9 +602,6 @@ void LuaExports_PublishCMethods(lua_State * luaState)
 #define PUBLISH_CMETHOD(m) \
   lua_pushcfunction(luaState, m); \
   lua_setglobal(luaState, #m);
-//  lua_pushstring(luaState, ##m##); \
-//  lua_pushcfunction(luaState, m); \
-//  lua_settable(luaState, -3);
 
   NateCheck0(lua_checkstack(luaState, 1));
 
@@ -346,9 +621,20 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_RegisterKeyUpHandler);
   PUBLISH_CMETHOD(C_RegisterKeyResetHandler);
   PUBLISH_CMETHOD(C_RegisterMouseMotionHandler);
-  //PUBLISH_CMETHOD(C_NateMash_Create);
   PUBLISH_CMETHOD(C_NateMash_Uninit);
   PUBLISH_CMETHOD(C_NateMash_LoadFromColladaResourceFile);
+  PUBLISH_CMETHOD(C_PolarVector2dAdd);
+  PUBLISH_CMETHOD(C_PolarVector2dDup);
+  PUBLISH_CMETHOD(C_PolarVector2dToCartesian);
+  PUBLISH_CMETHOD(C_CartesianVector2dAdd);
+  PUBLISH_CMETHOD(C_CartesianVector2dDup);
+  PUBLISH_CMETHOD(C_gluPerspective);
+  PUBLISH_CMETHOD(C_glMatrixMode);
+  PUBLISH_CMETHOD(C_glLoadIdentity);
+  PUBLISH_CMETHOD(C_SetView_CameraLookingAtPoint_FromDistance_AtAngle);
+  PUBLISH_CMETHOD(C_glClear);
+  PUBLISH_CMETHOD(C_DrawAxisLines);
+  PUBLISH_CMETHOD(C_DrawYAngledCube);
 
   //lua_pop(luaState, 1);
 }

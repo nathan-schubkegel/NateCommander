@@ -226,6 +226,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\Vectors2d.c"
+				>
+			</File>
+			<File
 				RelativePath=".\ViewGraphics.c"
 				>
 			</File>
@@ -297,6 +301,10 @@
 			</File>
 			<File
 				RelativePath=".\Utils.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Vectors2d.h"
 				>
 			</File>
 			<File

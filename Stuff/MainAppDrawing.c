@@ -8,71 +8,23 @@
 #include "ViewGraphics.h"
 #include "NateMashDrawing.h"
 
-// TODO: make these less global
-// The number of cubes to render in the simulation (try values between 2 and about 50) 
-//#define CUBECOUNT 5 
-// coordinates are (x, y, z) or (width, height length)
-float floorDimensions[] = { 3, 0.3f, 3};
-float floorLocation[] = { 0, -3, 0 };
-float cameraPosition[] = { 3, 3, 15 };
-float durpMetronomePosition[] = { -2, 2, 2 };
-float durpMetronomeRotation[] = { 0, 0, 0 };
-float durpMetronomeScale[] = { 1, 1, 1 };
-
-void MySetupView(MainAppHostStruct * hostStruct, lua_Number viewAngleX, lua_Number viewAngleY);
-
 void MainAppDrawing_Draw(MainAppHostStruct * hostStruct)
 {
-  lua_Number spinnyCubeAngle;
-  lua_Number floorZOffset;
-  lua_Number viewAngleX;
-  lua_Number viewAngleY;
-  NateMash * durpMetronome;
+  int width, height;
 
-  // call the lua function to get needed drawing info
-  MainAppLua_CallDraw(hostStruct, &spinnyCubeAngle, &floorZOffset, &viewAngleX, &viewAngleY, &durpMetronome);
-  floorLocation[2] = (float)floorZOffset;
-
-  // setup view matrix
-  MySetupView(hostStruct, viewAngleX, viewAngleY);
-
-  // Clear the color and depth buffers.
-  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-  // Draw stuff
-  DrawAxisLineX();
-  DrawAxisLineY();
-  DrawAxisLineZ();
-  DrawYAngledCube((float)spinnyCubeAngle);
-  DrawSizedLocatedBox(floorDimensions, floorLocation);
-  NateMash_DrawUpright(durpMetronome, durpMetronomePosition, durpMetronomeRotation, durpMetronomeScale);
-
-  // Swap the buffers. This this tells the driver to
-  // render the next frame from the contents of the
-  // back-buffer, and to set all rendering operations
-  // to occur on what was the front-buffer.
-  //
-  // Double buffering prevents nasty visual tearing
-  // from the application drawing on areas of the
-  // screen that are being updated at the same time.
-  SDL_GL_SwapWindow(hostStruct->MainWindow.Window);
-}
-
-void MySetupView(MainAppHostStruct * hostStruct, lua_Number viewAngleX, lua_Number viewAngleY)
-{
-  float ratio;
-  int width;
-  int height;
-  //float cameraDistance = 15.0f;
-  //float focusPointX = 0.0f;
-  //float focusPointY = 5.0f;
-  //float focusPointZ = 0.0f;
-  
   // get window width and height
   SDL_GetWindowSize(hostStruct->MainWindow.Window, &width, &height);
+
+  // make them so divide-by-zero errors will certainly not occur
+  // when lua code divides these to determine an aspect ratio later
   if (width <= 0) width = 1;
   if (height <= 0) height = 1;
-  ratio = (float)width / (float)height;
+
+  /////////////////////////////////////////////////////////////
+  //
+  // TODO: how much from this point down should be left to lua?
+  //
+  /////////////////////////////////////////////////////////////
 
   // Our shading model--Gouraud (smooth).
   glShadeModel( GL_SMOOTH );
@@ -91,39 +43,19 @@ void MySetupView(MainAppHostStruct * hostStruct, lua_Number viewAngleX, lua_Numb
   // Setup our viewport.
   glViewport( 0, 0, width, height );
 
-  // Change to the projection matrix and set
-  // our viewing volume.
-  glMatrixMode( GL_PROJECTION );
-  glLoadIdentity( );
+  // call the lua function to draw whatever is desired
+  MainAppLua_CallDraw(hostStruct, width, height);
 
-  // EXERCISE:
-  // Replace this with a call to glFrustum.
-  // TODO: NeHe used 45.0 degrees... what do I think looks good? (What did Halo use? I hated that)
-  gluPerspective( 60.0, ratio, 1.0, 1024.0 );
-
-  SetView_CameraAtPoint_LookingAtAngle(
-    cameraPosition, 
-    // translate viewing angle from screen coordinates (top left is 0,0 bottom right is width,height)
-    // to angles between -360 and +360, and flip y so when user moves mouse up it's considered y+
-    (((float)viewAngleX - (width * 0.5f)) / (width * 0.5f)) * 360.0f, 
-    -(((float)viewAngleY - (height * 0.5f)) / (height * 0.5f)) * 360.0f);
-  /*
-  // first (TODO: why first? why must rotation be done before translation?)
-  // rotate all the world objects in the negative-as-desired direction 
-  // to simulate camera angle.
-  // viewAngleX means to rotate left-right, which is implemented as "around the y axis"
-  glRotated(viewAngleX, 0.0f, 1.0f, 0.0f);
-  // viewAngleY means to rotate up-down, which is implemented as "around the x axis"
-  glRotated(viewAngleY, 1.0f, 0.0f, 0.0f);
-
-  // next (TODO: why next? why can we translate in world units AFTER rotating?)
-  // translate all the world objects in the negative-as-desired direction 
-  // to simulate the camera position
-  glTranslatef(5.0f, -5.0f, 0.0f);
-  */
+  // Swap the buffers. This this tells the driver to
+  // render the next frame from the contents of the
+  // back-buffer, and to set all rendering operations
+  // to occur on what was the front-buffer.
+  //
+  // Double buffering prevents nasty visual tearing
+  // from the application drawing on areas of the
+  // screen that are being updated at the same time.
+  SDL_GL_SwapWindow(hostStruct->MainWindow.Window);
 }
-
-
 
 void DrawFallingCubes()
 {

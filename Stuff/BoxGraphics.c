@@ -25,6 +25,8 @@ const GLubyte orange[] = { 255, 255,   0, 255 };
 const GLubyte purple[] = { 255,   0, 255,   0 };
 const GLubyte * colors[] = { red, green, blue, white, yellow, black, orange, purple };
 
+// -x = orange
+// +x = red
 void DrawAxisLineX(void)
 {
   glMatrixMode( GL_MODELVIEW );
@@ -126,6 +128,8 @@ void DrawAxisLineX(void)
   glEnd( );
 }
 
+// -y = white
+// +y = green
 void DrawAxisLineY(void)
 {
   glMatrixMode( GL_MODELVIEW );
@@ -227,6 +231,8 @@ void DrawAxisLineY(void)
   glEnd( );
 }
 
+// +z = blue
+// -z = purple
 void DrawAxisLineZ(void)
 {
   glMatrixMode( GL_MODELVIEW );
@@ -328,7 +334,7 @@ void DrawAxisLineZ(void)
   glEnd( );
 }
 
-void DrawRainbowCube(void)
+void MyDrawRainbowCube(void)
 {
   // Send our triangle data to the pipeline.
   glBegin( GL_TRIANGLES );
@@ -434,7 +440,7 @@ void DrawYAngledCube(float currentAngle)
   // the later three values indicate the vector of the axis around which we'll rotate
   glRotated( currentAngle, 0.0, 1.0, 0.0 );
 
-  DrawRainbowCube();
+  MyDrawRainbowCube();
 }
 
 void DrawSizedLocatedBox(float * whlDimensions, float * xyzTranslation)
@@ -453,5 +459,5 @@ void DrawSizedLocatedBox(float * whlDimensions, float * xyzTranslation)
     (1.0f / cubeHeight) * whlDimensions[1],
     (1.0f / cubeLength) * whlDimensions[2]);
 
-  DrawRainbowCube();
+  MyDrawRainbowCube();
 }

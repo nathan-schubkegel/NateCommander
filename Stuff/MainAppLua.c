@@ -5,12 +5,128 @@
 #include "ResourceLoader.h"
 #include "lua.h"
 #include "lauxlib.h"
+#include "lualib.h"
 
 int MyLuaPanic(lua_State * luaState);
 void * MyLuaAlloc(void *ud, void *ptr, size_t osize, size_t nsize);
 void MyInitializeHostClientStuff(lua_State * luaState, MainAppHostStruct * hostStruct);
 void MyInitializeLuaEventHandlerStuff(MainAppHostStruct * hostStruct);
 void MyLoadAndRunLuaFile(lua_State * luaState, const char * luaFileName);
+
+char * MyWhitelistedGlobals[] = 
+{
+  "assert",
+  "error",
+  "_G",
+  //"getmetatable",
+  "ipairs",
+  "next",
+  "pairs",
+  "pcall",
+  "rawequal",
+  "rawget",
+  "rawlen",
+  "rawset",
+  "select",
+  //"setmetatable",
+  "tonumber",
+  "tostring",
+  "type",
+  "_VERSION",
+  "xpcall",
+  "string",
+  "table",
+  "math",
+  "bit32",
+};
+
+#define MY_WHITELISTED_GLOBALS_LEN sizeof(MyWhitelistedGlobals) / sizeof(char*)
+
+void MyLoadStandardWhitelistedLibraries(MainAppHostStruct * hostStruct)
+{
+  lua_State * luaState;
+  int stackTopBeforeWhitelisting;
+  int stackTopAtStartOfLoop;
+  int globalTableIndex;
+  int keyIndex;
+  int valueIndex;
+  int keep;
+  const char * key;
+  int whitelistIndex;
+  
+  luaState = hostStruct->luaState;
+
+#define MY_LOAD_STANDARD_LIB(name, openFunction) \
+  luaL_requiref(luaState, (name), (openFunction), 1); /* 1 means "make it global" */ \
+  lua_pop(luaState, 1); /*remove lib*/
+
+  // Load standard methods for LUA libraries to call
+  MY_LOAD_STANDARD_LIB("_G", luaopen_base);
+  //MY_LOAD_STANDARD_LIB(LUA_LOADLIBNAME, luaopen_package);
+  //MY_LOAD_STANDARD_LIB(LUA_COLIBNAME, luaopen_coroutine);
+  MY_LOAD_STANDARD_LIB(LUA_TABLIBNAME, luaopen_table);
+  //MY_LOAD_STANDARD_LIB(LUA_IOLIBNAME, luaopen_io);
+  //MY_LOAD_STANDARD_LIB(LUA_OSLIBNAME, luaopen_os);
+  MY_LOAD_STANDARD_LIB(LUA_STRLIBNAME, luaopen_string);
+  MY_LOAD_STANDARD_LIB(LUA_BITLIBNAME, luaopen_bit32);
+  MY_LOAD_STANDARD_LIB(LUA_MATHLIBNAME, luaopen_math);
+  //MY_LOAD_STANDARD_LIB(LUA_DBLIBNAME, luaopen_debug);
+
+  // enumerate lua global table _G[]
+  stackTopBeforeWhitelisting = lua_gettop(luaState);
+  lua_pushglobaltable(luaState);
+  globalTableIndex = lua_gettop(luaState);
+  lua_pushnil(luaState); // nil makes lua_next() get the first item in table
+  while (lua_next(luaState, -2) != 0)
+  {
+    stackTopAtStartOfLoop = lua_gettop(luaState);
+
+    // key is at index -2
+    // value is at index -1
+    // copy them, and only look at the copies, to guarantee we don't change them
+    // because lua_next() can get goofed by lua_tostring() because it changes
+    // the value on the stack to a string
+    lua_pushnil(luaState);
+    lua_pushnil(luaState);
+    lua_copy(luaState, -4, -2);
+    lua_copy(luaState, -3, -1);
+    keyIndex = lua_gettop(luaState) - 1;
+    valueIndex = keyIndex + 1;
+
+    // only retain whitelisted LUA libraries
+    keep = 0;
+    if (lua_isstring(luaState, keyIndex))
+    {
+      key = lua_tostring(luaState, keyIndex);
+      
+      for (whitelistIndex = 0; whitelistIndex < MY_WHITELISTED_GLOBALS_LEN; whitelistIndex++)
+      {
+        if (strcmp(key, MyWhitelistedGlobals[whitelistIndex]) == 0)
+        {
+          keep = 1;
+          break;
+        }
+      }
+    }
+
+    if (!keep)
+    {
+      // remove key from global table
+      lua_pushnil(luaState);
+      lua_copy(luaState, keyIndex, -1);
+      lua_pushnil(luaState);
+      lua_settable(luaState, globalTableIndex);
+    }
+    
+    // remove 'value', keep 'key' and use it for next iteration
+    NateCheck(lua_gettop(luaState) >= stackTopAtStartOfLoop, "this logic fails if code popped a bunch of stuff");
+    lua_pop(luaState, lua_gettop(luaState) - stackTopAtStartOfLoop + 1);
+  }
+
+  // remove lua initialization stuff
+  NateCheck(lua_gettop(luaState) >= stackTopBeforeWhitelisting, "this logic fails if code popped a bunch of stuff");
+  lua_pop(luaState, lua_gettop(luaState) - stackTopBeforeWhitelisting);
+}
 
 void MainAppLua_InitLua(MainAppHostStruct * hostStruct)
 {
@@ -23,6 +139,8 @@ void MainAppLua_InitLua(MainAppHostStruct * hostStruct)
 
   // When lua borks, display an error messagebox and quit
   lua_atpanic(luaState, MyLuaPanic);
+
+  MyLoadStandardWhitelistedLibraries(hostStruct);
 
   // Initialize host/client table/reference stuff
   MyInitializeHostClientStuff(luaState, hostStruct);
@@ -331,11 +449,8 @@ void MainAppLua_CallProcess(MainAppHostStruct * hostStruct)
 }
 
 void MainAppLua_CallDraw(MainAppHostStruct * hostStruct, 
-                         lua_Number * spinnyCubeAngle, 
-                         lua_Number * floorZOffset, 
-                         lua_Number * viewAngleX, 
-                         lua_Number * viewAngleY,
-                         NateMash ** durpMetronome)
+                         int windowWidth,
+                         int windowHeight)
 {
   lua_State * luaState = hostStruct->luaState;
   int originalStackIndex = lua_gettop(luaState);
@@ -349,27 +464,23 @@ void MainAppLua_CallDraw(MainAppHostStruct * hostStruct,
     // first argument is the ClientTable
     MyGetClientTable2(hostStruct);
 
+    // second argument is a table
+    lua_createtable(luaState, 0, 2);
+
+    // the table has some properties
+    lua_pushstring(luaState, "WindowWidth");
+    lua_pushnumber(luaState, windowWidth);
+    lua_settable(luaState, -3);
+
+    lua_pushstring(luaState, "WindowHeight");
+    lua_pushnumber(luaState, windowHeight);
+    lua_settable(luaState, -3);
+
     // call the lua function
-    if (LUA_OK != lua_pcall(luaState, 1, 5, 0))
+    if (LUA_OK != lua_pcall(luaState, 2, 0, 0))
     {
       FatalError2("Failure while running lua Draw() method: ", lua_tostring(luaState, -1));
     }
-
-    // the return values
-    *spinnyCubeAngle = lua_tonumber(luaState, -5);
-    *floorZOffset = lua_tonumber(luaState, -4);
-    *viewAngleX = lua_tonumber(luaState, -3);
-    *viewAngleY = lua_tonumber(luaState, -2);
-    IsNateUserData_NateMash(luaState, -1, durpMetronome);
-  }
-  else
-  {
-    // return stinky default values
-    *spinnyCubeAngle = 0;
-    *floorZOffset = 0;
-    *viewAngleX = 0;
-    *viewAngleY = 0;
-    *durpMetronome = 0;
   }
 
   // restore stack
@@ -434,6 +545,13 @@ void MyCallHandlerEvent(MainAppHostStruct * hostStruct,
 
   // restore stack
   lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
+
+  // repeat for the "all events" handler (-1)
+  if (handlerKey != -1)
+  {
+    MyCallHandlerEvent(hostStruct, namesTableId, handlersTableId, 
+      -1, eventDataIndex);
+  }
 }
 
 void MainAppLua_CallKeyDownEvent(MainAppHostStruct * hostStruct, SDL_KeyboardEvent * e)
@@ -496,20 +614,20 @@ void MainAppLua_CallMouseMotionEvent(MainAppHostStruct * hostStruct, SDL_MouseMo
   lua_newtable(luaState);
   eventDataIndex = lua_gettop(luaState);
 
-  // table.xrel = relative x movement
-  lua_pushstring(luaState, "xrel");
+  // table.ChangeX = relative x movement
+  lua_pushstring(luaState, "ChangeX");
   lua_pushnumber(luaState, e->xrel);
   lua_settable(luaState, eventDataIndex);
-  // table.yrel = relative y movement
-  lua_pushstring(luaState, "yrel");
+  // table.ChangeY = relative y movement
+  lua_pushstring(luaState, "ChangeY");
   lua_pushnumber(luaState, e->yrel);
   lua_settable(luaState, eventDataIndex);
-  // table.x = absolute x position
-  lua_pushstring(luaState, "x");
+  // table.PositionX = absolute x position
+  lua_pushstring(luaState, "PositionX");
   lua_pushnumber(luaState, e->x);
   lua_settable(luaState, eventDataIndex);
-  // table.y = absolute x position
-  lua_pushstring(luaState, "y");
+  // table.PositionY = absolute x position
+  lua_pushstring(luaState, "PositionY");
   lua_pushnumber(luaState, e->y);
   lua_settable(luaState, eventDataIndex);
 
@@ -518,6 +636,29 @@ void MainAppLua_CallMouseMotionEvent(MainAppHostStruct * hostStruct, SDL_MouseMo
 
   // restore stack
   lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
+}
+
+int MyToAbsoluteIndex(lua_State * luaState, int index)
+{
+  if (index < 0)
+  {
+    return lua_gettop(luaState) + 1 + index;
+  }
+  return index;
+}
+
+void MyReplaceNilWithNumber(lua_State * luaState, int index, lua_Number number)
+{
+  int absoluteIndex;
+
+  NateCheck0(lua_checkstack(luaState, 1));
+
+  absoluteIndex = MyToAbsoluteIndex(luaState, index);
+  if (lua_isnil(luaState, absoluteIndex))
+  {
+    lua_pushnumber(luaState, number);
+    lua_replace(luaState, absoluteIndex);
+  }
 }
 
 void MyRegisterEventHandler(lua_State * luaState,
@@ -539,8 +680,9 @@ void MyRegisterEventHandler(lua_State * luaState,
   lua_pushstring(luaState, namesTableId);
   lua_gettable(luaState, hostTableIndex);
 
-  // HandlerNames[eventKeyIndex] = handlerName
+  // HandlerNames[eventKeyIndex ?? -1] = handlerName
   lua_pushvalue(luaState, eventKeyIndex);
+  MyReplaceNilWithNumber(luaState, -1, -1.0);
   lua_pushvalue(luaState, luaHandlerNameIndex);
   lua_settable(luaState, -3);
   lua_pop(luaState, 1); // pop the handlernames table
@@ -549,8 +691,9 @@ void MyRegisterEventHandler(lua_State * luaState,
   lua_pushstring(luaState, handlersTableId);
   lua_gettable(luaState, hostTableIndex);
 
-  // Handlers[eventKeyIndex] = handlerMethod
+  // Handlers[eventKeyIndex ?? -1] = handlerMethod
   lua_pushvalue(luaState, eventKeyIndex);
+  MyReplaceNilWithNumber(luaState, -1, -1.0);
   lua_pushvalue(luaState, luaHandlerMethodIndex);
   lua_settable(luaState, -3);
 
