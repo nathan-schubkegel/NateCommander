@@ -406,20 +406,16 @@ void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedG
 {
   size_t i, count;
   NateXmlNode * child;
-  char * names[4];
-  char * values[4];
+  const char * countValue;
   int numInputs;
   int numVcounts;
   int numPs;
 
   // <polylist material="Material-material" count="12">
-  NateCheckXml(node->AttributeCount >= 2);
-  NateXml_GetAttributes(node->Attributes, 2, names, values);
   // skip 'material' attribute (TODO: someday consume these)
-  NateCheckXml(strcmp(names[0], "material") == 0);
   // save 'count' attribute
-  NateCheckXml(strcmp(names[1], "count") == 0);
-  count = strtoul(values[1], 0, 10);
+  countValue = NateXmlNode_GetAttribute(node, "count");
+  count = strtoul(countValue, 0, 10);
   NateCheckXml(count > 0);
   // only 1 polylist is currently supported
   NateCheckXml(namedGeometry->geometry->numDataCoordinates == 0);

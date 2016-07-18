@@ -4,9 +4,9 @@ function Initialize_NicoTanks(state)
     {
       Nate = {
                Name = "Nate",
-               Position = {X = 0, Y = 0}, -- within state.WorldLeft/Top/Width/Height
-               FaceAngle = 0, -- degrees, 0 means "looking down the positive X axis (right)"
-               DesiredAngle = 0, -- degrees
+               Position = {X = -25, Y = -25}, -- within state.WorldLeft/Top/Width/Height
+               FaceAngle = 90, -- degrees, 0 means "looking down the positive X axis (right)"
+               DesiredAngle = 90, -- degrees
                ThrottleStrength = 0, -- between 0 and 100, like a percentage
                Velocity = {
                             Angle = 0, -- degrees
@@ -18,9 +18,9 @@ function Initialize_NicoTanks(state)
              },
       Nico = {
                Name = "Nico", 
-               Position = {X = 0, Y = 0}, -- within state.WorldLeft/Top/Width/Height
-               FaceAngle = 0, -- degrees, 0 means "looking down the positive X axis (right)"
-               DesiredAngle = 0, -- degrees
+               Position = {X = 25, Y = 25}, -- within state.WorldLeft/Top/Width/Height
+               FaceAngle = 270, -- degrees, 0 means "looking down the positive X axis (right)"
+               DesiredAngle = 270, -- degrees
                ThrottleStrength = 0, -- between 0 and 100, like a percentage
                Velocity = {
                             Angle = 0, -- degrees
@@ -34,10 +34,10 @@ function Initialize_NicoTanks(state)
     
   state.Bullets = {}
 
-  state.WorldLeft = -50
-  state.WorldTop = -50
-  state.WorldWidth = 100
-  state.WorldHeight = 100
+  state.WorldLeft = -500
+  state.WorldTop = -500
+  state.WorldWidth = 1000
+  state.WorldHeight = 1000
   
   state.WorldTime = C_MsCounter_Create()
   C_MsCounter_Reset(state.WorldTime)
@@ -52,9 +52,8 @@ function Initialize_NicoTanks(state)
 
   state.Mashes =
     {
-      -- TODO: actually load this info and use it
-      --Tank = C_NateMash_LoadFromColladaResourceFile("nicotank.dae"),
-      --Rock = C_NateMash_LoadFromColladaResourceFile("nicorock.dae"),
+      Tank = C_NateMash_LoadFromColladaResourceFile("nicotank.dae"),
+      Rock = C_NateMash_LoadFromColladaResourceFile("nicorock.dae"),
     }
     
   -- TODO: find a way to gather this from the NateMash
@@ -441,5 +440,8 @@ function Draw(state, e)
   -- Draw stuff
   C_DrawAxisLines();
   C_DrawYAngledCube(30); -- angle
-  --C_NateMash_DrawUpright(durpMetronome, durpMetronomePosition, durpMetronomeRotation, durpMetronomeScale);
+  
+  for name, tank in pairs(state.Tanks) do
+    C_NateMash_DrawUpright(state.Mashes.Tank, tank.Position.X, 0, -tank.Position.Y);
+  end
 end

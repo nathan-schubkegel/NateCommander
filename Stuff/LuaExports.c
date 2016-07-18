@@ -5,6 +5,7 @@
 //#include <Windows.h>
 #include "MsCounter.h"
 #include "NateMash.h"
+#include "NateMashDrawing.h"
 #include "MainAppLua.h"
 #include "MainAppPhysics.h"
 #include <GL\gl.h>
@@ -306,6 +307,34 @@ int C_NateMash_LoadFromColladaResourceFile(lua_State * luaState)
   NateMash_LoadFromColladaResourceFile(mash, fileName);
 
   return 1;
+}
+
+int C_NateMash_DrawUpright(lua_State * luaState)
+{
+  NateMash * mash;
+  float position[3];
+  float rotation[3];
+  float scale[3];
+
+  NateCheck(lua_gettop(luaState) == 4, "Expected exactly 4 arguments");
+  NateCheck(IsNateUserData_NateMash(luaState, 1, &mash), "Expected argument 1 to be NateMash");
+  NateCheck(lua_isnumber(luaState, 2), "Expected argument 2 to be number");
+  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 to be number");
+  NateCheck(lua_isnumber(luaState, 4), "Expected argument 4 to be number");
+
+  position[0] = lua_tonumber(luaState, 2);
+  position[1] = lua_tonumber(luaState, 3);
+  position[2] = lua_tonumber(luaState, 4);
+  rotation[0] = 0;
+  rotation[1] = 0;
+  rotation[2] = 0;
+  scale[0] = 10;
+  scale[1] = 10;
+  scale[2] = 10;
+
+  NateMash_DrawUpright(mash, position, rotation, scale);
+
+  return 0;
 }
 
 int C_PolarVector2dAdd(lua_State * luaState)
@@ -623,6 +652,7 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_RegisterMouseMotionHandler);
   PUBLISH_CMETHOD(C_NateMash_Uninit);
   PUBLISH_CMETHOD(C_NateMash_LoadFromColladaResourceFile);
+  PUBLISH_CMETHOD(C_NateMash_DrawUpright);
   PUBLISH_CMETHOD(C_PolarVector2dAdd);
   PUBLISH_CMETHOD(C_PolarVector2dDup);
   PUBLISH_CMETHOD(C_PolarVector2dToCartesian);

@@ -3,6 +3,6 @@
 
 #include "NateMash.h"
 
-void NateMash_DrawUpright(NateMash * mash, float * durpMetronomePosition, float * durpMetronomeRotation, float * durpMetronomeScale);
+void NateMash_DrawUpright(NateMash * mash, float * position, float * rotation, float * scale);
 
 #endif
