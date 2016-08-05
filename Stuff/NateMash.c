@@ -7,6 +7,24 @@
 #include "FatalErrorHandler.h"
 #include "ResourceLoader.h"
 
+#pragma warning( disable : 4996) // strcpy is unsafe warning
+
+void NateMash_Init(NateMash * obj)
+{
+  NateCheck0(obj != 0);
+  memset(obj, 0, sizeof(NateMash));
+}
+
+void NateMash_Uninit(NateMash * obj)
+{
+  NateCheck0(obj != 0);
+  if (obj->zdata != 0)
+  {
+    free(obj->zdata);
+  }
+  memset(obj, 0, sizeof(NateMash));
+}
+
 NateMash * NateMash_Create()
 {
   NateMash * obj = malloc(sizeof(NateMash));
@@ -21,250 +39,550 @@ void NateMash_Destroy(NateMash * obj)
   free(obj);
 }
 
-void NateMash_Init(NateMash * obj)
-{
-  memset(obj, 0, sizeof(NateMash));
-}
-
-// This method must survive being called multiple times for a single object
-void NateMash_Uninit(NateMash * obj)
-{
-  size_t i;
-  NateMashGeometry * geometry;
-
-  if (obj->sources != 0)
-  {
-    for (i = 0; i < obj->numSources; i++)
-    {
-      free(obj->sources[i].data);
-    }
-    free(obj->sources);
-  }
-  obj->sources = 0;
-  obj->numSources = 0;
-
-  if (obj->geometries != 0)
-  {
-    for (i = 0; i < obj->numGeometries; i++)
-    {
-      geometry = &obj->geometries[i];
-
-      if (geometry->inputs != 0)
-      {
-        free(geometry->inputs);
-      }
-      geometry->inputs = 0;
-      geometry->numInputs = 0;
-
-      if (geometry->dataIndexes != 0)
-      {
-        free(geometry->dataIndexes);
-      }
-      geometry->dataIndexes = 0;
-      geometry->numDataIndexes = 0;
-      geometry->numDataCoordinates = 0;
-    }
-    free(obj->geometries);
-  }
-  obj->geometries = 0;
-  obj->numGeometries = 0;
-}
-
-typedef struct MyNamedGeometry
-{
-  char * name;
-  size_t firstPolyListInputIndex;
-  size_t polyListInputCount;
-  NateMashGeometry * geometry;
-} MyNamedGeometry;
-
-typedef struct MyNamedSource
-{
-  char * name;
-  NateMashSource * source;
-} MyNamedSource;
-
-typedef struct MyNamedVertice
-{
-  char * name;
-  char * sourceName;
-} MyNamedVertice;
-
-typedef struct MyNamedPolyListInput
-{
-  char * sourceName;
-  NateMashPolyListInput * input;
-} MyNamedPolyListInput;
-
 typedef struct NateMashLoadInfo
 {
   NateMash * mash;
   const char * fileName;
-  NateList * sources; // holds struct MyNamedSource
-  NateList * vertices; // holds struct MyNamedVertice
-  NateList * polyListInputs; // holds struct MyNamedPolyListInput
-  NateList * geometries; // holds struct MyNamedGeometry
+  size_t spaceToAllocate;
+  size_t remainingSpace;
+  int isCountingRequiredSpace;
+  void * nextFreeSpace;
 } NateMashLoadInfo;
 
 #define NateCheckXml(condition) NateCheck2(condition, "while parsing xml file", loadInfo->fileName)
+void * MyNateMashAllocate(NateMashLoadInfo * loadInfo, size_t amount);
 void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessLibraryVisualScenes(NateMashLoadInfo * loadInfo, NateXmlNode * libraryVisualScenes);
+size_t MyProcessVisualSceneNodes(NateMashLoadInfo * loadInfo, NateXmlNode * parent, int justCountChildren,
+                                 NateMashNodeChildren * mashNodeContainer);
+void MyProcessVisualSceneNode(NateMashLoadInfo * loadInfo, NateXmlNode * node, 
+      NateXmlNode * matrix, NateXmlNode * instanceGeometry, NateMashNodeChildren * mashNodeContainer);
 void MyProcessLibraryGeometries(NateMashLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessGeometry(NateMashLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessMesh(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry);
-void MyProcessSource(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessGeometry(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashGeometry * geometry);
+void MyProcessMesh(NateMashLoadInfo * loadInfo, NateXmlNode * mesh, NateMashGeometry * geometry);
+void MyProcessSource(NateMashLoadInfo * loadInfo, NateXmlNode * sourceNode, NateMashSource * source);
 void MyProcessSourceFloatArray(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashSource * source);
 void MyProcessSourceTechniqueCommon(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashSource * source);
-void MyProcessVertices(NateMashLoadInfo * loadInfo, NateXmlNode * node);
-void MyProcessVerticesInput(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedVertice * namedVertice);
-void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry);
-void MyProcessPolylistInput(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry);
-void MyProcessPolylistVcount(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry);
-void MyProcessPolylistP(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry);
-int MyFindVertice(void * userData, void * item);
-int MyFindSource(void * userData, void * item);
-int MyFindGeometry(void * userData, void * item);
+void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * polylist, 
+                       NateXmlNode * meshNode, NateMashGeometry * geometry);
+void MyProcessPolylistInput(NateMashLoadInfo * loadInfo, NateXmlNode * inputNode, NateXmlNode * meshNode,
+                            NateMashGeometry * geometry, NateMashPolyListInput * input);
+void MyProcessPolylistVcount(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashGeometry * geometry);
+void MyProcessPolylistP(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashGeometry * geometry, int numInputs, int numDataCoordinates);
+
+size_t RoundToDword(size_t amount)
+{
+  size_t mod = amount % 4;
+  if (mod == 0) return amount;
+  else return amount + (4 - mod);
+}
+
+void * MyNateMashAllocate(NateMashLoadInfo * loadInfo, size_t amount)
+{
+  void * meh;
+
+  // sometimes this method is called asking for 0 bytes
+  if (amount == 0)
+  {
+    return 0; // return a null pointer
+  }
+
+  // make sure the caller is aware of the DWORD requirement
+  NateCheck(amount == RoundToDword(amount), "allocation amounts must be DWORD-sized so they're all dword aligned");
+  NateCheck(amount <= loadInfo->remainingSpace, "counted and allocated amounts were mismatched");
+  loadInfo->remainingSpace -= amount;
+  meh = loadInfo->nextFreeSpace;
+  loadInfo->nextFreeSpace = (void*)((char*)loadInfo->nextFreeSpace + amount);
+  return meh;
+}
 
 void MyLoadFromColladaFileCallback(
   NateXmlNode * fakeRoot,
   void * userData)
 {
   NateMashLoadInfo * loadInfo;
-  size_t i;
-  NateXmlNode * child;
-  
+  NateXmlNode * collada;
+  NateMash * mash;
+  const char * fileName;
+
   loadInfo = (NateMashLoadInfo*)userData;
-  for (i = 0; i < NateXmlNode_GetCount(fakeRoot); i++)
-  {
-    child = NateXmlNode_GetChild(fakeRoot, i);
-    NateCheckXml(strcmp(child->ElementName, "COLLADA") == 0);
-    MyProcessRoot(loadInfo, child);
-  }
+
+  // preconditions
+  NateCheck(loadInfo->fileName != 0, "filename is needed for XML error message reports");
+  NateCheck(loadInfo->mash != 0, "mash struct should be allocated before XML parsing takes place");
+  NateCheck(loadInfo->mash->zdata == 0, "mash data should be unallocated before entering this method");
+
+  // preserve inputs passed via 'loadInfo'
+  mash = loadInfo->mash;
+  fileName = loadInfo->fileName;
+
+  // clean start
+  memset(loadInfo, 0, sizeof(NateMashLoadInfo));
+  memset(mash, 0, sizeof(NateMash));
+
+  // initial state
+  loadInfo->fileName = fileName;
+  loadInfo->mash = mash;
+
+  // <COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  NateCheckXml(NateXmlNode_GetCount(fakeRoot) == 1); // currently can only handle one ever, due to memory allocation games
+  collada = NateXmlNode_GetChild(fakeRoot, 0);
+  NateCheckXml(strcmp(collada->ElementName, "COLLADA") == 0);
+
+  // count memory needed for all data
+  loadInfo->isCountingRequiredSpace = 1;
+  MyProcessRoot(loadInfo, collada);
+
+  // allocate memory needed for all data
+  NateCheckXml(loadInfo->spaceToAllocate > 0);
+  loadInfo->nextFreeSpace = malloc(loadInfo->spaceToAllocate);
+  NateCheckXml(loadInfo->nextFreeSpace != 0);
+  memset(loadInfo->nextFreeSpace, 0, loadInfo->spaceToAllocate);
+  loadInfo->mash->zdata = loadInfo->nextFreeSpace;
+  loadInfo->remainingSpace = loadInfo->spaceToAllocate;
+
+  // populate data memory
+  loadInfo->isCountingRequiredSpace = 0;
+  MyProcessRoot(loadInfo, collada);
+  NateCheckXml(loadInfo->remainingSpace == 0);
 }
 
 void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
+  int libraryGeometriesProcessed;
+  int libraryVisualScenesProcessed;
   size_t i;
   NateXmlNode * child;
 
+  // geometries must be processed before visual scenes
+  libraryGeometriesProcessed = 0;
   for (i = 0; i < NateXmlNode_GetCount(node); i++)
   {
     child = NateXmlNode_GetChild(node, i);
     if (strcmp(child->ElementName, "library_geometries") == 0)
     {
+      NateCheckXml(!libraryGeometriesProcessed); // currently can only handle 1 ever, due to memory allocation games
       MyProcessLibraryGeometries(loadInfo, child);
+      libraryGeometriesProcessed = 1;
+    }
+  }
+  NateCheckXml(libraryGeometriesProcessed); // currently requires 1, due to memory allocation games
+
+  // process visual scenes
+  libraryVisualScenesProcessed = 0;
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "library_visual_scenes") == 0)
+    {
+      NateCheckXml(!libraryVisualScenesProcessed); // currently can only handle 1 ever, due to memory allocation games
+      MyProcessLibraryVisualScenes(loadInfo, child);
+      libraryVisualScenesProcessed = 1;
     }
     // ignore other elements for now
   }
+  NateCheckXml(libraryVisualScenesProcessed); // currently requires 1, due to memory allocation games
+}
+
+void MyProcessLibraryVisualScenes(NateMashLoadInfo * loadInfo, NateXmlNode * libraryVisualScenes)
+{
+  NateXmlNode * visualScene;
+  size_t requiredChildren, spaceForChildren;
+  NateMashNodeChildren * mashNodeContainer;
+
+  // what would it mean to have multiple scenes? can't handle that yet
+  NateCheckXml(NateXmlNode_GetCount(libraryVisualScenes) == 1);
+
+  visualScene = NateXmlNode_GetChild(libraryVisualScenes, 0);
+  NateCheckXml(strcmp(visualScene->ElementName, "visual_scene") == 0);
+
+  // space required for NateMashNode children
+  requiredChildren = MyProcessVisualSceneNodes(loadInfo, visualScene, 1, 0);
+  spaceForChildren = RoundToDword(requiredChildren * sizeof(NateMashNode));
+
+  // count or save all that data
+  if (loadInfo->isCountingRequiredSpace)
+  {
+    loadInfo->spaceToAllocate += spaceForChildren;
+    mashNodeContainer = 0;
+  }
+  else
+  {
+    // allocate space for NateMashNode children
+    NateCheckXml(loadInfo->mash->nodes.nodes == 0); // make sure this only gets allocated once!
+    loadInfo->mash->nodes.nodes = MyNateMashAllocate(loadInfo, spaceForChildren);
+    // This will be incremented as children are added
+    //loadInfo->mash->nodes.numNodes = requiredChildren;
+
+    mashNodeContainer = &loadInfo->mash->nodes;
+  }
+
+  // process children
+  MyProcessVisualSceneNodes(loadInfo, visualScene, 0, mashNodeContainer);
+}
+
+// returns the number of immediate child NateMashNodes that will be created
+// for the given parent node
+size_t MyProcessVisualSceneNodes(NateMashLoadInfo * loadInfo, NateXmlNode * parent, int justCountChildren,
+                                 NateMashNodeChildren * mashNodeContainer)
+{
+  size_t i, j, numChildren;
+  NateXmlNode * nodeNode;
+  NateXmlNode * thingNode;
+  NateXmlNode * matrixNode;
+  NateXmlNode * instanceGeometryNode;
+
+  numChildren = 0;
+
+  // <visual_scene id="Scene" name="Scene">
+  //   <node id="Cube_001" name="Cube_001" type="NODE">
+  //     <matrix sid="transform">1 0 0 -0.4882614 0 1 0 1.015152 0 0 1 1.72046 0 0 0 1</matrix>
+  //     <instance_geometry url="#Cube_001-mesh" />
+  //   </node>
+  // </visual_scene>
+  for (i = 0; i < NateXmlNode_GetCount(parent); i++)
+  {
+    nodeNode = NateXmlNode_GetChild(parent, i);
+    if (strcmp(nodeNode->ElementName, "node") == 0)
+    {
+      matrixNode = 0;
+      instanceGeometryNode = 0;
+
+      // get the 'matrix' and 'instance_geometry' child elements
+      // (lights and cameras don't have 'instance_geometry' so ignore those)
+      for (j = 0; j < NateXmlNode_GetCount(nodeNode); j++)
+      {
+        thingNode = NateXmlNode_GetChild(nodeNode, j);
+        if (strcmp(thingNode->ElementName, "matrix") == 0)
+        {
+          // only expecting one
+          NateCheckXml(matrixNode == 0);
+          matrixNode = thingNode;
+        }
+        else if (strcmp(thingNode->ElementName, "instance_geometry") == 0)
+        {
+          // only expecting one
+          NateCheckXml(instanceGeometryNode == 0);
+          instanceGeometryNode = thingNode;
+        }
+      }
+
+      if (matrixNode != 0 && instanceGeometryNode != 0)
+      {
+        if (!justCountChildren)
+        {
+          MyProcessVisualSceneNode(loadInfo, nodeNode, matrixNode, instanceGeometryNode, mashNodeContainer);
+        }
+        numChildren++;
+      }
+    }
+  }
+
+  return numChildren;
+}
+
+void MyProcessVisualSceneNode(NateMashLoadInfo * loadInfo, NateXmlNode * nodeNode, 
+  NateXmlNode * matrixNode, NateXmlNode * instanceGeometryNode, NateMashNodeChildren * mashNodeContainer)
+{
+  char * name;
+  char * id;
+  char * type;
+  char * matrixSid;
+  char * geometryUrl;
+  size_t i, end;
+  char * next;
+  char * oldNext;
+  NateMashMatrix matrixData;
+  size_t requiredChildren;
+  size_t allNeededSpace;
+  size_t spaceForName, spaceForId, spaceForGeometryUrl, spaceForChildren;
+  NateMashNode * newMashNode;
+  NateMashGeometry * geometry;
+
+  // <node id="Baldy" name="Baldy" type="NODE">
+  //   <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.4905362 0 0 0 1</matrix>
+  //   <instance_geometry url="#BaldySphere-mesh"/>
+  // </node>
+
+  // confirm node 'type' = "NODE", not sure what it means, but I like it
+  type = NateXmlNode_GetAttribute(nodeNode, "type");
+  NateCheckXml(type != 0 && strcmp(type, "NODE") == 0);
+
+  // consume node 'name' and 'id'
+  name = NateXmlNode_GetAttribute(nodeNode, "name");
+  NateCheckXml(name != 0);
+  id = NateXmlNode_GetAttribute(nodeNode, "id");
+  NateCheckXml(id != 0);
+
+  // confirm matrix attribute "sid" = "transform", not sure what it means, but I like it
+  matrixSid = NateXmlNode_GetAttribute(matrixNode, "sid");
+  NateCheckXml(matrixSid != 0 && strcmp(matrixSid, "transform") == 0);
+
+  // consume matrix data
+  next = matrixNode->ElementText;
+  for (i = 0; i < 16; i++)
+  {
+    oldNext = next;
+    // Collada matrices are written in row-major order to aid the human reader.
+    // OpenGL matrices are in column-major order
+    // Do some fancy shuffling to read the values correctly.
+    matrixData.elements[i / 4 + 4 * (i % 4)] = (float)strtod(next, &next);
+    NateCheckXml(oldNext != next);
+  }
+  oldNext = next;
+  end = (size_t)strtod(next, &next);
+  NateCheckXml(end == 0);
+  NateCheckXml(oldNext == next);
+
+  // consume instance geometry attribute 'url' = '#IdOfSomeGeometry'
+  geometryUrl = NateXmlNode_GetAttribute(instanceGeometryNode, "url");
+  NateCheckXml(geometryUrl != 0);
+  NateCheckXml(geometryUrl[0] == '#');
+  geometryUrl++;
+
+  // count immediate children
+  requiredChildren = MyProcessVisualSceneNodes(loadInfo, nodeNode, 1, 0);
+
+  // space required for dynamic fields of NateMashNode
+  allNeededSpace = 
+    (spaceForName = RoundToDword(strlen(name) + 1)) +
+    (spaceForId = RoundToDword(strlen(id) + 1)) + 
+    (spaceForGeometryUrl = RoundToDword(strlen(geometryUrl) + 1)) +
+    // space required for NateMashNode children
+    (spaceForChildren = RoundToDword(requiredChildren * sizeof(NateMashNode)));
+
+  // count or save all that data
+  if (loadInfo->isCountingRequiredSpace)
+  {
+    loadInfo->spaceToAllocate += allNeededSpace;
+    newMashNode = 0;
+  }
+  else
+  {
+    // claim space for NateMashNode object
+    // (it was allocated by a parent call, but we claim it here)
+    NateCheckXml(mashNodeContainer != 0); // make sure this was passed in!
+    NateCheckXml(mashNodeContainer->nodes != 0); // make sure this was allocated!
+    newMashNode = &mashNodeContainer->nodes[mashNodeContainer->numNodes];
+    mashNodeContainer->numNodes++;
+
+    // allocate space for NateMashNode children
+    newMashNode->nodes.nodes = MyNateMashAllocate(loadInfo, spaceForChildren);
+    // This will be incremented as children are added
+    //newMashNode->nodes.numNodes = requiredChildren;
+
+    // save dynamic fields of NateMashNode
+    newMashNode->id = MyNateMashAllocate(loadInfo, spaceForId);
+    strcpy(newMashNode->id, id);
+    newMashNode->name = MyNateMashAllocate(loadInfo, spaceForName);
+    strcpy(newMashNode->name, name);
+    newMashNode->geometryUrl = MyNateMashAllocate(loadInfo, spaceForGeometryUrl);
+    strcpy(newMashNode->geometryUrl, geometryUrl);
+
+    // save non-dynamic fields of NateMashNode
+    memcpy(&newMashNode->transform, &matrixData, sizeof(newMashNode->transform));
+
+    // find geometry by that name, save pointer to it in NateMashNode
+    NateCheckXml(newMashNode->geometry == 0);
+    for (i = 0; i < loadInfo->mash->numGeometries; i++)
+    {
+      geometry = &loadInfo->mash->geometries[i];
+      if (strcmp(geometry->id, geometryUrl) == 0)
+      {
+        newMashNode->geometry = geometry;
+        break;
+      }
+    }
+    NateCheckXml(newMashNode->geometry != 0);
+  }
+
+  // process children
+  MyProcessVisualSceneNodes(loadInfo, nodeNode, 0, newMashNode == 0 ? 0 : &newMashNode->nodes);
 }
 
 void MyProcessLibraryGeometries(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
-  size_t i;
+  size_t i, requiredChildren, spaceForChildren;
   NateXmlNode * child;
+  NateMashGeometry * geometry;
 
+  // get count of geometry children
+  requiredChildren = 0;
   for (i = 0; i < NateXmlNode_GetCount(node); i++)
   {
     child = NateXmlNode_GetChild(node, i);
     NateCheckXml(strcmp(child->ElementName, "geometry") == 0);
-    MyProcessGeometry(loadInfo, child);
+    requiredChildren++;
+  }
+
+  // space required for referencing geometry children
+  spaceForChildren = RoundToDword(requiredChildren * sizeof(NateMashGeometry));
+
+  // count or save all that data
+  if (loadInfo->isCountingRequiredSpace)
+  {
+    loadInfo->spaceToAllocate += spaceForChildren;
+  }
+  else
+  {
+    NateCheckXml(loadInfo->mash->geometries == 0); // make sure this only gets allocated once!
+    loadInfo->mash->geometries = MyNateMashAllocate(loadInfo, spaceForChildren);
+    loadInfo->mash->numGeometries = requiredChildren;
+  }
+
+  // process children
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    NateCheckXml(strcmp(child->ElementName, "geometry") == 0);
+
+    geometry = loadInfo->isCountingRequiredSpace ? 0 : &loadInfo->mash->geometries[i];
+    MyProcessGeometry(loadInfo, child, geometry);
   }
 }
 
-void MyProcessGeometry(NateMashLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessGeometry(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashGeometry * geometry)
 {
-  size_t i;
+  size_t spaceForId;
   NateXmlNode * child;
-  char * names[4];
-  char * values[4];
-  MyNamedGeometry * namedGeometry;
+  char * idValue;
 
   // <geometry id="Cube-mesh" name="Cube">
-  NateCheckXml(node->AttributeCount >= 1);
-  NateXml_GetAttributes(node->Attributes, 1, names, values);
   // save id attribute, it's used later
-  NateCheckXml(strcmp(names[0], "id") == 0);
-  // (make sure it's not in use already)
-  NateCheckXml(!NateList_FindData(loadInfo->geometries, MyFindGeometry, values[0], 0));
-  // (allocate a MyNamedGeometry to store the name)
-  namedGeometry = (MyNamedGeometry*)NateList_AddZeroedData(loadInfo->geometries);
-  NateCheckXml(namedGeometry != 0);
-  namedGeometry->name = values[0];
-  // (allocate a NateMashGeometry to store other info)
-  namedGeometry->geometry = malloc(sizeof(NateMashGeometry));
-  NateCheckXml(namedGeometry != 0);
-  memset(namedGeometry->geometry, 0, sizeof(NateMashGeometry));
+  idValue = (char*)NateXmlNode_GetAttribute(node, "id");
+  NateCheckXml(idValue != 0);
 
-  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  spaceForId = RoundToDword(strlen(idValue) + 1);
+
+  // count or save all that data
+  if (loadInfo->isCountingRequiredSpace)
   {
-    child = NateXmlNode_GetChild(node, i);
-    // only 1 <mesh> per <geometry> is supported for now, until someone understands what multiple meshes means and how I'd store it in my data structures
-    NateCheckXml(i == 0);
-    NateCheckXml(strcmp(child->ElementName, "mesh") == 0);
-    MyProcessMesh(loadInfo, child, namedGeometry);
+    loadInfo->spaceToAllocate += spaceForId;
   }
+  else
+  {
+    NateCheckXml(geometry->id == 0); // make sure this only gets allocated once!
+    geometry->id = MyNateMashAllocate(loadInfo, spaceForId);
+    strcpy(geometry->id, idValue);
+  }
+
+  // exactly 1 <mesh> per <geometry> is supported for now, 
+  // until someone understands what multiple meshes means and how I'd store it in my data structures
+  NateCheckXml(NateXmlNode_GetCount(node) == 1);
+  child = NateXmlNode_GetChild(node, 0);
+  NateCheckXml(strcmp(child->ElementName, "mesh") == 0);
+
+  MyProcessMesh(loadInfo, child, geometry);
 }
 
-void MyProcessMesh(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry)
+void MyProcessMesh(NateMashLoadInfo * loadInfo, NateXmlNode * mesh, NateMashGeometry * geometry)
 {
-  size_t i;
-  NateXmlNode * child;
-  int numPolylists;
+  //<mesh>
+  //  <source id="Rightard-mesh-positions">...</source>
+  //  <source id="Rightard-mesh-normals">...</source>
+  //  <vertices id="Rightard-mesh-vertices">...</vertices>
+  //  <polylist count="12">...</polylist>
+  //</mesh>
 
+  size_t i, spaceForSources;
+  NateXmlNode * child;
+  NateXmlNode * polylist;
+  int numSources, numPolylists, sourceIndex;
+  NateMashSource * source;
+
+  // count the number of child elements
+  numSources = 0;
   numPolylists = 0;
-  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  polylist = 0;
+  for (i = 0; i < NateXmlNode_GetCount(mesh); i++)
   {
-    child = NateXmlNode_GetChild(node, i);
+    child = NateXmlNode_GetChild(mesh, i);
     if (strcmp(child->ElementName, "source") == 0)
     {
-      MyProcessSource(loadInfo, child);
-    }
-    else if (strcmp(child->ElementName, "vertices") == 0)
-    {
-      MyProcessVertices(loadInfo, child);
+      numSources++;
     }
     else if (strcmp(child->ElementName, "polylist") == 0)
     {
-      // only 1 polylist is supported for now
       numPolylists++;
-      NateCheckXml(numPolylists == 1);
-      MyProcessPolylist(loadInfo, child, namedGeometry);
+      polylist = child;
     }
   }
+
+  // count or allocate space for 'source' children
+  spaceForSources = RoundToDword(numSources * sizeof(NateMashSource));
+  if (loadInfo->isCountingRequiredSpace)
+  {
+    loadInfo->spaceToAllocate += spaceForSources;
+  }
+  else
+  {
+    NateCheckXml(geometry->sources == 0); // only allocate this once
+    geometry->sources = MyNateMashAllocate(loadInfo, spaceForSources);
+    geometry->numSources = numSources;
+  }
+
+  // process sources
+  sourceIndex = 0;
+  for (i = 0; i < NateXmlNode_GetCount(mesh); i++)
+  {
+    child = NateXmlNode_GetChild(mesh, i);
+    if (strcmp(child->ElementName, "source") == 0)
+    {
+      source = 0;
+      if (!loadInfo->isCountingRequiredSpace)
+      {
+        source = &geometry->sources[sourceIndex];
+        sourceIndex++;
+      }
+
+      MyProcessSource(loadInfo, child, source);
+    }
+  }
+
+  // process polylist
+  NateCheckXml(numPolylists == 1); // exactly 1 polylist is supported for now
+  MyProcessPolylist(loadInfo, polylist, mesh, geometry);
 }
 
-void MyProcessSource(NateMashLoadInfo * loadInfo, NateXmlNode * node)
+void MyProcessSource(NateMashLoadInfo * loadInfo, NateXmlNode * sourceNode, NateMashSource * source)
 {
-  size_t i;
+  size_t i, spaceForId;
   NateXmlNode * child;
-  char * names[4];
-  char * values[4];
-  MyNamedSource * namedSource;
-  NateMashSource * source;
   int numFloatArrays;
   int numTechniqueCommons;
+  char * id;
 
-  // <source id="Cube-mesh-normals">
-  NateCheckXml(node->AttributeCount >= 1);
-  NateXml_GetAttributes(node->Attributes, 1, names, values);
+  //<source id="BaldySphere-mesh-positions">
+  //  <float_array id="BaldySphere-mesh-positions-array" count="126">0 0 -0.5 ... </float_array>
+  //  <technique_common>
+  //    <accessor source="#BaldySphere-mesh-positions-array" count="42" stride="3">
+  //      <param name="X" type="float"/>
+  //      <param name="Y" type="float"/>
+  //      <param name="Z" type="float"/>
+  //    </accessor>
+  //  </technique_common>
+  //</source>
+
   // save id attribute, it's used later
-  NateCheckXml(strcmp(names[0], "id") == 0);
-  // (make sure it's not in use already)
-  NateCheckXml(!NateList_FindData(loadInfo->sources, MyFindSource, values[0], 0));
-  // (allocate a MyNamedSource to store this name)
-  namedSource = (MyNamedSource*)NateList_AddZeroedData(loadInfo->sources);
-  NateCheckXml(namedSource != 0);
-  namedSource->name = values[0];
-  // allocate NateMashSource while we're at it
-  namedSource->source = malloc(sizeof(NateMashSource));
-  NateCheckXml(namedSource->source != 0);
-  memset(namedSource->source, 0, sizeof(NateMashSource));
-  source = namedSource->source;
-
+  id = NateXmlNode_GetAttribute(sourceNode, "id");
+  NateCheckXml(id != 0);
+  spaceForId = RoundToDword(strlen(id) + 1);
+  if (loadInfo->isCountingRequiredSpace)
+  {
+    loadInfo->spaceToAllocate += spaceForId;
+  }
+  else
+  {
+    source->id = MyNateMashAllocate(loadInfo, spaceForId);
+    strcpy(source->id, id);
+  }
+  
+  // process child elements
   numFloatArrays = 0;
   numTechniqueCommons = 0;
-  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  for (i = 0; i < NateXmlNode_GetCount(sourceNode); i++)
   {
-    child = NateXmlNode_GetChild(node, i);
+    child = NateXmlNode_GetChild(sourceNode, i);
     if (strcmp(child->ElementName, "float_array") == 0)
     {
       numFloatArrays++;
@@ -278,461 +596,423 @@ void MyProcessSource(NateMashLoadInfo * loadInfo, NateXmlNode * node)
       MyProcessSourceTechniqueCommon(loadInfo, child, source);
     }
   }
+
+  // these need to exist
+  NateCheckXml(numFloatArrays == 1);
+  NateCheckXml(numTechniqueCommons == 1);
 }
 
 void MyProcessSourceFloatArray(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashSource * source)
 {
-  char * names[4];
-  char * values[4];
-  size_t i, count;
+  char * countText;
+  size_t i, count, spaceForData;
   char * next;
   char * oldNext;
 
-  // <float_array id="Cube-mesh-normals-array" count="36">0 0 -1 </float_array>
-  NateCheckXml(node->AttributeCount >= 2);
-  NateXml_GetAttributes(node->Attributes, 2, names, values);
-  // only one <float_array> is currently allowed per source
-  NateCheckXml(source->data == 0);
-  // skip "id" value, looks like it's only meaningful inside the <source>
-  // and only when there are multiple <float_array> (which we currently don't support)
-  NateCheckXml(strcmp(names[0], "id") == 0);
-  // save 'count' attribute
-  NateCheckXml(strcmp(names[1], "count") == 0);
-  count = strtoul(values[1], 0, 10);
+  //<source id="BaldySphere-mesh-positions">
+  //  <float_array id="BaldySphere-mesh-positions-array" count="126">0 0 -0.5 ... </float_array>
+  //  ...
+  //</source>
+
+  // capture 'count' attribute
+  countText = NateXmlNode_GetAttribute(node, "count");
+  NateCheckXml(countText != 0);
+  count = strtoul(countText, 0, 10);
   NateCheckXml(count > 0);
-  // allocate space for that many floats
-  source->totalLength = count;
-  source->data = malloc(count * sizeof(float));
-  NateCheckXml(source->data != 0);
-  // store numbers
-  next = node->ElementText;
-  for (i = 0; i < count; i++)
+
+  // count or allocate space for data
+  spaceForData = RoundToDword(sizeof(float) * count);
+  if (loadInfo->isCountingRequiredSpace)
   {
-    oldNext = next;
-    source->data[i] = (float)strtod(next, &next);
-    NateCheckXml(oldNext != next);
+    loadInfo->spaceToAllocate += spaceForData;
   }
-  oldNext = next;
-  count = (size_t)strtod(next, &next);
-  NateCheckXml(count == 0);
-  NateCheckXml(oldNext == next);
+  else
+  {
+    NateCheckXml(source->data == 0); // make sure this hasn't been allocated yet
+    source->data = MyNateMashAllocate(loadInfo, spaceForData);
+    source->totalLength = count;
+  
+    // store numbers
+    next = node->ElementText;
+    for (i = 0; i < count; i++)
+    {
+      oldNext = next;
+      source->data[i] = (float)strtod(next, &next);
+      NateCheckXml(oldNext != next);
+    }
+    oldNext = next;
+    count = (size_t)strtod(next, &next);
+    NateCheckXml(count == 0);
+    NateCheckXml(oldNext == next);
+  }
 }
 
 void MyProcessSourceTechniqueCommon(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashSource * source)
 {
-  char * names[4];
-  char * values[4];
   NateXmlNode * accessor;
+  char * countText;
+  char * strideText;
 
-  // <technique_common>
-  //   <accessor source="#Cube-mesh-normals-array" count="12" stride="3">
+  //<source id="BaldySphere-mesh-positions">
+  //  ...
+  //  <technique_common>
+  //    <accessor source="#BaldySphere-mesh-positions-array" count="42" stride="3">
+  //      <param name="X" type="float"/>
+  //      <param name="Y" type="float"/>
+  //      <param name="Z" type="float"/>
+  //    </accessor>
+  //  </technique_common>
+  //</source>
+
   NateCheckXml(NateXmlNode_GetCount(node) == 1); // only one accessor is currently allowed per source
   accessor = NateXmlNode_GetChild(node, 0);
   NateCheckXml(strcmp(accessor->ElementName, "accessor") == 0);
-  NateCheckXml(accessor->AttributeCount >= 3);
-  NateCheckXml(source->count == 0); // only one technique_common and accessor is currently supported per source
-  NateCheckXml(source->stride == 0);
-  NateCheckXml(accessor->AttributeCount >= 3);
-  NateXml_GetAttributes(accessor->Attributes, 3, names, values);
+
   // skip 'source' attribute and value (it just refers to the single <float_array>)
-  NateCheckXml(strcmp(names[0], "source") == 0);
-  // store 'count' value
-  NateCheckXml(strcmp(names[1], "count") == 0);
-  source->count = strtoul(values[1], 0, 10);
-  NateCheckXml(source->count > 0);
-  // store 'stride' value
-  NateCheckXml(strcmp(names[2], "stride") == 0);
-  source->stride = strtoul(values[2], 0, 10);
-  NateCheckXml(source->stride > 0);
-  NateCheckXml(source->stride * source->count == source->totalLength);
-}
 
-void MyProcessVertices(NateMashLoadInfo * loadInfo, NateXmlNode * node)
-{
-  size_t i;
-  NateXmlNode * child;
-  char * names[4];
-  char * values[4];
-  MyNamedVertice * namedVertice;
-  int numInputs;
-
-  // <vertices id="Cube-mesh-vertices">
-  NateCheckXml(node->AttributeCount >= 1);
-  NateXml_GetAttributes(node->Attributes, 1, names, values);
-  // save id attribute, it's used later
-  NateCheckXml(strcmp(names[0], "id") == 0);
-  // (make sure it's not in use already)
-  NateCheckXml(!NateList_FindData(loadInfo->vertices, MyFindVertice, values[0], 0));
-  // (allocate a MyNamedVertice to store the name)
-  namedVertice = (MyNamedVertice*)NateList_AddZeroedData(loadInfo->vertices);
-  NateCheckXml(namedVertice != 0);
-  namedVertice->name = values[0];
-
-  numInputs = 0;
-  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  if (!loadInfo->isCountingRequiredSpace)
   {
-    child = NateXmlNode_GetChild(node, i);
-    if (strcmp(child->ElementName, "input") == 0)
-    {
-      numInputs++;
-      NateCheckXml(numInputs == 1); // only 1 input per <vertices> is supported for now
-      MyProcessVerticesInput(loadInfo, child, namedVertice);
-    }
+    // only one technique_common and accessor is currently supported per source
+    NateCheckXml(source->count == 0);
+    NateCheckXml(source->stride == 0);
+
+    // store 'count' attribute
+    countText = NateXmlNode_GetAttribute(accessor, "count");
+    NateCheckXml(countText != 0);
+    source->count = strtoul(countText, 0, 10);
+    NateCheckXml(source->count > 0);
+    
+    // store 'stride' value
+    strideText = NateXmlNode_GetAttribute(accessor, "stride");
+    NateCheckXml(strideText != 0);
+    source->stride = strtoul(strideText, 0, 10);
+    NateCheckXml(source->stride > 0);
+    NateCheckXml(source->stride * source->count == source->totalLength);
   }
-  NateCheckXml(numInputs == 1); // exactly 1 is required
 }
 
-void MyProcessVerticesInput(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedVertice * namedVertice)
+void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * polylist, 
+                       NateXmlNode * meshNode, NateMashGeometry * geometry)
 {
-  char * names[2];
-  char * values[2];
-
-  // <input semantic="POSITION" source="#Cube-mesh-positions"/>
-  NateCheckXml(node->AttributeCount >= 2);
-  NateXml_GetAttributes(node->Attributes, 2, names, values);
-  // verify 'semantic' attribute is POSITION (it's arbitrary - that's just what I see blender exporting)
-  NateCheckXml(strcmp(names[0], "semantic") == 0);
-  NateCheckXml(strcmp(values[0], "POSITION") == 0);
-  // save 'source' attribute, it's used later
-  // it starts with # to indicate it's referencing something else (but don't save that character)
-  NateCheckXml(strcmp(names[1], "source") == 0);
-  NateCheckXml(values[1][0] == '#');
-  // only one <input> is currently supported per single <vertices> element
-  NateCheckXml(namedVertice->sourceName == 0);
-  namedVertice->sourceName = values[1] + 1; // +1 is to skip the # character
-}
-
-void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry)
-{
-  size_t i, count;
+  size_t i, spaceForInputs;
   NateXmlNode * child;
   const char * countValue;
   int numInputs;
   int numVcounts;
   int numPs;
+  int numDataCoordinates;
+  NateMashPolyListInput * input;
 
-  // <polylist material="Material-material" count="12">
-  // skip 'material' attribute (TODO: someday consume these)
-  // save 'count' attribute
-  countValue = NateXmlNode_GetAttribute(node, "count");
-  count = strtoul(countValue, 0, 10);
-  NateCheckXml(count > 0);
-  // only 1 polylist is currently supported
-  NateCheckXml(namedGeometry->geometry->numDataCoordinates == 0);
-  namedGeometry->geometry->numDataCoordinates = count;
+  //<mesh>
+  //  <source id="BaldySphere-mesh-positions">
+  //    <float_array id="BaldySphere-mesh-positions-array" count="126">0 0 -0.5 0.3618037 ...
+  //    ...
+  //  </source>
+  //  <source id="BaldySphere-mesh-normals">
+  //    <float_array id="BaldySphere-mesh-normals-array" count="240">0.1023809 -0.3150898 ...
+  //    ...
+  //  </source>
+  //  <vertices id="BaldySphere-mesh-vertices">
+  //    <input semantic="POSITION" source="#BaldySphere-mesh-positions"/>
+  //  </vertices>
+  //  <polylist count="80">
+  //    <input semantic="VERTEX" source="#BaldySphere-mesh-vertices" offset="0"/>
+  //    <input semantic="NORMAL" source="#BaldySphere-mesh-normals" offset="1"/>
+  //    <vcount>3 3 3 3 3 3 3 3 3  ...
+  //    <p>0 0 13 0 12 0 1 1 13 1 15 ...
+  //  </polylist>
+  //</mesh>
 
-  numInputs = 0;
-  numVcounts = 0;
-  numPs = 0;
-  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  // save 'count' attribute as numDataCoordinates
+  countValue = NateXmlNode_GetAttribute(polylist, "count");
+  numDataCoordinates = strtoul(countValue, 0, 10);
+  NateCheckXml(numDataCoordinates > 0);
+  if (!loadInfo->isCountingRequiredSpace)
   {
-    child = NateXmlNode_GetChild(node, i);
+    geometry->polylist.numDataCoordinates = numDataCoordinates;
+  }
+
+  // count <input> elements
+  numInputs = 0;
+  for (i = 0; i < NateXmlNode_GetCount(polylist); i++)
+  {
+    child = NateXmlNode_GetChild(polylist, i);
     if (strcmp(child->ElementName, "input") == 0)
     {
       numInputs++;
-      NateCheckXml(numPs == 0); // all <input> must be processed before <p>
-      MyProcessPolylistInput(loadInfo, child, namedGeometry);
     }
-    else if (strcmp(child->ElementName, "vcount") == 0)
+  }
+  NateCheckXml(numInputs > 0); // there must be inputs, right?
+
+  // count or allocate space for <input> children
+  spaceForInputs = RoundToDword(numInputs * sizeof(NateMashPolyListInput));
+  if (loadInfo->isCountingRequiredSpace)
+  {
+    loadInfo->spaceToAllocate += spaceForInputs;
+  }
+  else
+  {
+    NateCheckXml(geometry->polylist.inputs == 0); // only allocate this once
+    geometry->polylist.inputs = MyNateMashAllocate(loadInfo, spaceForInputs);
+    geometry->polylist.numInputs = numInputs;
+  }
+
+  // all <input> must be processed before <p>
+  numInputs = 0;
+  for (i = 0; i < NateXmlNode_GetCount(polylist); i++)
+  {
+    child = NateXmlNode_GetChild(polylist, i);
+    if (strcmp(child->ElementName, "input") == 0)
+    {
+      input = 0;
+      if (!loadInfo->isCountingRequiredSpace)
+      {
+        input = &geometry->polylist.inputs[numInputs];
+      }
+      MyProcessPolylistInput(loadInfo, child, meshNode, geometry, input);
+      numInputs++;
+    }
+  }
+
+  // exactly 1 'vcount' must be present
+  // (we don't actually harvest any data from it, so this could theoretically be relaxed)
+  numVcounts = 0;
+  for (i = 0; i < NateXmlNode_GetCount(polylist); i++)
+  {
+    child = NateXmlNode_GetChild(polylist, i);
+    if (strcmp(child->ElementName, "vcount") == 0)
     {
       numVcounts++;
       NateCheckXml(numVcounts == 1); // only 1 is supported for now
-      MyProcessPolylistVcount(loadInfo, child, namedGeometry);
+      MyProcessPolylistVcount(loadInfo, child, geometry);
     }
-    else if (strcmp(child->ElementName, "p") == 0)
+  }
+  NateCheckXml(numVcounts == 1); // exactly 1 is supported for now
+
+  // exactly 1 'p' must be present
+  numPs = 0;
+  for (i = 0; i < NateXmlNode_GetCount(polylist); i++)
+  {
+    child = NateXmlNode_GetChild(polylist, i);
+    if (strcmp(child->ElementName, "p") == 0)
     {
       numPs++;
-      NateCheckXml(numInputs > 0); // <input>s must exist before <p> is processed
       NateCheckXml(numPs == 1); // only 1 is supported for now
-      MyProcessPolylistP(loadInfo, child, namedGeometry);
+      MyProcessPolylistP(loadInfo, child, geometry, numInputs, numDataCoordinates);
     }
   }
+  NateCheckXml(numPs == 1); // exactly 1 is supported for now
 }
 
-void MyProcessPolylistInput(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry)
+void MyProcessPolylistInput(NateMashLoadInfo * loadInfo, NateXmlNode * inputNode, NateXmlNode * meshNode,
+                            NateMashGeometry * geometry, NateMashPolyListInput * input)
 {
   size_t i;
-  char * names[3];
-  char * values[3];
-  MyNamedPolyListInput * namedInput;
   char * next;
+  char * semantic;
+  char * source;
+  char * offset;
+  char * id;
+  NateXmlNode * foundVertices;
+  NateXmlNode * child;
+  int foundSourceIndex, currentSourceIndex;
 
-  if (namedGeometry->polyListInputCount == 0)
-  {
-    namedGeometry->firstPolyListInputIndex = NateList_GetCount(loadInfo->polyListInputs);
-  }
-  namedGeometry->polyListInputCount++;
+  //<mesh>
+  //  <source id="Cube-mesh-positions"/>
+  //  <source id="Cube-mesh-normals"/>
+  //  <vertices id="Cube-mesh-vertices">
+  //    <input semantic="POSITION" source="#Cube-mesh-positions"/>
+  //  </vertices>
+  //  <polylist material="Material-material" count="12">
+  //    <input semantic="VERTEX" source="#Cube-mesh-vertices" offset="0"/>
+  //    <input semantic="NORMAL" source="#Cube-mesh-normals" offset="1"/>
+  //    <vcount>3 3 3 3 3 3 3 3 3 3 3 3 </vcount>
+  //    <p>0 0 1 ...</p>
+  //  </polylist>
+  //</mesh>
 
-  // <input semantic="NORMAL" source="#Cube-mesh-normals" offset="1"/>
-  NateCheckXml(node->AttributeCount >= 2);
-  NateXml_GetAttributes(node->Attributes, (node->AttributeCount >= 3 ? 3 : 2), names, values);
-  // create a MyNamedPolyListInput for this <input>
-  namedInput = (MyNamedPolyListInput*)NateList_AddZeroedData(loadInfo->polyListInputs);
-  NateCheckXml(namedInput != 0);
-  namedInput->input = malloc(sizeof(NateMashPolyListInput));
-  NateCheckXml(namedInput->input != 0);
-  memset(namedInput->input, 0, sizeof(NateMashPolyListInput));
-  // verify 'semantic' attribute is VERTEX or NORMAL (that's all we support now)
-  NateCheckXml(strcmp(names[0], "semantic") == 0);
-  if (strcmp(values[0], "VERTEX") == 0) namedInput->input->dataType = NateMash_DataType_Vertex;
-  else if (strcmp(values[0], "NORMAL") == 0) namedInput->input->dataType = NateMash_DataType_Normal;
-  else NateCheckXml(0 == strcmp(names[0], "Unrecognized 'semantic' attribute value"));
-  // save 'source' attribute 
-  // it starts with # to indicate it's referencing something else (but don't save that character)
-  NateCheckXml(strcmp(names[1], "source") == 0);
-  NateCheckXml(values[1][0] == '#');
-  namedInput->sourceName = values[1] + 1; // + 1 to skip # character
-  // get 'offset' attribute if it exists (when it doesn't exist, offset is 0)
-  if (node->AttributeCount >= 3)
+  // collect attributes
+  semantic = NateXmlNode_GetAttribute(inputNode, "semantic");
+  NateCheckXml(semantic != 0);
+  
+  source = NateXmlNode_GetAttribute(inputNode, "source");
+  NateCheckXml(source != 0);
+  NateCheckXml(source[0] == '#');
+  source++;
+  
+  offset = NateXmlNode_GetAttribute(inputNode, "offset");
+  NateCheckXml(offset != 0);
+
+  if (!loadInfo->isCountingRequiredSpace)
   {
-    NateCheckXml(strcmp(names[2], "offset") == 0);
-    next = values[2];
-    i = strtoul(values[2], &next, 10);
-    NateCheckXml(next != values[2]);
+    // store 'semantic' as input->dataType
+    if (strcmp(semantic, "VERTEX") == 0) input->dataType = NateMash_DataType_Vertex;
+    else if (strcmp(semantic, "NORMAL") == 0) input->dataType = NateMash_DataType_Normal;
+    else NateCheckXml(0 == strcmp(semantic, "Unrecognized 'semantic' attribute value"));
+
+    // look for a 'vertices' node by the id of 'source'
+    foundVertices = 0;
+    for (i = 0; i < NateXmlNode_GetCount(meshNode); i++)
+    {
+      child = NateXmlNode_GetChild(meshNode, i);
+      if (strcmp(child->ElementName, "vertices") == 0)
+      {
+        id = NateXmlNode_GetAttribute(child, "id");
+        if (id != 0)
+        {
+          if (strcmp(id, source) == 0)
+          {
+            foundVertices = child;
+            break;
+          }
+        }
+      }
+    }
+
+    if (foundVertices != 0)
+    {
+      // parse the 'vertices' node to get the name of the 'source' that it refers to
+      for (i = 0; i < NateXmlNode_GetCount(foundVertices); i++)
+      {
+        child = NateXmlNode_GetChild(foundVertices, i);
+        if (strcmp(child->ElementName, "input") == 0)
+        {
+          source = NateXmlNode_GetAttribute(child, "source");
+          NateCheckXml(source != 0);
+          NateCheckXml(source[0] == '#');
+          source++;
+          break;
+        }
+      }
+    }
+
+    // look for a 'source' node by the id of 'source'
+    foundSourceIndex = -1;
+    currentSourceIndex = -1;
+    for (i = 0; i < NateXmlNode_GetCount(meshNode); i++)
+    {
+      child = NateXmlNode_GetChild(meshNode, i);
+      if (strcmp(child->ElementName, "source") == 0)
+      {
+        currentSourceIndex++;
+        id = NateXmlNode_GetAttribute(child, "id");
+        if (id != 0)
+        {
+          if (strcmp(id, source) == 0)
+          {
+            foundSourceIndex = currentSourceIndex;
+            break;
+          }
+        }
+      }
+    }
+
+    // store 'source'
+    NateCheckXml(foundSourceIndex >= 0);
+    NateCheckXml(foundSourceIndex < (int)geometry->numSources);
+    input->source = &geometry->sources[foundSourceIndex];
+
+    // store 'offset'
+    next = offset;
+    i = strtoul(offset, &next, 10);
+    NateCheckXml(next != offset);
+    // hack - assume order of <input> in XML is same as offset, so we don't have to store offset explicitly
+    NateCheckXml(i >= 0 && i < geometry->polylist.numInputs);
+    NateCheckXml(&geometry->polylist.inputs[i] == input);
   }
-  else i = 0;
-  // hack - assume order of <input> in XML is same as offset, so we don't have to store offset explicitly
-  NateCheckXml(i == namedGeometry->polyListInputCount - 1);
 }
 
-void MyProcessPolylistVcount(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry)
+void MyProcessPolylistVcount(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashGeometry * geometry)
 {
   size_t i, count;
   char * next;
   char * oldNext;
 
-  // <vcount>3 3 3 3 3 3 3 3 3 3 3 3 </vcount>
-  // only one <vcount> is allowed
-  // TODO: not really enforcing this since I'm not storing the vcount data
-  // I see n 3's here, where n = the <polylist> 'count' attribute
-  // I guess I'm assuming it's always 3s for now, and that there's exactly n of them
-  next = node->ElementText;
-  for (i = 0; i < namedGeometry->geometry->numDataCoordinates; i++)
+  if (!loadInfo->isCountingRequiredSpace)
   {
+    // <vcount>3 3 3 3 3 3 3 3 3 3 3 3 </vcount>
+    // only one <vcount> is allowed
+    // not really enforcing this since I'm not storing the vcount data
+    // I see n 3's here, where n = the <polylist> 'count' attribute
+    // I guess I'm assuming it's always 3s for now, and that there's exactly n of them
+    next = node->ElementText;
+    NateCheckXml(geometry->polylist.numDataCoordinates > 0); // must be populated before this code executes
+    for (i = 0; i < geometry->polylist.numDataCoordinates; i++)
+    {
+      count = strtoul(next, &next, 10);
+      NateCheckXml(count == 3);
+    }
+    oldNext = next;
     count = strtoul(next, &next, 10);
-    NateCheckXml(count == 3);
+    NateCheckXml(count == 0);
+    NateCheckXml(oldNext == next);
   }
-  oldNext = next;
-  count = strtoul(next, &next, 10);
-  NateCheckXml(count == 0);
-  NateCheckXml(oldNext == next);
 }
 
-void MyProcessPolylistP(NateMashLoadInfo * loadInfo, NateXmlNode * node, MyNamedGeometry * namedGeometry)
+void MyProcessPolylistP(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashGeometry * geometry, 
+                        int numInputs, int numDataCoordinates)
 {
-  size_t i, count;
+  size_t i, count, spaceForIndexes;
   char * next;
   char * oldNext;
   int * dataIndexes;
 
-  // <p>1 0 2 0 3 0 4 1 7 1 6 1 4 2 5 2 1 2 1 3 5 3 6 3 2 4 6 4 7 4 4 5 0 5 3 5 0 6 1 6 3 6 5 7 4 7 6 7 0 8 4 8 1 8 2 9 1 9 6 9 3 10 2 10 7 10 7 11 4 11 3 11</p>
-  // only one <p> allowed
-  NateCheckXml(namedGeometry->geometry->dataIndexes == 0);
+  // <p>1 0 2 0 3 0 4 1 ... </p>
   // there's going to be ([numOffsets] * 3 * count) indexes here,
-  // see comments on NateMashGeometry.dataIndexes for what it means
-  count = namedGeometry->polyListInputCount * 3 * namedGeometry->geometry->numDataCoordinates;
-  dataIndexes = malloc(count * sizeof(int));
-  NateCheckXml(dataIndexes != 0);
-  namedGeometry->geometry->numDataIndexes = count;
-  namedGeometry->geometry->dataIndexes = dataIndexes;
-  next = node->ElementText;
-  for (i = 0; i < count; i++)
+  // see comments on NateMashPolyList.dataIndexes for what it means
+  count = numInputs * 3 * numDataCoordinates;
+  spaceForIndexes = count * sizeof(int);
+
+  if (loadInfo->isCountingRequiredSpace)
   {
-    oldNext = next;
-    *dataIndexes = strtoul(next, &next, 10);
-    NateCheckXml(oldNext != next);
-    dataIndexes++;
+    loadInfo->spaceToAllocate += spaceForIndexes;
   }
-  oldNext = next;
-  count = strtoul(next, &next, 10);
-  NateCheckXml(count == 0);
-  NateCheckXml(oldNext == next);
-}
+  else
+  {
+    // only one <p> allowed
+    NateCheckXml(geometry->polylist.dataIndexes == 0);
 
-int MyFindVertice(void * userData, void * item)
-{
-  MyNamedVertice* namedVertice = (MyNamedVertice*)item;
-  char * desiredName = (char*)userData;
-  return (strcmp(desiredName, namedVertice->name) == 0);
+    dataIndexes = MyNateMashAllocate(loadInfo, spaceForIndexes);
+    geometry->polylist.numDataIndexes = count;
+    geometry->polylist.dataIndexes = dataIndexes;
+    next = node->ElementText;
+    for (i = 0; i < count; i++)
+    {
+      oldNext = next;
+      *dataIndexes = (int)strtoul(next, &next, 10);
+      NateCheckXml(oldNext != next);
+      dataIndexes++;
+    }
+    oldNext = next;
+    count = strtoul(next, &next, 10);
+    NateCheckXml(count == 0);
+    NateCheckXml(oldNext == next);
+  }
 }
-
-int MyFindSource(void * userData, void * item)
-{
-  MyNamedSource* namedSource = (MyNamedSource*)item;
-  char * desiredName = (char*)userData;
-  return (strcmp(desiredName, namedSource->name) == 0);
-}
-
-int MyFindGeometry(void * userData, void * item)
-{
-  MyNamedGeometry* namedGeometry = (MyNamedGeometry*)item;
-  char * desiredName = (char*)userData;
-  return (strcmp(desiredName, namedGeometry->name) == 0);
-}
-
-void MyCopyPolyListInputsToObj(NateMashLoadInfo * loadInfo, NateMashGeometry * destGeometry, MyNamedGeometry * namedGeometry);
 
 void NateMash_LoadFromColladaData(NateMash * obj, char * colladaFileData, size_t colladaFileLength, const char * colladaFileDebugIdentifier)
 {
   NateMashLoadInfo loadInfo;
   int parseResult;
   char errorBuffer[200];
-  size_t count, i;
-  NateMashSource * source1;
-  NateMashSource * source2;
-  NateMashGeometry * geometry1;
-  NateMashGeometry * geometry2;
-  MyNamedSource* namedSource;
-  MyNamedPolyListInput* namedInput;
-  MyNamedGeometry* namedGeometry;
 
   // first free everything in 'obj'
-  NateMash_Uninit(obj);
+  if (obj->zdata != 0)
+  {
+    free(obj->zdata);
+  }
+  memset(obj, 0, sizeof(*obj));
 
-  // init a 'NateMashLoadInfo' and malloc its data structures for parsing assistance
+  // init a 'NateMashLoadInfo' for parsing assistance
   memset(&loadInfo, 0, sizeof(NateMashLoadInfo));
   loadInfo.mash = obj;
   if (colladaFileDebugIdentifier == 0) { colladaFileDebugIdentifier = "unspecified collada file data"; }
   loadInfo.fileName = colladaFileDebugIdentifier;
   
-  loadInfo.sources = NateList_Create();
-  NateCheck(loadInfo.sources != 0, "out of memory");
-  NateList_SetBytesPerItem(loadInfo.sources, sizeof(MyNamedSource));
-
-  loadInfo.vertices = NateList_Create();
-  NateCheck(loadInfo.vertices != 0, "out of memory");
-  NateList_SetBytesPerItem(loadInfo.vertices, sizeof(MyNamedVertice));
-
-  loadInfo.polyListInputs = NateList_Create();
-  NateCheck(loadInfo.polyListInputs != 0, "out of memory");
-  NateList_SetBytesPerItem(loadInfo.polyListInputs, sizeof(MyNamedPolyListInput));
-
-  loadInfo.geometries = NateList_Create();
-  NateCheck(loadInfo.geometries != 0, "out of memory");
-  NateList_SetBytesPerItem(loadInfo.geometries, sizeof(MyNamedGeometry));
-
   // parse the collada file
   parseResult = NateXml_ParseDom(colladaFileData, colladaFileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
   errorBuffer[199] = 0;
   NateCheck3(parseResult, "failed to parse collada mash xml: ", colladaFileDebugIdentifier, errorBuffer);
-
-  // copy/move sources into 'obj'
-  count = NateList_GetCount(loadInfo.sources);
-  obj->numSources = count;
-  if (count == 0)
-  {
-    obj->sources = 0;
-  }
-  else
-  {
-    obj->sources = malloc(count * sizeof(NateMashSource));
-    NateCheck(obj->sources, "out of memory");
-    memset(obj->sources, 0, count * sizeof(NateMashSource));
-    for (i = 0; i < count; i++)
-    {
-      source1 = &obj->sources[i];
-      source2 = ((MyNamedSource*)NateList_GetData(loadInfo.sources, i))->source;
-      memcpy(source1, source2, sizeof(NateMashSource));
-    }
-  }
-
-  // copy/move geometries into 'obj'
-  count = NateList_GetCount(loadInfo.geometries);
-  obj->numGeometries = count;
-  if (count == 0)
-  {
-    obj->geometries = 0;
-  }
-  else
-  {
-    obj->geometries = malloc(count * sizeof(NateMashGeometry));
-    NateCheck(obj->geometries, "out of memory");
-    memset(obj->geometries, 0, count * sizeof(NateMashGeometry));
-    for (i = 0; i < count; i++)
-    {
-      geometry1 = &obj->geometries[i];
-      namedGeometry = (MyNamedGeometry*)NateList_GetData(loadInfo.geometries, i);
-      geometry2 = namedGeometry->geometry;
-      memcpy(geometry1, geometry2, sizeof(NateMashGeometry));
-      
-      // copy/move polyListInputs into 'destGeometry'
-      MyCopyPolyListInputsToObj(&loadInfo, geometry1, namedGeometry);
-    }
-  }
-
-  // clean up 'NateMashLoadInfo' data structures
-  count = NateList_GetCount(loadInfo.sources);
-  for (i = 0; i < count; i++)
-  {
-    // free the dynamically allocated 'source' objects
-    namedSource = (MyNamedSource*)NateList_GetData(loadInfo.sources, i);
-    free(namedSource->source);
-  }
-  count = NateList_GetCount(loadInfo.polyListInputs);
-  for (i = 0; i < count; i++)
-  {
-    // free the dynamically allocated 'polylistinput' objects
-    namedInput = (MyNamedPolyListInput*)NateList_GetData(loadInfo.polyListInputs, i);
-    free(namedInput->input);
-  }
-  count = NateList_GetCount(loadInfo.polyListInputs);
-  for (i = 0; i < count; i++)
-  {
-    // free the dynamically allocated 'geometry' objects
-    namedGeometry = (MyNamedGeometry*)NateList_GetData(loadInfo.geometries, i);
-    free(namedGeometry->geometry);
-  }
-  NateList_Destroy(loadInfo.sources);
-  NateList_Destroy(loadInfo.vertices);
-  NateList_Destroy(loadInfo.polyListInputs);
-  NateList_Destroy(loadInfo.geometries);
-}
-
-void MyCopyPolyListInputsToObj(
-  NateMashLoadInfo * loadInfo,
-  NateMashGeometry * destGeometry,
-  MyNamedGeometry * namedGeometry)
-{
-  size_t count, i;
-  MyNamedPolyListInput * namedInput;
-  NateMashPolyListInput * input1;
-  NateMashPolyListInput * input2;
-  char * sourceName;
-  size_t sourceIndex;
-
-  // copy/move polyListInputs into 'destGeometry'
-  count = namedGeometry->polyListInputCount;
-  destGeometry->numInputs = count;
-  if (count == 0)
-  {
-    destGeometry->inputs = 0;
-  }
-  else
-  {
-    destGeometry->inputs = malloc(count * sizeof(NateMashPolyListInput));
-    NateCheck(destGeometry->inputs, "out of memory");
-    memset(destGeometry->inputs, 0, count * sizeof(NateMashPolyListInput));
-    for (i = 0; i < count; i++)
-    {
-      input1 = &destGeometry->inputs[i];
-      namedInput = (MyNamedPolyListInput*)NateList_GetData(loadInfo->polyListInputs, namedGeometry->firstPolyListInputIndex + i);
-      input2 = namedInput->input;
-      memcpy(input1, input2, sizeof(NateMashPolyListInput));
-
-      // look up the source in 'vertices'
-      if (NateList_FindData(loadInfo->vertices, MyFindVertice, namedInput->sourceName, &sourceIndex))
-      {
-        sourceName = ((MyNamedVertice*)NateList_GetData(loadInfo->vertices, sourceIndex))->sourceName;
-      }
-      else
-      {
-        sourceName = namedInput->sourceName;
-      }
-
-      NateCheck(NateList_FindData(loadInfo->sources, MyFindSource, sourceName, &sourceIndex), "invalid collada data");
-      input1->source = &loadInfo->mash->sources[sourceIndex];
-    }
-  }
 }
 
 void NateMash_LoadFromColladaResourceFile(NateMash * obj, const char * mashFileName)

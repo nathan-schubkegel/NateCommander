@@ -280,6 +280,11 @@ float source2floats[] =
 
 int pDataIndexes[] = { 1, 0, 2, 0, 3, 0, 4, 1, 7, 1, 6, 1, 4, 2, 5, 2, 1, 2, 1, 3, 5, 3, 6, 3, 2, 4, 6, 4, 7, 4, 4, 5, 0, 5, 3, 5, 0, 6, 1, 6, 3, 6, 5, 7, 4, 7, 6, 7, 0, 8, 4, 8, 1, 8, 2, 9, 1, 9, 6, 9, 3, 10, 2, 10, 7, 10, 7, 11, 4, 11, 3, 11 };
 
+float matrixValues[] = { 1, 0, 0, 0,
+                         0, 1, 0, 0,
+                         0, 0, 1, 0,
+                         0, 0, 0, 1 };
+
 void CheckFloatArray(float * data, float * expected, size_t count)
 {
   for (size_t i = 0; i < count; i++)
@@ -300,6 +305,8 @@ void Test_NateMash()
 {
   char * newXml1;
   NateMashSource * source;
+  NateMashGeometry * geometry;
+  NateMashNode * node;
   
   newXml1 = (char*)malloc(strlen(durpMetronome) + 1);
   strcpy_s(newXml1, strlen(durpMetronome) + 1, durpMetronome);
@@ -307,42 +314,62 @@ void Test_NateMash()
   NateMash * mash = NateMash_Create();
   NateMash_LoadFromColladaData(mash, newXml1, strlen(durpMetronome) + 1, "durpMetronome");
 
-  // verify that 2 sources were loaded and they have reasonable-looking data
-  CHECK(mash->numSources == 2, );
-  CHECK(mash->sources != 0, );
+  // verify that 1 geometry was loaded and it has reasonable-looking data
+  CHECK(mash->numGeometries == 1, );
+  CHECK(mash->geometries != 0, );
+  geometry = &mash->geometries[0];
+  
+  CHECK(geometry != 0, );
+  CHECK(strcmp(geometry->id, "Cube-mesh") == 0, );
 
-  source = &mash->sources[0];
+  // verify that 2 sources were loaded and they have reasonable-looking data
+  CHECK(geometry->numSources == 2, );
+  CHECK(geometry->sources != 0, );
+
+  source = &geometry->sources[0];
   CHECK(source != 0, );
   CHECK(source->count == 8, );
   CHECK(source->stride == 3, );
   CHECK(source->totalLength == 24, );
   CheckFloatArray(source->data, source1floats, 24);
 
-  source = &mash->sources[1];
+  source = &geometry->sources[1];
   CHECK(source != 0, );
   CHECK(source->count == 12, );
   CHECK(source->stride == 3, );
   CHECK(source->totalLength == 36, );
   CheckFloatArray(source->data, source2floats, 36);
 
-  // verify that 1 geometry was loaded and it has reasonable-looking data
-  CHECK(mash->numGeometries == 1, );
-  CHECK(mash->geometries != 0, );
-
-  NateMashGeometry * geometry = &mash->geometries[0];
-  CHECK(geometry != 0, );
-  CHECK(geometry->numInputs == 2, );
-  CHECK(geometry->inputs != 0, );
-  NateMashPolyListInput * input = &geometry->inputs[0];
+  CHECK(geometry->polylist.numInputs == 2, );
+  CHECK(geometry->polylist.inputs != 0, );
+  NateMashPolyListInput * input = &geometry->polylist.inputs[0];
   CHECK(input != 0, );
   CHECK(input->dataType == NateMash_DataType_Vertex, );
-  CHECK(input->source == &mash->sources[0], );
-  input = &geometry->inputs[1];
+  CHECK(input->source == &geometry->sources[0], );
+  input = &geometry->polylist.inputs[1];
   CHECK(input != 0, );
   CHECK(input->dataType == NateMash_DataType_Normal, );
-  CHECK(input->source == &mash->sources[1], );
+  CHECK(input->source == &geometry->sources[1], );
 
-  CHECK(geometry->numDataIndexes == 12 * 3 * 2, );
-  CheckIntArray(geometry->dataIndexes, pDataIndexes, 12 * 3 * 2);
-  CHECK(geometry->numDataCoordinates == 12, );
+  CHECK(geometry->polylist.numDataIndexes == 12 * 3 * 2, );
+  CheckIntArray(geometry->polylist.dataIndexes, pDataIndexes, 12 * 3 * 2);
+  CHECK(geometry->polylist.numDataCoordinates == 12, );
+
+  // verify that 1 node was loaded
+  CHECK(mash->nodes.nodes != 0, );
+  CHECK(mash->nodes.numNodes == 1, );
+  node = &mash->nodes.nodes[0];
+  CHECK(node != 0, );
+
+  // verify that the node fields look OK
+  CHECK(node->geometry != 0, );
+  CHECK(node->geometry == geometry, );
+  CHECK(strcmp(node->geometryUrl, geometry->id) == 0, );
+  CHECK(strcmp(node->id, "Cube") == 0, );
+  CHECK(strcmp(node->name, "Cube") == 0, );
+  CheckFloatArray(node->transform.elements, matrixValues, 16);
+  
+  // verify that the node children look OK
+  CHECK(node->nodes.nodes == 0, );
+  CHECK(node->nodes.numNodes == 0, );
 }

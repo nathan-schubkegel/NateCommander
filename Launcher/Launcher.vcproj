@@ -30,9 +30,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine="echo Copying changed files to $(OutDir)\Resources&#x0D;&#x0A;if not exist &quot;$(OutDir)\Resources&quot; mkdir &quot;$(OutDir)\Resources&quot;&#x0D;&#x0A;xcopy ..\Resources\* &quot;$(OutDir)\Resources&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;echo Copying changed files to $(OutDir)\Lua Files&#x0D;&#x0A;if not exist &quot;$(OutDir)\Lua Files&quot; mkdir &quot;$(OutDir)\Lua Files&quot;&#x0D;&#x0A;xcopy &quot;..\Stuff\Lua Files\*.lua&quot; &quot;$(OutDir)\Lua Files&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;echo Copying changed files to $(OutDir)\Mashes&#x0D;&#x0A;if not exist &quot;$(OutDir)\Mashes&quot; mkdir &quot;$(OutDir)\Mashes&quot;&#x0D;&#x0A;xcopy &quot;..\Mashes\*.dae&quot; &quot;$(OutDir)\Mashes&quot; /D /S /R /Y"
+				CommandLine="echo Copying changed files to $(OutDir)\Resources&#x0D;&#x0A;if not exist &quot;$(OutDir)\Resources&quot; mkdir &quot;$(OutDir)\Resources&quot;&#x0D;&#x0A;xcopy ..\Resources\* &quot;$(OutDir)\Resources&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;echo Copying changed files to $(OutDir)\Lua Files&#x0D;&#x0A;if not exist &quot;$(OutDir)\Lua Files&quot; mkdir &quot;$(OutDir)\Lua Files&quot;&#x0D;&#x0A;xcopy &quot;..\Stuff\Lua Files\*.lua&quot; &quot;$(OutDir)\Lua Files&quot; /D /S /R /Y&#x0D;&#x0A;&#x0D;&#x0A;echo Copying changed files to $(OutDir)\Mashes&#x0D;&#x0A;if not exist &quot;$(OutDir)\Mashes&quot; mkdir &quot;$(OutDir)\Mashes&quot;&#x0D;&#x0A;xcopy &quot;..\Mashes\*.dae&quot; &quot;$(OutDir)\Mashes&quot; /D /S /R /Y&#x0D;&#x0A;"
 				AdditionalDependencies=""
-				Outputs="&quot;$(OutDir)\Resources\*&quot;;&quot;$(OutDir)\Lua Files\*&quot;;&quot;$(OutDir)\Mashes\*&quot;"
+				Outputs="$(OutDir)\Resources\*;$(OutDir)\Mashes\*;$(OutDir)\Lua Files\*"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"

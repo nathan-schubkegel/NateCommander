@@ -322,9 +322,9 @@ int C_NateMash_DrawUpright(lua_State * luaState)
   NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 to be number");
   NateCheck(lua_isnumber(luaState, 4), "Expected argument 4 to be number");
 
-  position[0] = lua_tonumber(luaState, 2);
-  position[1] = lua_tonumber(luaState, 3);
-  position[2] = lua_tonumber(luaState, 4);
+  position[0] = (float)lua_tonumber(luaState, 2);
+  position[1] = (float)lua_tonumber(luaState, 3);
+  position[2] = (float)lua_tonumber(luaState, 4);
   rotation[0] = 0;
   rotation[1] = 0;
   rotation[2] = 0;

@@ -6,9 +6,9 @@
 #include "BoxGraphics.h"
 #include "FatalErrorHandler.h"
 
-void NateMash_Draw(NateMash * mash)
+void MyDrawNode(NateMashNode * node)
 {
-  size_t h, i, j, k, i2;
+  size_t i, j, k, i2;
   size_t count;
   size_t stride;
   size_t vertexInputIndex;
@@ -21,67 +21,95 @@ void NateMash_Draw(NateMash * mash)
   int * dataIndexes;
   NateMashGeometry * geometry;
 
+  geometry = node->geometry;
+
+  // adjust opengl transform by the amount required for this node
+  glMultMatrixf(node->transform.elements);
+
   glBegin( GL_TRIANGLES );
 
-  for (h = 0; h < mash->numGeometries; h++)
+  // find the "VERTEX" input
+  // (I guess we just assume every mash has a single "VERTEX" input)
+  // and count the data coordinate stride
+  //dataCoordinatesStride = 0;
+  vertexInputIndex = 0xFFFFFFFF;
+  for (i = 0; i < geometry->polylist.numInputs; i++)
   {
-    geometry = &mash->geometries[h];
-
-    // find the "VERTEX" input
-    // (I guess we just assume every mash has a single "VERTEX" input)
-    // and count the data coordinate stride
-    //dataCoordinatesStride = 0;
-    vertexInputIndex = 0xFFFFFFFF;
-    for (i = 0; i < geometry->numInputs; i++)
+    //dataCoordinatesStride += mash->inputs[i].source->stride;
+    if (geometry->polylist.inputs[i].dataType == NateMash_DataType_Vertex)
     {
-      //dataCoordinatesStride += mash->inputs[i].source->stride;
-      if (geometry->inputs[i].dataType == NateMash_DataType_Vertex)
-      {
-        NateCheck(vertexInputIndex == 0xFFFFFFFF, "there can be only one!");
-        vertexInputIndex = i;
-      }
+      NateCheck(vertexInputIndex == 0xFFFFFFFF, "there can be only one!");
+      vertexInputIndex = i;
     }
-    NateCheck(vertexInputIndex != 0xFFFFFFFF, "there must be at least one!");
+  }
+  NateCheck(vertexInputIndex != 0xFFFFFFFF, "there must be at least one!");
+  
+  // get source
+  // (I guess we just assume the source is using 3 floats to make a vertex)
+  source = geometry->polylist.inputs[vertexInputIndex].source;
+  sourceData = source->data;
+  NateAssert(source->stride == 3, "we assume sources depict triangles");
+
+  // iterate through data coordinates
+  // (I guess we just assume every 3 of these is a triangle that needs to be drawn)
+  //NateAssert(mash->numDataCoordinates == , "we assume numDataCoordinates depicts triangles");
+  count = geometry->polylist.numDataCoordinates;
+  stride = 3 * geometry->polylist.numInputs;
+  dataIndexes = geometry->polylist.dataIndexes;
+  numInputs = geometry->polylist.numInputs;
+  NateAssert(count * stride == geometry->polylist.numDataIndexes, "right?");
+  for (i = 0; i < count; i++)
+  {
+    i2 = i * stride + vertexInputIndex; // get to index of first vertex data index for this triangle
+
+    // random-ish color
+    glColor4ubv(colors[i % 8]);
     
-    // get source
-    // (I guess we just assume the source is using 3 floats to make a vertex)
-    source = geometry->inputs[vertexInputIndex].source;
-    sourceData = source->data;
-    NateAssert(source->stride == 3, "we assume sources depict triangles");
-
-    // iterate through data coordinates
-    // (I guess we just assume every 3 of these is a triangle that needs to be drawn)
-    //NateAssert(mash->numDataCoordinates == , "we assume numDataCoordinates depicts triangles");
-    count = geometry->numDataCoordinates;
-    stride = 3 * geometry->numInputs;
-    dataIndexes = geometry->dataIndexes;
-    numInputs = geometry->numInputs;
-    NateAssert(count * stride == geometry->numDataIndexes, "right?");
-    for (i = 0; i < count; i++)
+    // j = for each of the 3 vertices in a triangle
+    for (j = 0; j < 3; j++)
     {
-      i2 = i * stride + vertexInputIndex; // get to index of first vertex data index for this triangle
+      vertIndexes[j] = dataIndexes[i2 + j * numInputs];
 
-      // random-ish color
-      glColor4ubv(colors[i % 8]);
-      
-      // j = for each of the 3 vertices in a triangle
-      for (j = 0; j < 3; j++)
+      // k = for each of the 3 x,y,z parts of a vertex
+      for (k = 0; k < 3; k++)
       {
-        vertIndexes[j] = dataIndexes[i2 + j * numInputs];
-
-        // k = for each of the 3 x,y,z parts of a vertex
-        for (k = 0; k < 3; k++)
-        {
-          vertParts[k] = sourceData[vertIndexes[j] * 3 + k];
-        }
-
-        // draw this vertex
-        glVertex3fv( vertParts );
+        vertParts[k] = sourceData[vertIndexes[j] * 3 + k];
       }
+
+      // draw this vertex
+      glVertex3fv( vertParts );
     }
   }
 
   glEnd( );
+
+  for (i = 0; i < node->nodes.numNodes; i++)
+  {
+    // TODO: could call glGetError() to make sure this succeeds
+    // but I'm not sure how I want to handle GL errors across the board
+    // (and if some sloppy earlier/other code caused a GL error, do I throw it away here first?)
+
+    // preserve and restore the MODELVIEW matrix before/after drawing children
+    glPushMatrix();
+    MyDrawNode(&node->nodes.nodes[i]);
+    glPopMatrix();
+  }
+}
+
+void NateMash_Draw(NateMash * mash)
+{
+  size_t i;
+  for (i = 0; i < mash->nodes.numNodes; i++)
+  {
+    // TODO: could call glGetError() to make sure this succeeds
+    // but I'm not sure how I want to handle GL errors across the board
+    // (and if some sloppy earlier/other code caused a GL error, do I throw it away here first?)
+
+    // preserve and restore the MODELVIEW matrix before/after drawing children
+    glPushMatrix();
+    MyDrawNode(&mash->nodes.nodes[i]);
+    glPopMatrix();
+  }
 }
 
 void NateMash_DrawUpright(NateMash * mash, float * position, float * rotation, float * scale)

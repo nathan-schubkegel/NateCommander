@@ -8,19 +8,22 @@
 
 typedef struct NateMashSource
 {
+  char * id;
   size_t count; // example: 8
   size_t stride; // example: 3
   size_t totalLength; // example: 24
   float * data; // example: float[24]
+
 } NateMashSource;
 
 typedef struct NateMashPolyListInput
 {
   int dataType;
   NateMashSource * source;
+
 } NateMashPolyListInput;
 
-typedef struct NateMashGeometry
+typedef struct NateMashPolyList
 {
   // <input semantic="VERTEX" source="#Cube-mesh-vertices" offset="0"/>
   // <input semantic="NORMAL" source="#Cube-mesh-normals" offset="1"/>
@@ -44,21 +47,60 @@ typedef struct NateMashGeometry
   size_t numDataIndexes; // length of 'dataIndexes'
   size_t numDataCoordinates; // numDataIndexes / (numInputs * 3)
 
-} NateMashGeometry;
+} NateMashPolyList;
 
-typedef struct NateMash
+typedef struct NateMashGeometry
 {
+  char * id;
+
   // could hold vertex data
   // could hold normal data
   NateMashSource * sources;
   size_t numSources;
 
+  NateMashPolyList polylist;
+
+} NateMashGeometry;
+
+typedef struct NateMashMatrix
+{
+  float elements[16]; // in column-major order, like opengl needs
+
+} NateMashMatrix;
+
+typedef struct NateMashNode NateMashNode; // forward declaration
+
+typedef struct NateMashNodeChildren
+{
+  NateMashNode * nodes;
+  size_t numNodes;
+
+} NateMashNodeChildren;
+
+struct NateMashNode
+{
+  char * name;
+  char * id; // TODO: what's the difference between these?
+
+  NateMashMatrix transform;
+  NateMashGeometry * geometry;
+  char * geometryUrl;
+  // FUTURE: bound material(s)
+
+  NateMashNodeChildren nodes;
+
+};
+
+typedef struct NateMash
+{
   NateMashGeometry * geometries;
   size_t numGeometries;
 
-  // TODO: bones?
-  //NateMash * childMeshes;
-  //size_t numChildMeshes;
+  NateMashNodeChildren nodes;
+
+  // the single giant hunk of memory allocated for this NateMash
+  void * zdata;
+
 } NateMash;
 
 // These methods malloc/free a NateMash and its internals
@@ -66,6 +108,7 @@ NateMash * NateMash_Create();
 void NateMash_Destroy(NateMash * obj);
 
 // These methods do not malloc/free the NateMash, but they malloc/free its internals
+// (necessary when memory for a NateMash is allocated by Lua)
 void NateMash_Init(NateMash * obj);
 void NateMash_Uninit(NateMash * obj);
 

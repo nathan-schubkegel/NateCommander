@@ -29,8 +29,7 @@ const GLubyte * colors[] = { red, green, blue, white, yellow, black, orange, pur
 // +x = red
 void DrawAxisLineX(void)
 {
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity( );
+  glPushMatrix();
 
   // scale so the axis box is freaking long and thin
   glScalef(
@@ -126,14 +125,15 @@ void DrawAxisLineX(void)
   glVertex3fv( v5 );
 
   glEnd( );
+
+  glPopMatrix();
 }
 
 // -y = white
 // +y = green
 void DrawAxisLineY(void)
 {
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity( );
+  glPushMatrix();
 
   // scale so the axis box is freaking long and thin
   glScalef(
@@ -229,14 +229,15 @@ void DrawAxisLineY(void)
   glVertex3fv( v5 );
 
   glEnd( );
+
+  glPopMatrix();
 }
 
 // +z = blue
 // -z = purple
 void DrawAxisLineZ(void)
 {
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity( );
+  glPushMatrix();
 
   // scale so the axis box is freaking long and thin
   glScalef(
@@ -332,6 +333,8 @@ void DrawAxisLineZ(void)
   glVertex3fv( v5 );
 
   glEnd( );
+
+  glPopMatrix();
 }
 
 void MyDrawRainbowCube(void)
@@ -428,8 +431,7 @@ void MyDrawRainbowCube(void)
 
 void DrawYAngledCube(float currentAngle)
 {
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity( );
+  glPushMatrix();
 
   // Move down the z-axis. 
   // This makes the cube appear 5.0 further into the screen than where we're currently viewing from
@@ -441,12 +443,13 @@ void DrawYAngledCube(float currentAngle)
   glRotated( currentAngle, 0.0, 1.0, 0.0 );
 
   MyDrawRainbowCube();
+
+  glPopMatrix();
 }
 
 void DrawSizedLocatedBox(float * whlDimensions, float * xyzTranslation)
 {
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity( );
+  glPushMatrix();
 
   // Move down the y-axis so the floor appears at the right height
   // Move up or down the z-axis based on where user specified the floor to be
@@ -460,4 +463,6 @@ void DrawSizedLocatedBox(float * whlDimensions, float * xyzTranslation)
     (1.0f / cubeLength) * whlDimensions[2]);
 
   MyDrawRainbowCube();
+
+  glPopMatrix();
 }

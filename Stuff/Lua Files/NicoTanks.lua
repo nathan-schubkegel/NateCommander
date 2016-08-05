@@ -404,42 +404,44 @@ function Draw(state, e)
     -- graphics axes are in terms of "being a person standing on the ground looking in -Z direction"
     -- game axes are in terms of "looking down on a town of people, oriented by a compass"
 
-    -- FocalPointX (graphics X axis)
+    -- arg: FocalPointX (graphics X axis)
     -- graphics X axis is -left/+right of "looking into -Z direction"
     -- that is the game X axis -west/+east
     state.CameraFocalPoint.X,
 
-    -- FocalPointY (graphics Y axis)
+    -- arg: FocalPointY (graphics Y axis)
     -- graphics Y axis is -down/+up of "looking into -Z direction"
     -- that is the game Z axis -lower/+higher elevation
     0,
 
-    -- FocalPointZ (graphics Z axis)
+    -- arg: FocalPointZ (graphics Z axis)
     -- graphics Z axis is -into monitor/+toward user of "looking into -Z direction"
     -- that is the game Y axis negated -(-south/+north)
     -state.CameraFocalPoint.Y,
 
-    -- FocalPointDistance
+    -- arg: FocalPointDistance
     -- look down at the people from above
     30,
 
-    -- LeftRightAngle
+    -- arg: LeftRightAngle
     -- graphics "LeftRight" means rotating around the up/down graphics Y axis
     -- graphics "LeftRight" 0 degrees means "looking into -Z direction" (into the monitor)
     -- in game terms we always want to look 90 degrees, north
     -- (in graphics terms that's 0 degrees)
     0,
     
-    -- UpDownAngle
+    -- arg: UpDownAngle
     -- -60 degrees means "looking down on the little people"
     -60)
     
   -- Clear the color and depth buffers.
   C_glClear(bit32.bor(0x00004000, 0x00000100)) -- GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
-    
+
   -- Draw stuff
-  C_DrawAxisLines();
-  C_DrawYAngledCube(30); -- angle
+  C_glMatrixMode(0x1700) -- GL_MODELVIEW
+  C_glLoadIdentity()
+  C_DrawAxisLines()
+  C_DrawYAngledCube(30) -- angle
   
   for name, tank in pairs(state.Tanks) do
     C_NateMash_DrawUpright(state.Mashes.Tank, tank.Position.X, 0, -tank.Position.Y);
