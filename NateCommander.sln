@@ -38,6 +38,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTests", "UnitTests\Unit
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tokamak", "tokamak\tokamak.vcproj", "{DE49562B-F87F-48FE-AE4B-2ACE89892231}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "crypto-algorithms", "crypto-algorithms\crypto-algorithms.vcproj", "{FB352594-F049-5421-CADD-504934925049}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -72,6 +74,10 @@ Global
 		{DE49562B-F87F-48FE-AE4B-2ACE89892231}.Debug|Win32.Build.0 = Debug|Win32
 		{DE49562B-F87F-48FE-AE4B-2ACE89892231}.Release|Win32.ActiveCfg = Release|Win32
 		{DE49562B-F87F-48FE-AE4B-2ACE89892231}.Release|Win32.Build.0 = Release|Win32
+		{FB352594-F049-5421-CADD-504934925049}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FB352594-F049-5421-CADD-504934925049}.Debug|Win32.Build.0 = Debug|Win32
+		{FB352594-F049-5421-CADD-504934925049}.Release|Win32.ActiveCfg = Release|Win32
+		{FB352594-F049-5421-CADD-504934925049}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
