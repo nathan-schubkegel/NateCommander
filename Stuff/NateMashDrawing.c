@@ -114,8 +114,7 @@ void NateMash_Draw(NateMash * mash)
 
 void NateMash_DrawUpright(NateMash * mash, float * position, float * rotation, float * scale)
 {
-  glMatrixMode( GL_MODELVIEW );
-  glLoadIdentity( );
+  glPushMatrix();
 
   // TODO: Why do I have to translate first? (Why doesn't it work right when I scale first?)
   if (position != 0)
@@ -140,4 +139,6 @@ void NateMash_DrawUpright(NateMash * mash, float * position, float * rotation, f
   glRotated(rotation[0], 0.0f, 1.0f, 0.0f);
 
   NateMash_Draw(mash);
+
+  glPopMatrix();
 }

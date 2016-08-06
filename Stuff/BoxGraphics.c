@@ -12,7 +12,7 @@ const GLfloat v1[] = {  1.0f, -1.0f,  1.0f }; // green
 const GLfloat v2[] = {  1.0f,  1.0f,  1.0f }; // blue
 const GLfloat v3[] = { -1.0f,  1.0f,  1.0f }; // white
 const GLfloat v4[] = { -1.0f, -1.0f, -1.0f }; // yellow
-const GLfloat v5[] = {  1.0f, -1.0f, -1.0f }; // black
+const GLfloat v5[] = {  1.0f, -1.0f, -1.0f }; // brown
 const GLfloat v6[] = {  1.0f,  1.0f, -1.0f }; // orange
 const GLfloat v7[] = { -1.0f,  1.0f, -1.0f }; // purple
 const GLubyte red[]    = { 255,   0,   0, 255 };
@@ -20,10 +20,10 @@ const GLubyte green[]  = {   0, 255,   0, 255 };
 const GLubyte blue[]   = {   0,   0, 255, 255 };
 const GLubyte white[]  = { 255, 255, 255, 255 };
 const GLubyte yellow[] = {   0, 255, 255, 255 };
-const GLubyte black[]  = {   0,   0,   0, 255 };
+const GLubyte brown[]  = {  80,  50,  50, 255 };
 const GLubyte orange[] = { 255, 255,   0, 255 };
 const GLubyte purple[] = { 255,   0, 255,   0 };
-const GLubyte * colors[] = { red, green, blue, white, yellow, black, orange, purple };
+const GLubyte * colors[] = { red, green, blue, white, yellow, brown, orange, purple };
 
 // -x = orange
 // +x = red
@@ -358,7 +358,7 @@ void MyDrawRainbowCube(void)
 
   glColor4ubv( green );
   glVertex3fv( v1 );
-  glColor4ubv( black );
+  glColor4ubv( brown );
   glVertex3fv( v5 );
   glColor4ubv( orange );
   glVertex3fv( v6 );
@@ -370,14 +370,14 @@ void MyDrawRainbowCube(void)
   glColor4ubv( blue );
   glVertex3fv( v2 );
 
-  glColor4ubv( black );
+  glColor4ubv( brown );
   glVertex3fv( v5 );
   glColor4ubv( yellow );
   glVertex3fv( v4 );
   glColor4ubv( purple );
   glVertex3fv( v7 );
 
-  glColor4ubv( black );
+  glColor4ubv( brown );
   glVertex3fv( v5 );
   glColor4ubv( purple );
   glVertex3fv( v7 );
@@ -423,7 +423,7 @@ void MyDrawRainbowCube(void)
   glVertex3fv( v1 );
   glColor4ubv( yellow );
   glVertex3fv( v4 );
-  glColor4ubv( black );
+  glColor4ubv( brown );
   glVertex3fv( v5 );
 
   glEnd( );

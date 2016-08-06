@@ -318,9 +318,6 @@ int C_NateMash_DrawUpright(lua_State * luaState)
 
   NateCheck(lua_gettop(luaState) == 4, "Expected exactly 4 arguments");
   NateCheck(IsNateUserData_NateMash(luaState, 1, &mash), "Expected argument 1 to be NateMash");
-  NateCheck(lua_isnumber(luaState, 2), "Expected argument 2 to be number");
-  NateCheck(lua_isnumber(luaState, 3), "Expected argument 3 to be number");
-  NateCheck(lua_isnumber(luaState, 4), "Expected argument 4 to be number");
 
   position[0] = (float)lua_tonumber(luaState, 2);
   position[1] = (float)lua_tonumber(luaState, 3);
@@ -605,6 +602,43 @@ int C_glClear(lua_State * luaState)
   return 0;
 }
 
+int C_glRotate(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 4, "Expected exactly 4 arguments");
+
+  glRotated(
+    (double)lua_tonumber(luaState, 1),  // angle
+    (double)lua_tonumber(luaState, 2),  // x of vector to rotate around
+    (double)lua_tonumber(luaState, 3),  // y
+    (double)lua_tonumber(luaState, 4)); // z
+
+  return 0;
+}
+
+int C_glScale(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 3, "Expected exactly 3 arguments");
+
+  glScaled(
+    (double)lua_tonumber(luaState, 1),  // x amount to scale
+    (double)lua_tonumber(luaState, 2),  // y
+    (double)lua_tonumber(luaState, 3)); // z
+
+  return 0;
+}
+
+int C_glTranslate(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 3, "Expected exactly 3 arguments");
+
+  glTranslated(
+    (double)lua_tonumber(luaState, 1),  // x amount to translate
+    (double)lua_tonumber(luaState, 2),  // y
+    (double)lua_tonumber(luaState, 3)); // z
+
+  return 0;
+}
+
 int C_DrawAxisLines(lua_State * luaState)
 {
   (void)luaState;
@@ -661,8 +695,11 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_gluPerspective);
   PUBLISH_CMETHOD(C_glMatrixMode);
   PUBLISH_CMETHOD(C_glLoadIdentity);
-  PUBLISH_CMETHOD(C_SetView_CameraLookingAtPoint_FromDistance_AtAngle);
   PUBLISH_CMETHOD(C_glClear);
+  PUBLISH_CMETHOD(C_glRotate);
+  PUBLISH_CMETHOD(C_glScale);
+  PUBLISH_CMETHOD(C_glTranslate);
+  PUBLISH_CMETHOD(C_SetView_CameraLookingAtPoint_FromDistance_AtAngle);
   PUBLISH_CMETHOD(C_DrawAxisLines);
   PUBLISH_CMETHOD(C_DrawYAngledCube);
 

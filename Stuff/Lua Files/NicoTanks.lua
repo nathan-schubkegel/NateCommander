@@ -393,46 +393,52 @@ function Draw(state, e)
 
   C_glMatrixMode(0x1701) -- GL_PROJECTION
   C_glLoadIdentity()
+
   C_gluPerspective(
     60, -- lense angle
     e.WindowWidth / e.WindowHeight, -- aspect ratio
     1.0, -- zNear
     1024.0) -- zFar
-  
+
   -- set the camera to look down on the playing field
   C_SetView_CameraLookingAtPoint_FromDistance_AtAngle(
-    -- graphics axes are in terms of "being a person standing on the ground looking in -Z direction"
-    -- game axes are in terms of "looking down on a town of people, oriented by a compass"
-
-    -- arg: FocalPointX (graphics X axis)
-    -- graphics X axis is -left/+right of "looking into -Z direction"
-    -- that is the game X axis -west/+east
-    state.CameraFocalPoint.X,
-
-    -- arg: FocalPointY (graphics Y axis)
-    -- graphics Y axis is -down/+up of "looking into -Z direction"
-    -- that is the game Z axis -lower/+higher elevation
+    -- arg: FocalPointX
     0,
-
-    -- arg: FocalPointZ (graphics Z axis)
-    -- graphics Z axis is -into monitor/+toward user of "looking into -Z direction"
-    -- that is the game Y axis negated -(-south/+north)
-    -state.CameraFocalPoint.Y,
-
+    -- arg: FocalPointY
+    0,
+    -- arg: FocalPointZ
+    0,
     -- arg: FocalPointDistance
     -- look down at the people from above
-    30,
-
+    50,
     -- arg: LeftRightAngle
     -- graphics "LeftRight" means rotating around the up/down graphics Y axis
     -- graphics "LeftRight" 0 degrees means "looking into -Z direction" (into the monitor)
     -- in game terms we always want to look 90 degrees, north
     -- (in graphics terms that's 0 degrees)
     0,
-    
     -- arg: UpDownAngle
     -- -60 degrees means "looking down on the little people"
     -60)
+
+  -- graphics coordinates are in terms of
+  -- "being a person standing on the ground looking forward" with
+  -- -Z forward, +Z behind, -X left, +X right, +Y up, -Y down
+
+  -- game coordinates are in terms of
+  -- "looking down on a town of people, oriented by a compass" with
+  -- -Z underground, +Z sky, -X west, +X east, +Y north, -Y south"
+  
+  -- transform the Projection matrix so drawings to ModelView can be in game coordinates
+  -- (this says "rotate round X axis 90 degrees so graphics +Z axis points into sky
+  --  and graphics Y axis points north")
+  C_glRotate(-90, 1, 0, 0)
+  
+  -- scoot camera around the map
+  C_glTranslate(
+    -state.CameraFocalPoint.X,
+    -state.CameraFocalPoint.Y,
+    0)
     
   -- Clear the color and depth buffers.
   C_glClear(bit32.bor(0x00004000, 0x00000100)) -- GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
@@ -440,10 +446,11 @@ function Draw(state, e)
   -- Draw stuff
   C_glMatrixMode(0x1700) -- GL_MODELVIEW
   C_glLoadIdentity()
+
   C_DrawAxisLines()
   C_DrawYAngledCube(30) -- angle
   
   for name, tank in pairs(state.Tanks) do
-    C_NateMash_DrawUpright(state.Mashes.Tank, tank.Position.X, 0, -tank.Position.Y);
+    C_NateMash_DrawUpright(state.Mashes.Tank, tank.Position.X, tank.Position.Y, 0);
   end
 end
