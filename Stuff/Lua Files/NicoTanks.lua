@@ -5,13 +5,14 @@ function Initialize_NicoTanks(state)
       Nate = {
                Name = "Nate",
                Position = {X = -25, Y = -25}, -- within state.WorldLeft/Top/Width/Height
+               SizeMultiplier = 5, -- scale tank by this much
                FaceAngle = 90, -- degrees, 0 means "looking down the positive X axis (right)"
                DesiredAngle = 90, -- degrees
                ThrottleStrength = 0, -- between 0 and 100, like a percentage
                Velocity = {
                             Angle = 0, -- degrees
-                            Magnitude = 0, -- between 0 and 2 world units per 20ms tick
-                          },               -- (that's a top speed of 100 world units per second)
+                            Magnitude = 0, -- world units per tick
+                          },
                IsShootButtonHeldDown = false,
                TicksSinceLastShot = 1000000, -- ensures user can shoot immediately when game starts
                Keys = {Up = 'w', Down = 's', Left = 'a', Right = 'd', Shoot = 'LCTRL'},
@@ -19,13 +20,14 @@ function Initialize_NicoTanks(state)
       Nico = {
                Name = "Nico", 
                Position = {X = 25, Y = 25}, -- within state.WorldLeft/Top/Width/Height
+               SizeMultiplier = 5, -- scale tank by this much
                FaceAngle = 270, -- degrees, 0 means "looking down the positive X axis (right)"
                DesiredAngle = 270, -- degrees
                ThrottleStrength = 0, -- between 0 and 100, like a percentage
                Velocity = {
                             Angle = 0, -- degrees
-                            Magnitude = 0, -- between 0 and 2 world units per 20ms tick
-                          },               -- (that's a top speed of 100 world units per second)
+                            Magnitude = 0, -- world units per tick
+                          },
                IsShootButtonHeldDown = false,
                TicksSinceLastShot = 1000000, -- ensures user can shoot immediately when game starts
                Keys = {Up = 'UP', Down = 'DOWN', Left = 'LEFT', Right = 'RIGHT', Shoot = 'SPACE'},
@@ -34,10 +36,10 @@ function Initialize_NicoTanks(state)
     
   state.Bullets = {}
 
-  state.WorldLeft = -500
-  state.WorldTop = -500
-  state.WorldWidth = 1000
-  state.WorldHeight = 1000
+  state.WorldLeft = -50
+  state.WorldTop = -50
+  state.WorldWidth = 100
+  state.WorldHeight = 100
   
   state.WorldTime = C_MsCounter_Create()
   C_MsCounter_Reset(state.WorldTime)
@@ -55,9 +57,40 @@ function Initialize_NicoTanks(state)
       Tank = C_NateMash_LoadFromColladaResourceFile("nicotank.dae"),
       Rock = C_NateMash_LoadFromColladaResourceFile("nicorock.dae"),
     }
-    
+
   -- TODO: find a way to gather this from the NateMash
-  state.DistanceFromTankCenterToSnoutTip = 20
+  state.DistanceFromTankCenterToSnoutTipInMeshUnits = 1
+  state.TankRadiusInMeshUnits = 0.5
+
+  -- game constants
+  state.GameConstants = {}
+  state.GameConstants.MsPerTick = 20
+  state.GameConstants.TicksPerSecond = 1000 / state.GameConstants.MsPerTick
+
+  -- Tank speed
+  state.GameConstants.TankMaxSpeedInUnitsPerSecond = 30
+  state.GameConstants.TankMaxSpeedInUnitsPerTick =
+        state.GameConstants.TankMaxSpeedInUnitsPerSecond / state.GameConstants.TicksPerSecond
+
+  -- Tank acceleration
+  state.GameConstants.TankAccelerationTimeMs = 800 -- means "it takes this long to reach max speed, in ms"
+  state.GameConstants.TankAccelerationTimeTicks = -- means "it takes this long to reach max speed, in ticks"
+        state.GameConstants.TankAccelerationTimeMs / state.GameConstants.MsPerTick
+  state.GameConstants.TankMaxAccelerationPerTick =
+        state.GameConstants.TankMaxSpeedInUnitsPerTick / state.GameConstants.TankAccelerationTimeTicks
+
+  -- Tank deceleration
+  state.GameConstants.TankDecelerationTimeMs = 500 -- means "it takes this long to stop rolling, in ms"
+  state.GameConstants.TankDecelerationTimeTicks = -- means "it takes this long to stop rolling, in ticks"
+        state.GameConstants.TankDecelerationTimeMs / state.GameConstants.MsPerTick
+  state.GameConstants.TankDecelerationPerTick = 
+        state.GameConstants.TankMaxSpeedInUnitsPerTick / state.GameConstants.TankDecelerationTimeTicks
+
+  -- Tank rotation speed
+  state.GameConstants.TankRotationTimeMs = 1200 -- means "it takes this long to rotate, in ms"
+  state.GameConstants.TankRotationTimeTicks = -- means "it takes this long to rotate, in ticks"
+        state.GameConstants.TankRotationTimeMs / state.GameConstants.MsPerTick
+  state.GameConstants.TankRotationPerTick = 360 / state.GameConstants.TankRotationTimeTicks;
 
   -- register event handlers for every key
   C_RegisterKeyDownHandler("HandleKeyEvent(Down)", 
@@ -141,23 +174,26 @@ function UpdateTankForPressedButtons(state, tank)
   local inputProvided = false
   local keys = tank.Keys;
   
+  -- update magnitude and angle for keys pressed
+  -- Magnitude is between 0 and 100 like a percent, ultimately it goes into tank.ThrottleStrength
+  
   if state.SDLK_KeysDown[keys.Up] then
-    C_PolarVector2dAdd(desiredDirection, {Angle = 90, Magnitude = 100})
+    desiredDirection = C_PolarVector2dAdd(desiredDirection, {Angle = 90, Magnitude = 100})
     inputProvided = true
   end
   
   if state.SDLK_KeysDown[keys.Down] then
-    C_PolarVector2dAdd(desiredDirection, {Angle = 270, Magnitude = 100})
+    desiredDirection = C_PolarVector2dAdd(desiredDirection, {Angle = 270, Magnitude = 100})
     inputProvided = true
   end
   
   if state.SDLK_KeysDown[keys.Left] then
-    C_PolarVector2dAdd(desiredDirection, {Angle = 180, Magnitude = 100})
+    desiredDirection = C_PolarVector2dAdd(desiredDirection, {Angle = 180, Magnitude = 100})
     inputProvided = true
   end
   
   if state.SDLK_KeysDown[keys.Right] then
-    C_PolarVector2dAdd(desiredDirection, {Angle = 0, Magnitude = 100})
+    desiredDirection = C_PolarVector2dAdd(desiredDirection, {Angle = 0, Magnitude = 100})
     inputProvided = true
   end
 
@@ -174,7 +210,7 @@ function UpdateTankForPressedButtons(state, tank)
     tank.ThrottleStrength = desiredDirection.Magnitude
   end
   
-  tank.IsShootButtonHeldDown = state.SDLK_KeysDown[keys.Shoot]
+  tank.IsShootButtonHeldDown = state.SDLK_KeysDown[keys.Shoot] == true
 end
 
 function Clamp(value, min, max)
@@ -232,10 +268,12 @@ function Process(state)
     msCount = 500
   end
   
-  -- advance game state for every 1/50th of a second that goes by
+  -- advance game state for every tick that goes by
   -- until it's current with NOW
-  while msCount > 20 do
-    msCount = msCount - 20;
+  while msCount > state.GameConstants.MsPerTick do
+    msCount = msCount - state.GameConstants.MsPerTick;
+    
+    --C_NonFatalError('processing a loop')
     
     -- try to move tanks
     -- try to shoot guns    
@@ -253,10 +291,8 @@ end
 function TryToMoveTanks(state)
   for name, tank in pairs(state.Tanks) do
     -- if the user wants to rotate, let him rotate toward the angle he's desiring
-    -- 1 rotation per 4 seconds
-    -- 360 degrees per 4000 ms
-    -- 1.8 degrees per 20ms tick
-    tank.FaceAngle = RotateTowardAngle(tank.FaceAngle, tank.DesiredAngle, 1.8)
+    tank.FaceAngle = RotateTowardAngle(tank.FaceAngle, tank.DesiredAngle, state.GameConstants.TankRotationPerTick)
+    -- TODO: need to let the user do this slowly with gamepads
     
     -- convert all the tank's momentum into the direction it's facing
     -- (I guess it only moves forward for now)
@@ -264,64 +300,50 @@ function TryToMoveTanks(state)
     
     if tank.ThrottleStrength < 10 then
       -- the tank isn't trying to go (deadzone = 10 percent throttle strength)
-      -- so drag it to a stop within 700ms (35 ticks at 20ms)
-      -- full speed is 100 units per second (2 units per 1 tick at 20ms)
-      -- decceleration is (that speed) / (the time to achieve it) == (2 units per tick / 35 ticks)
-      tank.Velocity.Magnitude = tank.Velocity.Magnitude - (2 / 35);
+      -- so drag it to a stop
+      tank.Velocity.Magnitude = tank.Velocity.Magnitude - state.GameConstants.TankDecelerationPerTick;
     else
-      -- boost the tank in the direction it's facing
-      -- the tank velocity should increase to full speed within 1200ms (60 ticks at 20ms)
-      -- full speed is 100 units per second (2 units per 1 tick at 20ms)
-      -- acceleration is (that speed) / (the time to achieve it) == (2 units per tick / 60 ticks)
-      tank.Velocity.Magnitude = tank.Velocity.Magnitude + (tank.ThrottleStrength / 100) * (2 / 60)
+      -- boost the tank in the direction it's facing, limited by throttle strength
+      tank.Velocity.Magnitude = tank.Velocity.Magnitude + 
+        (tank.ThrottleStrength / 100) * state.GameConstants.TankMaxAccelerationPerTick
     end
+    -- TODO: need to let the user actually decelerate when ThrottleStrength is low
 
     -- no going backward, no going too fast
-    tank.Velocity.Magnitude = Clamp(tank.Velocity.Magnitude, 0, 100)
+    tank.Velocity.Magnitude = Clamp(tank.Velocity.Magnitude, 0, state.GameConstants.TankMaxSpeedInUnitsPerTick)
 
     -- change the tank's position by the velocity
-    local newPosition = C_CartesianVector2dAdd(tank.Position, 
+    local newPosition = C_CartesianVector2dAdd(tank.Position,
       C_PolarVector2dToCartesian(tank.Velocity))
 
     -- keep the tank inside the world battlefield
-    newPosition.X = Clamp(newPosition.X, state.WorldLeft, state.WorldLeft + state.WorldWidth);
-    newPosition.Y = Clamp(newPosition.Y, state.WorldTop, state.WorldTop + state.WorldHeight);
-    
+    local tankRadius = state.TankRadiusInMeshUnits * tank.SizeMultiplier;    
+    newPosition.X = Clamp(newPosition.X,
+        state.WorldLeft + tankRadius,
+        state.WorldLeft + state.WorldWidth - tankRadius);
+    newPosition.Y = Clamp(newPosition.Y,
+        state.WorldTop + tankRadius,
+        state.WorldTop + state.WorldHeight - tankRadius);
+
     tank.Position = newPosition;
-    
+
     -- TODO: collisions =)
   end
 end
 
 function RotateTowardAngle(currentAngle, desiredAngle, amount)
-  local d1 = GetAbsAnglesBetween(currentAngle, desiredAngle)
+  local d1 = C_GetAbsAnglesBetween(currentAngle, desiredAngle)
   if d1 < math.abs(amount) then
     return desiredAngle
   end
   
-  local d2 = GetAbsAnglesBetween(currentAngle + amount, desiredAngle)
-  local d3 = GetAbsAnglesBetween(currentAngle - amount, desiredAngle)
+  local d2 = C_GetAbsAnglesBetween(currentAngle + amount, desiredAngle)
+  local d3 = C_GetAbsAnglesBetween(currentAngle - amount, desiredAngle)
   if d2 < d3 then
     return currentAngle + amount
   else
     return currentAngle - amount
   end
-end
-
-function GetAbsAnglesBetween(a1, a2)
-  -- add or subtract 360 to a1 until it's as close to a2 as possible
-  local best = math.abs(a2 - a1)
-  local next = math.abs(a2 - (a1 + 360))
-  while next < best do
-    best = next
-    a1 = a1 + 360
-  end
-  next = math.abs(a2 - (a1 - 360))
-  while next < best do
-    best = next
-    a1 = a1 - 360
-  end
-  return best
 end
 
 function TryToShootGuns(state)
@@ -338,7 +360,7 @@ function TryToShootGuns(state)
           Position = C_CartesianVector2dAdd(tank.Position, C_PolarVector2dToCartesian(
             {
               Angle = tank.FaceAngle,
-              Magnitude = state.DistanceFromTankCenterToSnoutTip
+              Magnitude = state.DistanceFromTankCenterToSnoutTipInMeshUnits * tank.SizeMultiplier,
             })),
 
           -- move the bullet in the direction the tank is facing
@@ -410,7 +432,8 @@ function Draw(state, e)
     0,
     -- arg: FocalPointDistance
     -- look down at the people from above
-    50,
+    -- TODO: find a better way to look at the world
+    math.max(state.WorldWidth, state.WorldHeight) - 0.3 * math.max(state.WorldWidth, state.WorldHeight),
     -- arg: LeftRightAngle
     -- graphics "LeftRight" means rotating around the up/down graphics Y axis
     -- graphics "LeftRight" 0 degrees means "looking into -Z direction" (into the monitor)
@@ -443,14 +466,32 @@ function Draw(state, e)
   -- Clear the color and depth buffers.
   C_glClear(bit32.bor(0x00004000, 0x00000100)) -- GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
 
-  -- Draw stuff
+  -- Draw world objects
   C_glMatrixMode(0x1700) -- GL_MODELVIEW
   C_glLoadIdentity()
 
   C_DrawAxisLines()
-  C_DrawYAngledCube(30) -- angle
-  
+
+  C_glScale(5, 5, 5)
+  C_glRotate(((C_MsCounter_GetCount(state.WorldTime) % 3500) / 3500) * 360, 0, 0, 1)
+  C_DrawRainbowCube()
+
   for name, tank in pairs(state.Tanks) do
-    C_NateMash_DrawUpright(state.Mashes.Tank, tank.Position.X, tank.Position.Y, 0);
+    C_glLoadIdentity()
+
+    C_glTranslate(
+      tank.Position.X,
+      tank.Position.Y,
+      0)
+
+    C_glScale(
+      tank.SizeMultiplier,
+      tank.SizeMultiplier,
+      tank.SizeMultiplier)
+
+    C_glRotate(tank.FaceAngle, 0, 0, 1)
+
+    C_NateMash_Draw(state.Mashes.Tank)
   end
+  C_glLoadIdentity()
 end

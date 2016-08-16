@@ -13,6 +13,7 @@
 #include "ViewGraphics.h"
 #include "BoxGraphics.h"
 #include "Vectors2d.h"
+#include <math.h>
 
 // Design Hint: use this macro for every full userdata handed to lua
 // so we can check the types of userdata passed from client lua scripts to C
@@ -313,23 +314,36 @@ int C_NateMash_DrawUpright(lua_State * luaState)
 {
   NateMash * mash;
   float position[3];
-  float rotation[3];
   float scale[3];
+  float rotation[2];
 
-  NateCheck(lua_gettop(luaState) == 4, "Expected exactly 4 arguments");
+  NateCheck(lua_gettop(luaState) == 9, "Expected exactly 9 argument");
   NateCheck(IsNateUserData_NateMash(luaState, 1, &mash), "Expected argument 1 to be NateMash");
 
   position[0] = (float)lua_tonumber(luaState, 2);
   position[1] = (float)lua_tonumber(luaState, 3);
   position[2] = (float)lua_tonumber(luaState, 4);
-  rotation[0] = 0;
-  rotation[1] = 0;
-  rotation[2] = 0;
-  scale[0] = 10;
-  scale[1] = 10;
-  scale[2] = 10;
+
+  rotation[0] = (float)lua_tonumber(luaState, 5);
+  rotation[1] = (float)lua_tonumber(luaState, 6);
+
+  scale[0] = (float)lua_tonumber(luaState, 7);
+  scale[1] = (float)lua_tonumber(luaState, 8);
+  scale[2] = (float)lua_tonumber(luaState, 9);
 
   NateMash_DrawUpright(mash, position, rotation, scale);
+
+  return 0;
+}
+
+int C_NateMash_Draw(lua_State * luaState)
+{
+  NateMash * mash;
+
+  NateCheck(lua_gettop(luaState) == 1, "Expected exactly 1 argument");
+  NateCheck(IsNateUserData_NateMash(luaState, 1, &mash), "Expected argument 1 to be NateMash");
+
+  NateMash_Draw(mash);
 
   return 0;
 }
@@ -532,6 +546,42 @@ int C_CartesianVector2dDup(lua_State * luaState)
   return 1;
 }
 
+int C_GetAbsAnglesBetween(lua_State * luaState)
+{
+  double a1, a2, best, next, modified_a1;
+
+  NateCheck(lua_gettop(luaState) == 2, "Expected exactly two arguments");
+  a1 = lua_tonumber(luaState, 1);
+  a2 = lua_tonumber(luaState, 2);
+
+  // initial best
+  best = fabs(a2 - a1);
+  
+  // add 360 to a1 until it's as close to a2 as possible
+  modified_a1 = a1 + 360;
+  next = fabs(a2 - modified_a1);
+  while (next < best)
+  {
+    best = next;
+    modified_a1 += 360;
+    next = fabs(a2 - modified_a1);
+  }
+
+  // subtract 360 from a1 until it's as close to a2 as possible
+  modified_a1 = a1 - 360;
+  next = fabs(a2 - modified_a1);
+  while (next < best)
+  {
+    best = next;
+    modified_a1 -= 360;
+    next = fabs(a2 - modified_a1);
+  }
+
+  // return the best found number
+  lua_pushnumber(luaState, best);
+  return 1;
+}
+
 int C_gluPerspective(lua_State * luaState)
 {
   NateCheck(lua_gettop(luaState) == 4, "Expected exactly 4 arguments");
@@ -657,6 +707,15 @@ int C_DrawYAngledCube(lua_State * luaState)
   return 0;
 }
 
+int C_DrawRainbowCube(lua_State * luaState)
+{
+  (void)luaState;
+
+  DrawRainbowCube();
+
+  return 0;
+}
+
 void LuaExports_PublishCMethods(lua_State * luaState)
 {
   //lua_pushnumber(lua_state, LUA_RIDX_GLOBALS);
@@ -687,11 +746,13 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_NateMash_Uninit);
   PUBLISH_CMETHOD(C_NateMash_LoadFromColladaResourceFile);
   PUBLISH_CMETHOD(C_NateMash_DrawUpright);
+  PUBLISH_CMETHOD(C_NateMash_Draw);
   PUBLISH_CMETHOD(C_PolarVector2dAdd);
   PUBLISH_CMETHOD(C_PolarVector2dDup);
   PUBLISH_CMETHOD(C_PolarVector2dToCartesian);
   PUBLISH_CMETHOD(C_CartesianVector2dAdd);
   PUBLISH_CMETHOD(C_CartesianVector2dDup);
+  PUBLISH_CMETHOD(C_GetAbsAnglesBetween);
   PUBLISH_CMETHOD(C_gluPerspective);
   PUBLISH_CMETHOD(C_glMatrixMode);
   PUBLISH_CMETHOD(C_glLoadIdentity);
@@ -702,6 +763,7 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_SetView_CameraLookingAtPoint_FromDistance_AtAngle);
   PUBLISH_CMETHOD(C_DrawAxisLines);
   PUBLISH_CMETHOD(C_DrawYAngledCube);
+  PUBLISH_CMETHOD(C_DrawRainbowCube);
 
   //lua_pop(luaState, 1);
 }

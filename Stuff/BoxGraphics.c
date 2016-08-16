@@ -337,7 +337,7 @@ void DrawAxisLineZ(void)
   glPopMatrix();
 }
 
-void MyDrawRainbowCube(void)
+void DrawRainbowCube(void)
 {
   // Send our triangle data to the pipeline.
   glBegin( GL_TRIANGLES );
@@ -442,7 +442,7 @@ void DrawYAngledCube(float currentAngle)
   // the later three values indicate the vector of the axis around which we'll rotate
   glRotated( currentAngle, 0.0, 1.0, 0.0 );
 
-  MyDrawRainbowCube();
+  DrawRainbowCube();
 
   glPopMatrix();
 }
@@ -462,7 +462,7 @@ void DrawSizedLocatedBox(float * whlDimensions, float * xyzTranslation)
     (1.0f / cubeHeight) * whlDimensions[1],
     (1.0f / cubeLength) * whlDimensions[2]);
 
-  MyDrawRainbowCube();
+  DrawRainbowCube();
 
   glPopMatrix();
 }

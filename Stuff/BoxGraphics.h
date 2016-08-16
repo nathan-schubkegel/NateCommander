@@ -19,6 +19,7 @@ void DrawAxisLineX(void);
 void DrawAxisLineY(void);
 void DrawAxisLineZ(void);
 void DrawYAngledCube(float currentAngle);
+void DrawRainbowCube();
 void DrawSizedLocatedBox(float * whlDimensions, float * xyzTranslation);
 
 #endif

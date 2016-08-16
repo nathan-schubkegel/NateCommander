@@ -129,14 +129,17 @@ void NateMash_DrawUpright(NateMash * mash, float * position, float * rotation, f
   }
 
   // rotate
-  // left-right is implemented as "around the y axis"
-  // up-down is implemented as "around the x axis"
-  // upright-models don't have a notion of Z-rotation that would look any good
-  // TODO: why do we rotate up/down then left/right?
-  // rotation[1] is the up-down angle
-  glRotated(-rotation[1], 1.0f, 0.0f, 0.0f);
-  // rotation[0] is the left-right angle
-  glRotated(rotation[0], 0.0f, 1.0f, 0.0f);
+  if (rotation != 0)
+  {
+    // left-right is implemented as "around the y axis"
+    // up-down is implemented as "around the x axis"
+    // upright-models don't have a notion of Z-rotation that would look any good
+    // TODO: why do we rotate up/down then left/right?
+    // rotation[1] is the up-down angle
+    glRotated(-rotation[1], 1.0f, 0.0f, 0.0f);
+    // rotation[0] is the left-right angle
+    glRotated(rotation[0], 0.0f, 1.0f, 0.0f);
+  }
 
   NateMash_Draw(mash);
 
