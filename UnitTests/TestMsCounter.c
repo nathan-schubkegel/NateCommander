@@ -45,31 +45,31 @@ void Test_MsCounter()
   // Verify that each method basically looks like it works in a rollover scenario
   fakeSystemTime = 12;
 
-  m.LastGetTicksValue = -12;
+  m.LastGetTicksValue = (Uint32)-12;
   m.Count = 1;
   MsCounter_Reset(&m);
   CHECK(m.Count == 0, );
   CHECK(m.LastGetTicksValue == 12, );
 
-  m.LastGetTicksValue = -12;
+  m.LastGetTicksValue = (Uint32)-12;
   m.Count = 1;
   CHECK(MsCounter_Update(&m) == 25, );
   CHECK(m.Count == 25, );
   CHECK(m.LastGetTicksValue == 12, );
 
-  m.LastGetTicksValue = -12;
+  m.LastGetTicksValue = (Uint32)-12;
   m.Count = 24;
   CHECK(MsCounter_GetCount(&m) == 24, );
   CHECK(m.Count == 24, );
   CHECK(m.LastGetTicksValue == -12, );
 
-  m.LastGetTicksValue = -12;
+  m.LastGetTicksValue = (Uint32)-12;
   m.Count = 24;
   MsCounter_ResetToNewCount(&m, 50);
   CHECK(m.Count == 50, );
   CHECK(m.LastGetTicksValue == 12, );
 
-  m.LastGetTicksValue = -12;
+  m.LastGetTicksValue = (Uint32)-12;
   m.Count = 15;
   MsCounter_ResetToCurrentCount(&m);
   CHECK(m.Count == 15, );

@@ -55,7 +55,7 @@
 				UsePrecompiledHeader="0"
 				ProgramDataBaseFileName="$(IntDir)\"
 				WarningLevel="4"
-				WarnAsError="false"
+				WarnAsError="true"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 				CompileAs="1"

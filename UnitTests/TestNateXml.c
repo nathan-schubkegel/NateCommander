@@ -2,6 +2,9 @@
 #include "ccan/NateXml/NateXml.h"
 #include "SDL.h"
 
+#pragma warning(disable : 4127) // conditional expression is constant
+#pragma warning(disable : 4100) // unreferenced formal parameter
+
 char * xml1 = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
   "<Setup Id=\"VisualWebDeveloper\" Type=\"Product\" ProductCode=\"{90120000-0021-0000-0000-0000000FF1CE}\">\r"
   "  <PIDTemplate Value=\"825&#34;&u1234;03&amp;&lt;````=````=````=````=`````&amp;&gt;@@@@@\"/>\n"

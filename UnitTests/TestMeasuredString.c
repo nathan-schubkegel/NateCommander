@@ -1,12 +1,28 @@
 #include "TestUtils.h"
 #include "MeasuredString.h"
 
+#pragma warning(disable : 4310) // cast truncates constant value (for 'weirdUnicodeChars' and 'brokenUnicodeChars')
+#pragma warning(disable : 4127) // conditional expression is constant
+
+static char weirdUnicodeChars_data[12] = {
+                              'w', 'h', (char)0xC2, (char)0xBB, 't', 'e', 'v',
+                              (char)0xE0, (char)0xA0, (char)0xA0, 'r', (char)0
+                             };
+
+static char brokenUnicodeChars_data[11] = {
+                                'w', 'h', (char)0x80, 't', 'e', 'v', (char)0x80,
+                                (char)0x80, (char)0x80, 'r', (char)0
+                              };
+
 void Test_MeasuredString()
 {
   MeasuredString m;
   Unicode_Codepoint_t fakeData[20];
-  char weirdUnicodeChars[15] = { 'w', 'h', (char)0xC2, (char)0xBB, 't', 'e', 'v', (char)0xE0, (char)0xA0, (char)0xA0, "r" };
-  char brokenUnicodeChars[15] = { 'w', 'h', (char)0x80, 't', 'e', 'v', (char)0x80, (char)0x80, (char)0x80, 'r' };
+  char weirdUnicodeChars[12];
+  char brokenUnicodeChars[11];
+
+  memcpy(weirdUnicodeChars, weirdUnicodeChars_data, sizeof(weirdUnicodeChars));
+  memcpy(brokenUnicodeChars, brokenUnicodeChars_data, sizeof(brokenUnicodeChars));
 
   // Verify that the ascii allocator works
   m.Data = &fakeData[19];
