@@ -2,8 +2,8 @@
 
 //#include "ResourceLoader.h"
 #include <string.h>
-#include "ccan/NateXml/NateXml.h"
-#include "ccan/NateList/NateList.h"
+#include "NateXml.h"
+#include "NateList.h"
 #include "FatalErrorHandler.h"
 #include "ResourceLoader.h"
 

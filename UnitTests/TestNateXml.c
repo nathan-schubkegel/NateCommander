@@ -1,5 +1,5 @@
 #include "TestUtils.h"
-#include "ccan/NateXml/NateXml.h"
+#include "NateXml.h"
 #include "SDL.h"
 
 #pragma warning(disable : 4127) // conditional expression is constant

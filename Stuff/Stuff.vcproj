@@ -203,11 +203,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NateList.c"
+				>
+			</File>
+			<File
 				RelativePath=".\NateMash.c"
 				>
 			</File>
 			<File
 				RelativePath=".\NateMashDrawing.c"
+				>
+			</File>
+			<File
+				RelativePath=".\NateMinMaxHeap.c"
+				>
+			</File>
+			<File
+				RelativePath=".\NateUtf8.c"
+				>
+			</File>
+			<File
+				RelativePath=".\NateXml.c"
 				>
 			</File>
 			<File
@@ -285,11 +301,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NateList.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NateMash.h"
 				>
 			</File>
 			<File
 				RelativePath=".\NateMashDrawing.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NateMinMaxHeap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NateUtf8.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NateXml.h"
 				>
 			</File>
 			<File

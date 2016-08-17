@@ -5,7 +5,7 @@
 extern "C"
 {
   #include "TestUtils.h"
-  #include "ccan/NateMinMaxHeap/NateMinMaxHeap.h"
+  #include "NateMinMaxHeap.h"
 
   extern size_t MyGetFirstChildIndex(size_t index);
 }

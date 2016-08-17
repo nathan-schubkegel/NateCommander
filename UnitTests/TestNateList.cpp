@@ -7,7 +7,7 @@
 extern "C"
 {
   #include "TestUtils.h"
-  #include "ccan/NateList/NateList.h"
+  #include "NateList.h"
 }
 
 static void Test_ListPtrsAreSame(NateList * obj, std::vector<char*> &v)
