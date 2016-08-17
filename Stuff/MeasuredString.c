@@ -4,8 +4,8 @@
 void MeasuredString_AllocFromAscii(MeasuredString * this, char * zeroTerminatedAsciiString)
 {
   size_t len;
-  Unicode_Codepoint_t * data;
-  Unicode_Codepoint_t * end;
+  Utf32Char * data;
+  Utf32Char * end;
   char * here;
 
   len = strlen(zeroTerminatedAsciiString);
@@ -17,7 +17,7 @@ void MeasuredString_AllocFromAscii(MeasuredString * this, char * zeroTerminatedA
   }
   else
   {
-    data = malloc(len * sizeof(Unicode_Codepoint_t));
+    data = malloc(len * sizeof(Utf32Char));
     this->Data = data;
     this->Length = len;
     end = data + len;
@@ -38,7 +38,7 @@ void MeasuredString_AllocFromUtf8(MeasuredString * this, char * utf8Data, Uint32
   int numBytesInChar;
   Uint32 numCodePoints;
   int lastWasInvalid;
-  Unicode_Codepoint_t * data;
+  Utf32Char * data;
 
   assert(sizeof(char) == 1);
 
@@ -75,7 +75,7 @@ void MeasuredString_AllocFromUtf8(MeasuredString * this, char * utf8Data, Uint32
   else
   {
     // allocate space
-    this->Data = malloc(numCodePoints * sizeof(Unicode_Codepoint_t));
+    this->Data = malloc(numCodePoints * sizeof(Utf32Char));
     this->Length = numCodePoints;
     data = this->Data;
 
@@ -116,8 +116,8 @@ void MeasuredString_AllocFromLength(MeasuredString * this, Uint32 numCodePoints)
   }
   else
   {
-    this->Data = malloc(numCodePoints * sizeof(Unicode_Codepoint_t));
-    memset(this->Data, 0, numCodePoints * sizeof(Unicode_Codepoint_t));
+    this->Data = malloc(numCodePoints * sizeof(Utf32Char));
+    memset(this->Data, 0, numCodePoints * sizeof(Utf32Char));
     this->Length = numCodePoints;
   }
 }

@@ -17,7 +17,7 @@ static char brokenUnicodeChars_data[11] = {
 void Test_MeasuredString()
 {
   MeasuredString m;
-  Unicode_Codepoint_t fakeData[20];
+  Utf32Char fakeData[20];
   char weirdUnicodeChars[12];
   char brokenUnicodeChars[11];
 

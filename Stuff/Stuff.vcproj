@@ -219,10 +219,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NateUtf8.c"
-				>
-			</File>
-			<File
 				RelativePath=".\NateXml.c"
 				>
 			</File>
@@ -314,10 +310,6 @@
 			</File>
 			<File
 				RelativePath=".\NateMinMaxHeap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NateUtf8.h"
 				>
 			</File>
 			<File

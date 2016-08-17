@@ -1,3 +1,6 @@
 [submodule "crypto-algorithms"]
 	path = crypto-algorithms
 	url = https://github.com/nathan-schubkegel/crypto-algorithms.git
+[submodule "ccan"]
+	path = ccan
+	url = https://github.com/nathan-schubkegel/ccan.git

@@ -1,11 +1,11 @@
 #ifndef NATE_COMMANDER_MEASURED_STRING_H
 #define NATE_COMMANDER_MEASURED_STRING_H
 
-#include "NateUtf8.h"
+#include "../ccan/ccan/charset/charset.h"
 
 typedef struct MeasuredString
 {
-  Unicode_Codepoint_t * Data;
+  Utf32Char * Data;
   Uint32 Length;
 }
 MeasuredString;
