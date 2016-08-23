@@ -4,3 +4,6 @@
 [submodule "ccan"]
 	path = ccan
 	url = https://github.com/nathan-schubkegel/ccan.git
+[submodule "lua"]
+	path = lua
+	url = https://github.com/nathan-schubkegel/lua.git
