@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\;&quot;..\lua\src&quot;;&quot;..\sdl\include&quot;;..\tokamak"
+				AdditionalIncludeDirectories="..\;&quot;..\lua\src&quot;;&quot;..\sdl\include&quot;;..\tokamak\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_LIB;$(NOINHERIT)"
 				MinimalRebuild="false"
 				ExceptionHandling="0"

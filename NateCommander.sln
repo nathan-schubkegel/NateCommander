@@ -36,7 +36,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnitTests", "UnitTests\Unit
 		{81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68} = {81CE8DAF-EBB2-4761-8E45-B71ABCCA8C68}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tokamak", "tokamak\tokamak.vcproj", "{DE49562B-F87F-48FE-AE4B-2ACE89892231}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tokamak", "tokamak\tokamaksrc\tokamak.vcproj", "{DE49562B-F87F-48FE-AE4B-2ACE89892231}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "crypto-algorithms", "crypto-algorithms\crypto-algorithms.vcproj", "{FB352594-F049-5421-CADD-504934925049}"
 EndProject

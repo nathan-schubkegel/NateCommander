@@ -74,7 +74,7 @@
 				AdditionalDependencies="tokamak.lib stuff.lib lua.lib sdl2.lib opengl32.lib glu32.lib user32.lib winmm.lib shell32.lib imm32.lib ole32.lib version.lib gdi32.lib oleaut32.lib ccan.lib kernel32.lib msvcrtd.lib uuid.lib libcmtd.lib $(NOINHERIT)"
 				OutputFile="$(OutDir)\NateCommander.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\tokamak\Debug;..\Stuff\Debug;&quot;..\lua\Debug&quot;;&quot;..\sdl\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug;$(NOINHERIT)"
+				AdditionalLibraryDirectories="..\tokamak\tokamaksrc\Debug;..\Stuff\Debug;&quot;..\lua\Debug&quot;;&quot;..\sdl\VisualC\SDL\Debug&quot;;&quot;..\Microsoft DirectX SDK (August 2009)\Lib&quot;;..\ccan\Debug;$(NOINHERIT)"
 				IgnoreAllDefaultLibraries="true"
 				DelayLoadDLLs="$(NOINHERIT)"
 				GenerateDebugInformation="true"

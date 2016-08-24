@@ -10,3 +10,6 @@
 [submodule "sdl"]
 	path = sdl
 	url = https://github.com/nathan-schubkegel/sdl.git
+[submodule "tokamak"]
+	path = tokamak
+	url = https://github.com/nathan-schubkegel/tokamak.git
