@@ -7,3 +7,6 @@
 [submodule "lua"]
 	path = lua
 	url = https://github.com/nathan-schubkegel/lua.git
+[submodule "sdl"]
+	path = sdl
+	url = https://github.com/nathan-schubkegel/sdl.git
