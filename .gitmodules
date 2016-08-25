@@ -13,3 +13,6 @@
 [submodule "tokamak"]
 	path = tokamak
 	url = https://github.com/nathan-schubkegel/tokamak.git
+[submodule "directx"]
+	path = directx
+	url = https://github.com/nathan-schubkegel/directx.git
