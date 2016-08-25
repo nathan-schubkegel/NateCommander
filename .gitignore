@@ -1,5 +1,7 @@
 #ignore vim backup files
 *~
+
+#ignore visual studio files
 *.user
 *.suo
 *.ncb
@@ -7,10 +9,12 @@
 [Rr]elease/
 [Bb]in/
 [Oo]bj/
-*.bak
-*.aps
-/ccan-original
 
-# the wiki zip file is in source control
-# and the extracted contents are not
-/SDL2-2.0.3/SDL-wiki
+#ignore winmerge files
+*.bak
+
+#???
+*.aps
+
+#ignore blender files, in case they accidentally get added
+*.blend
