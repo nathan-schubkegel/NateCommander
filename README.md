@@ -24,9 +24,7 @@ Graphic models are built and exported as Collada files using Blender 2.71
 
 Licensing
 ---
-Copyright (c) 2016 Nathan Schubkegel
-
-This software is licensed by the zlib/libpng License as follows:
+The direct contents of this repo are Copyright (c) 2016 Nathan Schubkegel. It is licensed by the zlib/libpng license as follows:
 
 This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
 
@@ -37,3 +35,12 @@ Permission is granted to anyone to use this software for any purpose, including 
     2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
 
     3. This notice may not be removed or altered from any source distribution.
+
+The contents of the submodules / subrepos are copyrighted and licensed as described in each respectively.
+
+* ccan - various licenses
+* lua - MIT license
+* directx - a EULA that doesn't really specify, but it's freely available for download from MSDN so we're going with that
+* sdl - zlib license
+* tokamak - BSD or zlib license
+* crypto-algorithms - public domain
