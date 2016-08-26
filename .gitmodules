@@ -1,18 +1,18 @@
 [submodule "crypto-algorithms"]
 	path = crypto-algorithms
-	url = https://github.com/nathan-schubkegel/crypto-algorithms.git
+	url = https://github.com/nathan-schubkegel/crypto-algorithms
 [submodule "ccan"]
 	path = ccan
-	url = https://github.com/nathan-schubkegel/ccan.git
+	url = https://github.com/nathan-schubkegel/ccan
 [submodule "lua"]
 	path = lua
-	url = https://github.com/nathan-schubkegel/lua.git
+	url = https://github.com/nathan-schubkegel/lua
 [submodule "sdl"]
 	path = sdl
-	url = https://github.com/nathan-schubkegel/sdl.git
+	url = https://github.com/nathan-schubkegel/sdl
 [submodule "tokamak"]
 	path = tokamak
-	url = https://github.com/nathan-schubkegel/tokamak.git
+	url = https://github.com/nathan-schubkegel/tokamak
 [submodule "directx"]
 	path = directx
-	url = https://github.com/nathan-schubkegel/directx.git
+	url = https://github.com/nathan-schubkegel/directx
