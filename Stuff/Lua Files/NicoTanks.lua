@@ -64,12 +64,15 @@ function Initialize_NicoTanks(state)
       Rock = C_NateMash_LoadFromColladaResourceFile("nicorock.dae"),
     }
 
-  -- TODO: find a way to gather this from the NateMash
-  state.DistanceFromTankCenterToSnoutTipInMeshUnits = 1
-  state.TankRadiusInMeshUnits = 0.5
-
   -- game constants
   state.GameConstants = {}
+
+  -- TODO: find a way to gather this from the NateMash
+  state.GameConstants.DistanceFromTankCenterToSnoutTipInMeshUnits = 1
+  state.GameConstants.TankRadiusInMeshUnits = 0.5
+  state.GameConstants.BulletRadiusInMeshUnits = 1.0
+
+  -- Time constants
   state.GameConstants.MsPerTick = 20
   state.GameConstants.TicksPerSecond = 1000 / state.GameConstants.MsPerTick
 
@@ -96,7 +99,28 @@ function Initialize_NicoTanks(state)
   state.GameConstants.TankRotationTimeMs = 1200 -- means "it takes this long to rotate, in ms"
   state.GameConstants.TankRotationTimeTicks = -- means "it takes this long to rotate, in ticks"
         state.GameConstants.TankRotationTimeMs / state.GameConstants.MsPerTick
-  state.GameConstants.TankRotationPerTick = 360 / state.GameConstants.TankRotationTimeTicks;
+  state.GameConstants.TankRotationPerTick = 360 / state.GameConstants.TankRotationTimeTicks
+
+  -- Tank shoot frequency
+  state.GameConstants.TankShootFrequencyMs = 400 -- means "this much time between shots, in ms"
+  state.GameConstants.TankShootFrequencyTicks = -- means "this much time between shots, in ticks"
+        state.GameConstants.TankShootFrequencyMs / state.GameConstants.MsPerTick
+
+  -- Bullet speed
+  state.GameConstants.BulletSpeedInUnitsPerSecond = 80
+  state.GameConstants.BulletSpeedInUnitsPerTick =
+        state.GameConstants.BulletSpeedInUnitsPerSecond / state.GameConstants.TicksPerSecond
+
+  -- Bullet lifetime, means "if it doesn't collide with anything in this amount of time, it goes away"
+  state.GameConstants.BulletLifeTimeMs = 2000 -- "in ms"
+  state.GameConstants.BulletLifeTimeTicks = -- "in ticks"
+        state.GameConstants.BulletLifeTimeMs / state.GameConstants.MsPerTick
+
+  -- Bullet misc values
+  state.GameConstants.BulletSizeMultiplier = 0.8
+  state.GameConstants.BulletHeadOverHeelsAnglesPerSecond = 560
+  state.GameConstants.BulletHeadOverHeelsAnglesPerTick = 
+        state.GameConstants.BulletHeadOverHeelsAnglesPerSecond * state.GameConstants.MsPerTick / 1000
 
   -- register event handlers for every key
   C_RegisterKeyDownHandler("HandleKeyEvent(Down)", 
@@ -323,7 +347,7 @@ function TryToMoveTanks(state)
       C_PolarVector2dToCartesian(tank.Velocity))
 
     -- keep the tank inside the world battlefield
-    local tankRadius = state.TankRadiusInMeshUnits * tank.SizeMultiplier;    
+    local tankRadius = state.GameConstants.TankRadiusInMeshUnits * tank.SizeMultiplier;    
     newPosition.X = Clamp(newPosition.X,
         state.WorldLeft + tankRadius,
         state.WorldLeft + state.WorldWidth - tankRadius);
@@ -354,10 +378,15 @@ end
 
 function TryToShootGuns(state)
   for name, tank in pairs(state.Tanks) do
+
+    -- advance tank's ability to shoot again soon
+    tank.TicksSinceLastShot = tank.TicksSinceLastShot + 1
+
     if tank.IsShootButtonHeldDown then
-      -- shoot a new bullet every 400 ms (once per 20 ticks)
-      if tank.TicksSinceLastShot >= 20 then
-      
+
+      -- shoot a new bullet every once in a while
+      if tank.TicksSinceLastShot >= state.GameConstants.TankShootFrequencyTicks then
+
         -- don't let tank fire again for a while
         tank.TicksSinceLastShot = 0
 
@@ -366,15 +395,18 @@ function TryToShootGuns(state)
           Position = C_CartesianVector2dAdd(tank.Position, C_PolarVector2dToCartesian(
             {
               Angle = tank.FaceAngle,
-              Magnitude = state.DistanceFromTankCenterToSnoutTipInMeshUnits * tank.SizeMultiplier,
+              Magnitude = state.GameConstants.DistanceFromTankCenterToSnoutTipInMeshUnits *
+                             tank.SizeMultiplier,
             })),
 
           -- move the bullet in the direction the tank is facing
-          -- at 200 units per second (4 units per 20ms tick)
           -- plus the tank's current velocity (just like asteroids)
           Velocity = C_PolarVector2dAdd(
-            { Angle = tank.FaceAngle, Magnitude = 4 },
+            { Angle = tank.FaceAngle, Magnitude = state.GameConstants.BulletSpeedInUnitsPerTick },
             tank.Velocity),
+
+          -- record the direction it was originally intended to be shot
+          FaceAngle = tank.FaceAngle,
           
           -- record who shot it
           Tank = tank,
@@ -393,14 +425,16 @@ end
 
 function TryToMoveBullets(state)
   for bullet, bullet2 in pairs(state.Bullets) do
+
     -- TODO: if bullet is colliding with tank, blow it up
-    bullet.Position = C_CartesianVector2dAdd(bullet.Position, C_PolarVector2dToCartesian(bullet.Velocity))
-    -- TODO: if bullet is colliding with tank, blow it up
-    
     -- TODO: check for the whole path the tank might have traversed
+
+    -- move bullet
+    bullet.Position = C_CartesianVector2dAdd(bullet.Position, C_PolarVector2dToCartesian(bullet.Velocity))
     
-    -- after bullets have been around for 2 seconds (100 ticks), destroy them
-    if bullet.TicksAlive >= 100 then
+    -- after bullets have been around long enough, discard them
+    bullet.TicksAlive = bullet.TicksAlive + 1
+    if bullet.TicksAlive >= state.GameConstants.BulletLifeTimeTicks then
       state.Bullets[bullet] = nil
     end
   end
@@ -474,11 +508,12 @@ function Draw(state, e)
 
   -- Draw world objects
   C_glMatrixMode(0x1700) -- GL_MODELVIEW
-  C_glLoadIdentity()
 
+  -- Draw axis lines and a cube in the middle so I know where the middle is
+  C_glLoadIdentity()  
   C_DrawAxisLines()
-
   C_glScale(5, 5, 5)
+  -- (make the cube spin around at some speed)
   C_glRotate(((C_MsCounter_GetCount(state.WorldTime) % 3500) / 3500) * 360, 0, 0, 1)
   C_DrawRainbowCube()
 
@@ -499,5 +534,30 @@ function Draw(state, e)
 
     C_NateMash_Draw(state.Mashes.Tank)
   end
-  C_glLoadIdentity()
+
+  for bullet, bullet2 in pairs(state.Bullets) do
+    C_glLoadIdentity()
+
+    C_glTranslate(
+      bullet.Position.X,
+      bullet.Position.Y,
+      0)
+
+    C_glScale(
+      state.GameConstants.BulletSizeMultiplier,
+      state.GameConstants.BulletSizeMultiplier,
+      state.GameConstants.BulletSizeMultiplier)
+
+    -- make the bullet face the direction it was originally shot
+    C_glRotate(bullet.FaceAngle, 0, 0, 1)
+
+    -- make the bullet spin head-over-heels in the direction it was originally shot
+    -- (rotating on Y axis because this transformation occurs "before" the bullet is
+    --  faced the direction it was originally shot)
+    C_glRotate(bullet.TicksAlive * state.GameConstants.BulletHeadOverHeelsAnglesPerTick, 0, 1, 0)
+
+    C_DrawRainbowCube()
+  end
+
+  --C_glLoadIdentity()
 end
