@@ -24,17 +24,7 @@ Graphic models are built and exported as Collada files using Blender 2.71
 
 Licensing
 ---
-The direct contents of this repo are Copyright (c) 2016 Nathan Schubkegel. It is licensed by the zlib/libpng license as follows:
-
-This software is provided 'as-is', without any express or implied warranty. In no event will the authors be held liable for any damages arising from the use of this software.
-
-Permission is granted to anyone to use this software for any purpose, including commercial applications, and to alter it and redistribute it freely, subject to the following restrictions:
-
-    1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
-
-    2. Altered source versions must be plainly marked as such, and must not be misrepresented as being the original software.
-
-    3. This notice may not be removed or altered from any source distribution.
+The contents of this repo, excluding any submodules / subrepos, are free and unencumbered software released into the public domain under The Unlicense. You have complete freedom to do anything you want with the software, for any purpose. Please refer to <http://unlicense.org/> .
 
 The contents of the submodules / subrepos are copyrighted and licensed as described in each respectively.
 
