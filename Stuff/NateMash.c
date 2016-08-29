@@ -169,20 +169,6 @@ void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node)
   size_t i;
   NateXmlNode * child;
 
-  // geometries must be processed before visual scenes
-  libraryGeometriesProcessed = 0;
-  for (i = 0; i < NateXmlNode_GetCount(node); i++)
-  {
-    child = NateXmlNode_GetChild(node, i);
-    if (strcmp(child->ElementName, "library_geometries") == 0)
-    {
-      NateCheckXml(!libraryGeometriesProcessed); // currently can only handle 1 ever, due to memory allocation games
-      MyProcessLibraryGeometries(loadInfo, child);
-      libraryGeometriesProcessed = 1;
-    }
-  }
-  NateCheckXml(libraryGeometriesProcessed); // currently requires 1, due to memory allocation games
-
   // effects must be processed before visual scenes and before materials
   libraryEffectsProcessed = 0;
   for (i = 0; i < NateXmlNode_GetCount(node); i++)
@@ -196,7 +182,7 @@ void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node)
     }
   }
 
-  // materials must be processed before visual scenes
+  // materials must be processed before visual scenes and geometries
   libraryMaterialsProcessed = 0;
   for (i = 0; i < NateXmlNode_GetCount(node); i++)
   {
@@ -208,6 +194,20 @@ void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node)
       libraryMaterialsProcessed = 1;
     }
   }
+
+  // geometries must be processed before visual scenes
+  libraryGeometriesProcessed = 0;
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "library_geometries") == 0)
+    {
+      NateCheckXml(!libraryGeometriesProcessed); // currently can only handle 1 ever, due to memory allocation games
+      MyProcessLibraryGeometries(loadInfo, child);
+      libraryGeometriesProcessed = 1;
+    }
+  }
+  NateCheckXml(libraryGeometriesProcessed); // currently requires 1, due to memory allocation games
 
   // process visual scenes
   libraryVisualScenesProcessed = 0;
@@ -743,6 +743,8 @@ void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * polylist,
   int numPs;
   int numDataCoordinates;
   NateMashPolyListInput * input;
+  char * materialId;
+  NateMashMaterial * material;
 
   //<mesh>
   //  <source id="BaldySphere-mesh-positions">
@@ -756,7 +758,7 @@ void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * polylist,
   //  <vertices id="BaldySphere-mesh-vertices">
   //    <input semantic="POSITION" source="#BaldySphere-mesh-positions"/>
   //  </vertices>
-  //  <polylist count="80">
+  //  <polylist count="80" material="Some-Material">
   //    <input semantic="VERTEX" source="#BaldySphere-mesh-vertices" offset="0"/>
   //    <input semantic="NORMAL" source="#BaldySphere-mesh-normals" offset="1"/>
   //    <vcount>3 3 3 3 3 3 3 3 3  ...
@@ -771,6 +773,26 @@ void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * polylist,
   if (!loadInfo->isCountingRequiredSpace)
   {
     geometry->polylist.numDataCoordinates = numDataCoordinates;
+  }
+
+  // optionally a "default" material may be named
+  materialId = NateXmlNode_GetAttribute(polylist, "material");
+  if (materialId != 0 && !loadInfo->isCountingRequiredSpace)
+  {
+    // get the reference to that material
+    material = 0;
+    for (i = 0; i < loadInfo->mash->numMaterials; i++)
+    {
+      material = &loadInfo->mash->materials[i];
+      if (strcmp(material->id, materialId) == 0)
+      {
+        break;
+      }
+      material = 0;
+    }
+    
+    NateCheckXml(material != 0);
+    geometry->polylist.defaultMaterial = material;
   }
 
   // count <input> elements

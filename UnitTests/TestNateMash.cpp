@@ -407,4 +407,7 @@ void Test_NateMash()
   CHECK(mash->numMaterials == 1, );
   CHECK(strcmp(mash->materials[0].id, "Material-material") == 0, );
   CHECK(mash->materials[0].effect == &mash->effects[0], );
+
+  // verify that the 1 geometry referenced the 1 material as its default material
+  CHECK(mash->geometries[0].polylist.defaultMaterial == &mash->materials[0], );
 }

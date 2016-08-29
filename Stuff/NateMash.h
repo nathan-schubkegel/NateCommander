@@ -91,6 +91,8 @@ typedef struct NateMashPolyList
   size_t numDataIndexes; // length of 'dataIndexes'
   size_t numDataCoordinates; // numDataIndexes / (numInputs * 3)
 
+  NateMashMaterial * defaultMaterial; // may be null
+
 } NateMashPolyList;
 
 typedef struct NateMashGeometry
