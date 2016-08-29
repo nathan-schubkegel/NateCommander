@@ -333,12 +333,18 @@ void MyProcessVisualSceneNode(NateMashLoadInfo * loadInfo, NateXmlNode * nodeNod
   size_t i, end;
   char * next;
   char * oldNext;
+  char * materialId;
+  char * symbol;
   NateMashMatrix matrixData;
   size_t requiredChildren;
   size_t allNeededSpace;
   size_t spaceForName, spaceForId, spaceForGeometryUrl, spaceForChildren;
   NateMashNode * newMashNode;
   NateMashGeometry * geometry;
+  NateXmlNode * bindMaterialNode;
+  NateXmlNode * techniqueCommonNode;
+  NateXmlNode * instanceMaterialNode;
+  NateMashMaterial * material;
 
   // <node id="Baldy" name="Baldy" type="NODE">
   //   <matrix sid="transform">1 0 0 0 0 1 0 0 0 0 1 0.4905362 0 0 0 1</matrix>
@@ -435,6 +441,67 @@ void MyProcessVisualSceneNode(NateMashLoadInfo * loadInfo, NateXmlNode * nodeNod
       }
     }
     NateCheckXml(newMashNode->geometry != 0);
+
+    // XML instance_geometry node may optionally identify a material
+    //<instance_geometry url="#Cube-mesh">
+    //  <bind_material>
+    //    <technique_common>
+    //      <instance_material symbol="Material-material" target="#Material-material"/>
+    //    </technique_common>
+    //  </bind_material>
+    //</instance_geometry>
+    material = 0;
+    if (NateXmlNode_GetCount(instanceGeometryNode) == 0)
+    {
+      // that's fine
+    }
+    else
+    {
+      // only <bind_material> is supported for now
+      NateCheckXml(NateXmlNode_GetCount(instanceGeometryNode) == 1);
+      bindMaterialNode = NateXmlNode_GetChild(instanceGeometryNode, 0);
+      NateCheckXml(strcmp(bindMaterialNode->ElementName, "bind_material") == 0);
+      
+      // only <technique_common> is supported for now
+      NateCheckXml(NateXmlNode_GetCount(bindMaterialNode) == 1);
+      techniqueCommonNode = NateXmlNode_GetChild(bindMaterialNode, 0);
+      NateCheckXml(strcmp(techniqueCommonNode->ElementName, "technique_common") == 0);
+
+      // only <instance_material> is supported for now
+      NateCheckXml(NateXmlNode_GetCount(techniqueCommonNode) == 1);
+      instanceMaterialNode = NateXmlNode_GetChild(techniqueCommonNode, 0);
+      NateCheckXml(strcmp(instanceMaterialNode->ElementName, "instance_material") == 0);
+
+      // get symbol, identifies which geometry polylist is being configured
+      symbol = NateXmlNode_GetAttribute(instanceMaterialNode, "symbol");
+      NateCheckXml(symbol != 0);
+
+      // get target, identifies which material will be associated with a geometry polylist
+      materialId = NateXmlNode_GetAttribute(instanceMaterialNode, "target");
+      NateCheckXml(materialId != 0);
+      NateCheckXml(materialId[0] == '#');
+      materialId++;
+
+      // get a reference to the target material
+      material = 0;
+      for (i = 0; i < loadInfo->mash->numMaterials; i++)
+      {
+        material = &loadInfo->mash->materials[i];
+        if (strcmp(material->id, materialId) == 0)
+        {
+          break;
+        }
+        material = 0;
+      }
+      NateCheckXml(material != 0);
+
+      // right now only 1 polylist is supported per geometry
+      // (otherwise we'd have to find which polylist to bind this to! ick!)
+      NateCheckXml(strcmp(symbol, newMashNode->geometry->polylist.materialSymbol) == 0);
+
+      // save that material reference in the NateMashNode
+      newMashNode->material = material;
+    }
   }
 
   // process children
@@ -735,7 +802,7 @@ void MyProcessSourceTechniqueCommon(NateMashLoadInfo * loadInfo, NateXmlNode * n
 void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * polylist, 
                        NateXmlNode * meshNode, NateMashGeometry * geometry)
 {
-  size_t i, spaceForInputs;
+  size_t i, spaceForInputs, spaceForMaterialSymbol;
   NateXmlNode * child;
   const char * countValue;
   int numInputs;
@@ -743,8 +810,7 @@ void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * polylist,
   int numPs;
   int numDataCoordinates;
   NateMashPolyListInput * input;
-  char * materialId;
-  NateMashMaterial * material;
+  char * materialSymbol;
 
   //<mesh>
   //  <source id="BaldySphere-mesh-positions">
@@ -775,24 +841,22 @@ void MyProcessPolylist(NateMashLoadInfo * loadInfo, NateXmlNode * polylist,
     geometry->polylist.numDataCoordinates = numDataCoordinates;
   }
 
-  // optionally a "default" material may be named
-  materialId = NateXmlNode_GetAttribute(polylist, "material");
-  if (materialId != 0 && !loadInfo->isCountingRequiredSpace)
+  // optionally a material symbol may be provided
+  materialSymbol = NateXmlNode_GetAttribute(polylist, "material");
+  if (materialSymbol != 0)
   {
-    // get the reference to that material
-    material = 0;
-    for (i = 0; i < loadInfo->mash->numMaterials; i++)
+    // count space and save 'material' attribute as materialSymbol
+    spaceForMaterialSymbol = RoundToDword(strlen(materialSymbol) + 1);
+    if (loadInfo->isCountingRequiredSpace)
     {
-      material = &loadInfo->mash->materials[i];
-      if (strcmp(material->id, materialId) == 0)
-      {
-        break;
-      }
-      material = 0;
+      loadInfo->spaceToAllocate += spaceForMaterialSymbol;
     }
-    
-    NateCheckXml(material != 0);
-    geometry->polylist.defaultMaterial = material;
+    else
+    {
+      NateCheckXml(geometry->polylist.materialSymbol == 0); // make sure this only gets allocated once!
+      geometry->polylist.materialSymbol = MyNateMashAllocate(loadInfo, spaceForMaterialSymbol);
+      strcpy(geometry->polylist.materialSymbol, materialSymbol);
+    }
   }
 
   // count <input> elements

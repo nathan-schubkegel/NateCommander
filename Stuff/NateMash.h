@@ -91,7 +91,8 @@ typedef struct NateMashPolyList
   size_t numDataIndexes; // length of 'dataIndexes'
   size_t numDataCoordinates; // numDataIndexes / (numInputs * 3)
 
-  NateMashMaterial * defaultMaterial; // may be null
+  char * materialSymbol; // may be null. It's a named slot for a NateMashNode to specify which
+                         // material to associate with this PolyList data.
 
 } NateMashPolyList;
 
@@ -131,7 +132,9 @@ struct NateMashNode
   NateMashMatrix transform;
   NateMashGeometry * geometry;
   char * geometryUrl;
-  // FUTURE: bound material(s)
+
+  NateMashMaterial * material; // may be null, it's the material to use when rendering that geometry
+  // FUTURE: bound materials (plural)
 
   NateMashNodeChildren nodes;
 
