@@ -12,6 +12,8 @@ Please refer to <http://unlicense.org/>
 #define NateMash_DataType_Vertex 1
 #define NateMash_DataType_Normal 2
 
+#define NateMash_EffectType_Phong 1
+
 typedef struct NateMashSource
 {
   char * id;
@@ -74,6 +76,35 @@ typedef struct NateMashMatrix
 
 } NateMashMatrix;
 
+typedef struct NateMashColor
+{
+  float rgba[4];
+
+} NateMashColor;
+
+typedef struct NateMashEffectPhong
+{
+  NateMashColor emission; // amount of light emitted from the surface of this object
+  NateMashColor ambient; // amount of ambient light emitted from the surface of this object
+  NateMashColor diffuse; // the basic underlying color of the material
+  NateMashColor specular; //  for highlights (small bright spots on a shiny surface) by shader
+  float shininess; // the specularity or roughness of the specular reflection
+  float indexOfRefraction; // for perfectly refracted light as a single scalar index
+
+} NateMashEffectPhong;
+
+typedef struct NateMashEffect
+{
+  char * id;
+  int effectType;
+
+  union
+  {
+    NateMashEffectPhong phong;
+  } data;
+
+} NateMashEffect;
+
 typedef struct NateMashNode NateMashNode; // forward declaration
 
 typedef struct NateMashNodeChildren
@@ -101,6 +132,9 @@ typedef struct NateMash
 {
   NateMashGeometry * geometries;
   size_t numGeometries;
+
+  NateMashEffect * effects;
+  size_t numEffects;
 
   NateMashNodeChildren nodes;
 

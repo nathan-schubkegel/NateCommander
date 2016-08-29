@@ -291,6 +291,13 @@ float matrixValues[] = { 1, 0, 0, 0,
                          0, 0, 1, 0,
                          0, 0, 0, 1 };
 
+float phongEmissionValues[] = { 0, 0, 0, 1 };
+float phongAmbientValues[] = { 0, 0, 0, 1 };
+float phongDiffuseValues[] = { 0.64f, 0.64f, 0.64f, 1 };
+float phongSpecularValues[] = { 0.5f, 0.5f, 0.5f, 1 };
+float phongShininessValue = 50;
+float phongRefractionValue = 1;
+
 void CheckFloatArray(float * data, float * expected, size_t count)
 {
   for (size_t i = 0; i < count; i++)
@@ -313,6 +320,7 @@ void Test_NateMash()
   NateMashSource * source;
   NateMashGeometry * geometry;
   NateMashNode * node;
+  NateMashEffectPhong * phong;
   
   newXml1 = (char*)malloc(strlen(durpMetronome) + 1);
   strcpy_s(newXml1, strlen(durpMetronome) + 1, durpMetronome);
@@ -378,4 +386,19 @@ void Test_NateMash()
   // verify that the node children look OK
   CHECK(node->nodes.nodes == 0, );
   CHECK(node->nodes.numNodes == 0, );
+
+  // verify that the 1 effect loaded OK
+  CHECK(mash->effects != 0, );
+  CHECK(mash->numEffects == 1, );
+  CHECK(mash->effects[0].effectType == NateMash_EffectType_Phong, );
+  CHECK(strcmp(mash->effects[0].id, "Material-effect") == 0, );
+
+  // verify the effect's phong data is OK
+  phong = &mash->effects[0].data.phong;
+  CheckFloatArray(phong->ambient.rgba, phongAmbientValues, 4);
+  CheckFloatArray(phong->diffuse.rgba, phongDiffuseValues, 4);
+  CheckFloatArray(phong->emission.rgba, phongEmissionValues, 4);
+  CheckFloatArray(phong->specular.rgba, phongSpecularValues, 4);
+  CHECK(phong->shininess == phongShininessValue, );
+  CHECK(phong->indexOfRefraction == phongRefractionValue, );
 }

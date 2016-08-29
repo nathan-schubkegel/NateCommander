@@ -75,6 +75,11 @@ void MyProcessPolylistInput(NateMashLoadInfo * loadInfo, NateXmlNode * inputNode
                             NateMashGeometry * geometry, NateMashPolyListInput * input);
 void MyProcessPolylistVcount(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashGeometry * geometry);
 void MyProcessPolylistP(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashGeometry * geometry, int numInputs, int numDataCoordinates);
+void MyProcessLibraryEffects(NateMashLoadInfo * loadInfo, NateXmlNode * node);
+void MyProcessEffect(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashEffect * effect);
+void MyProcessPhong(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashEffectPhong * phong);
+void MyProcessNodeWithColorChild(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashColor * color);
+void MyProcessNodeWithFloatChild(NateMashLoadInfo * loadInfo, NateXmlNode * node, float * value);
 
 size_t RoundToDword(size_t amount)
 {
@@ -156,6 +161,7 @@ void MyLoadFromColladaFileCallback(
 void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node)
 {
   int libraryGeometriesProcessed;
+  int libraryEffectsProcessed;
   int libraryVisualScenesProcessed;
   size_t i;
   NateXmlNode * child;
@@ -173,6 +179,19 @@ void MyProcessRoot(NateMashLoadInfo * loadInfo, NateXmlNode * node)
     }
   }
   NateCheckXml(libraryGeometriesProcessed); // currently requires 1, due to memory allocation games
+
+  // effects must be processed before visual scenes
+  libraryEffectsProcessed = 0;
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "library_effects") == 0)
+    {
+      NateCheckXml(!libraryEffectsProcessed); // currently can only handle 1 ever, due to memory allocation games
+      MyProcessLibraryEffects(loadInfo, child);
+      libraryEffectsProcessed = 1;
+    }
+  }
 
   // process visual scenes
   libraryVisualScenesProcessed = 0;
@@ -994,6 +1013,223 @@ void MyProcessPolylistP(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMas
     NateCheckXml(count == 0);
     NateCheckXml(oldNext == next);
   }
+}
+
+void MyProcessLibraryEffects(NateMashLoadInfo * loadInfo, NateXmlNode * node)
+{
+  size_t i, requiredChildren, spaceForChildren;
+  NateXmlNode * child;
+  NateMashEffect * effect;
+
+  // get count of effect children
+  requiredChildren = 0;
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "effect") == 0)
+    {
+      requiredChildren++;
+    }
+  }
+
+  // space required for referencing effect children
+  spaceForChildren = RoundToDword(requiredChildren * sizeof(NateMashEffect));
+
+  // count or save all that data
+  if (loadInfo->isCountingRequiredSpace)
+  {
+    loadInfo->spaceToAllocate += spaceForChildren;
+  }
+  else
+  {
+    NateCheckXml(loadInfo->mash->effects == 0); // make sure this only gets allocated once!
+    loadInfo->mash->effects = MyNateMashAllocate(loadInfo, spaceForChildren);
+    loadInfo->mash->numEffects = requiredChildren;
+  }
+
+  // process children
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "effect") == 0)
+    {
+      effect = loadInfo->isCountingRequiredSpace ? 0 : &loadInfo->mash->effects[i];
+      MyProcessEffect(loadInfo, child, effect);
+    }
+  }
+}
+
+void MyProcessEffect(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashEffect * effect)
+{
+  size_t spaceForId;
+  NateXmlNode * profileNode;
+  NateXmlNode * techniqueNode;
+  NateXmlNode * effectNode;
+  char * idValue;
+
+  // <effect id="Material-effect">
+  //   <profile_COMMON>
+  //     <technique sid="common">
+  //       <phong>
+
+  // save id attribute, it's used later
+  idValue = (char*)NateXmlNode_GetAttribute(node, "id");
+  NateCheckXml(idValue != 0);
+
+  // count or save id
+  spaceForId = RoundToDword(strlen(idValue) + 1);
+  if (loadInfo->isCountingRequiredSpace)
+  {
+    loadInfo->spaceToAllocate += spaceForId;
+  }
+  else
+  {
+    NateCheckXml(effect->id == 0); // make sure this only gets allocated once!
+    effect->id = MyNateMashAllocate(loadInfo, spaceForId);
+    strcpy(effect->id, idValue);
+  }
+
+  // only <profile_COMMON> is supported for now
+  NateCheckXml(NateXmlNode_GetCount(node) == 1);
+  profileNode = NateXmlNode_GetChild(node, 0);
+  NateCheckXml(strcmp(profileNode->ElementName, "profile_COMMON") == 0);
+  
+  // only <technique> is supported for now
+  NateCheckXml(NateXmlNode_GetCount(profileNode) == 1);
+  techniqueNode = NateXmlNode_GetChild(profileNode, 0);
+  NateCheckXml(strcmp(techniqueNode->ElementName, "technique") == 0);
+
+  // only <phong> is supported for now
+  NateCheckXml(NateXmlNode_GetCount(techniqueNode) == 1);
+  effectNode = NateXmlNode_GetChild(techniqueNode, 0);
+  NateCheckXml(strcmp(effectNode->ElementName, "phong") == 0);
+
+  if (!loadInfo->isCountingRequiredSpace)
+  {
+    effect->effectType = NateMash_EffectType_Phong;
+    MyProcessPhong(loadInfo, effectNode, &effect->data.phong);
+  }
+}
+
+void MyProcessPhong(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashEffectPhong * phong)
+{
+  NateXmlNode * child;
+  NateXmlNode * emissionNode;
+  NateXmlNode * ambientNode;
+  NateXmlNode * diffuseNode;
+  NateXmlNode * specularNode;
+  NateXmlNode * shininessNode;
+  NateXmlNode * indexOfRefractionNode;
+  size_t i;
+
+  emissionNode = 0;
+  ambientNode = 0;
+  diffuseNode = 0;
+  specularNode = 0;
+  shininessNode = 0;
+  indexOfRefractionNode = 0;
+
+  for (i = 0; i < NateXmlNode_GetCount(node); i++)
+  {
+    child = NateXmlNode_GetChild(node, i);
+    if (strcmp(child->ElementName, "emission") == 0)
+    {
+      emissionNode = child;
+    }
+    else if (strcmp(child->ElementName, "ambient") == 0)
+    {
+      ambientNode = child;
+    }
+    else if (strcmp(child->ElementName, "diffuse") == 0)
+    {
+      diffuseNode = child;
+    }
+    else if (strcmp(child->ElementName, "specular") == 0)
+    {
+      specularNode = child;
+    }
+    else if (strcmp(child->ElementName, "shininess") == 0)
+    {
+      shininessNode = child;
+    }
+    else if (strcmp(child->ElementName, "index_of_refraction") == 0)
+    {
+      indexOfRefractionNode = child;
+    }
+    //else
+    //{
+    //  NateCheckXml(strcmp(child->ElementName, "unrecognized node name") == 0);
+    //}
+  }
+
+  NateCheckXml(
+    emissionNode != 0 &&
+    ambientNode != 0 &&
+    diffuseNode != 0 &&
+    specularNode != 0 &&
+    shininessNode != 0 &&
+    indexOfRefractionNode != 0);
+
+  if (!loadInfo->isCountingRequiredSpace)
+  {
+    MyProcessNodeWithColorChild(loadInfo, emissionNode, &phong->emission);
+    MyProcessNodeWithColorChild(loadInfo, ambientNode, &phong->ambient);
+    MyProcessNodeWithColorChild(loadInfo, diffuseNode, &phong->diffuse);
+    MyProcessNodeWithColorChild(loadInfo, specularNode, &phong->specular);
+
+    MyProcessNodeWithFloatChild(loadInfo, shininessNode, &phong->shininess);
+    MyProcessNodeWithFloatChild(loadInfo, indexOfRefractionNode, &phong->indexOfRefraction);
+  }
+}
+
+void MyProcessNodeWithColorChild(NateMashLoadInfo * loadInfo, NateXmlNode * node, NateMashColor * color)
+{
+  NateXmlNode * colorNode;
+  char * next;
+  char * oldNext;
+  size_t i;
+
+  // exactly 1 <color> child element
+  NateCheckXml(NateXmlNode_GetCount(node) == 1);
+  colorNode = NateXmlNode_GetChild(node, 0);
+  NateCheckXml(strcmp(colorNode->ElementName, "color") == 0);
+
+  // store numbers
+  next = colorNode->ElementText;
+  for (i = 0; i < 4; i++)
+  {
+    oldNext = next;
+    color->rgba[i] = (float)strtod(next, &next);
+    NateCheckXml(oldNext != next);
+  }
+  oldNext = next;
+  i = (size_t)strtod(next, &next);
+  NateCheckXml(i == 0);
+  NateCheckXml(oldNext == next);
+}
+
+void MyProcessNodeWithFloatChild(NateMashLoadInfo * loadInfo, NateXmlNode * node, float * value)
+{
+  NateXmlNode * floatNode;
+  char * next;
+  char * oldNext;
+  size_t i;
+
+  // exactly 1 <float> child element
+  NateCheckXml(NateXmlNode_GetCount(node) == 1);
+  floatNode = NateXmlNode_GetChild(node, 0);
+  NateCheckXml(strcmp(floatNode->ElementName, "float") == 0);
+
+  // store the number
+  next = floatNode->ElementText;
+  oldNext = next;
+  *value = (float)strtod(next, &next);
+  NateCheckXml(oldNext != next);
+
+  oldNext = next;
+  i = (size_t)strtod(next, &next);
+  NateCheckXml(i == 0);
+  NateCheckXml(oldNext == next);
 }
 
 void NateMash_LoadFromColladaData(NateMash * obj, char * colladaFileData, size_t colladaFileLength, const char * colladaFileDebugIdentifier)
