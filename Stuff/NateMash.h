@@ -14,6 +14,42 @@ Please refer to <http://unlicense.org/>
 
 #define NateMash_EffectType_Phong 1
 
+typedef struct NateMashColor
+{
+  float rgba[4];
+
+} NateMashColor;
+
+typedef struct NateMashEffectPhong
+{
+  NateMashColor emission; // amount of light emitted from the surface of this object
+  NateMashColor ambient; // amount of ambient light emitted from the surface of this object
+  NateMashColor diffuse; // the basic underlying color of the material
+  NateMashColor specular; //  for highlights (small bright spots on a shiny surface) by shader
+  float shininess; // the specularity or roughness of the specular reflection
+  float indexOfRefraction; // for perfectly refracted light as a single scalar index
+
+} NateMashEffectPhong;
+
+typedef struct NateMashEffect
+{
+  char * id;
+  int effectType;
+
+  union
+  {
+    NateMashEffectPhong phong;
+  } data;
+
+} NateMashEffect;
+
+typedef struct NateMashMaterial
+{
+  char * id;
+  NateMashEffect * effect;
+
+} NateMashMaterial;
+
 typedef struct NateMashSource
 {
   char * id;
@@ -76,35 +112,6 @@ typedef struct NateMashMatrix
 
 } NateMashMatrix;
 
-typedef struct NateMashColor
-{
-  float rgba[4];
-
-} NateMashColor;
-
-typedef struct NateMashEffectPhong
-{
-  NateMashColor emission; // amount of light emitted from the surface of this object
-  NateMashColor ambient; // amount of ambient light emitted from the surface of this object
-  NateMashColor diffuse; // the basic underlying color of the material
-  NateMashColor specular; //  for highlights (small bright spots on a shiny surface) by shader
-  float shininess; // the specularity or roughness of the specular reflection
-  float indexOfRefraction; // for perfectly refracted light as a single scalar index
-
-} NateMashEffectPhong;
-
-typedef struct NateMashEffect
-{
-  char * id;
-  int effectType;
-
-  union
-  {
-    NateMashEffectPhong phong;
-  } data;
-
-} NateMashEffect;
-
 typedef struct NateMashNode NateMashNode; // forward declaration
 
 typedef struct NateMashNodeChildren
@@ -135,6 +142,9 @@ typedef struct NateMash
 
   NateMashEffect * effects;
   size_t numEffects;
+
+  NateMashMaterial * materials;
+  size_t numMaterials;
 
   NateMashNodeChildren nodes;
 

@@ -401,4 +401,10 @@ void Test_NateMash()
   CheckFloatArray(phong->specular.rgba, phongSpecularValues, 4);
   CHECK(phong->shininess == phongShininessValue, );
   CHECK(phong->indexOfRefraction == phongRefractionValue, );
+
+  // verify that the 1 material loaded OK
+  CHECK(mash->materials != 0, );
+  CHECK(mash->numMaterials == 1, );
+  CHECK(strcmp(mash->materials[0].id, "Material-material") == 0, );
+  CHECK(mash->materials[0].effect == &mash->effects[0], );
 }
