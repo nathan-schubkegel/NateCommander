@@ -155,6 +155,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\AngleMath.c"
+				>
+			</File>
+			<File
 				RelativePath=".\BoxGraphics.c"
 				>
 			</File>
@@ -227,6 +231,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SafeMath.c"
+				>
+			</File>
+			<File
 				RelativePath=".\Utils.c"
 				>
 				<FileConfiguration
@@ -252,6 +260,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\AngleMath.h"
+				>
+			</File>
 			<File
 				RelativePath=".\BoxGraphics.h"
 				>
@@ -322,6 +334,10 @@
 			</File>
 			<File
 				RelativePath=".\Resources.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SafeMath.h"
 				>
 			</File>
 			<File

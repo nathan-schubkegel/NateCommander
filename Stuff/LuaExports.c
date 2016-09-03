@@ -20,6 +20,7 @@ Please refer to <http://unlicense.org/>
 #include "BoxGraphics.h"
 #include "Vectors2d.h"
 #include <math.h>
+#include "AngleMath.h"
 
 // Design Hint: use this macro for every full userdata handed to lua
 // so we can check the types of userdata passed from client lua scripts to C
@@ -554,34 +555,13 @@ int C_CartesianVector2dDup(lua_State * luaState)
 
 int C_GetAbsAnglesBetween(lua_State * luaState)
 {
-  double a1, a2, best, next, modified_a1;
+  double a1, a2, best;
 
   NateCheck(lua_gettop(luaState) == 2, "Expected exactly two arguments");
   a1 = lua_tonumber(luaState, 1);
   a2 = lua_tonumber(luaState, 2);
 
-  // initial best
-  best = fabs(a2 - a1);
-  
-  // add 360 to a1 until it's as close to a2 as possible
-  modified_a1 = a1 + 360;
-  next = fabs(a2 - modified_a1);
-  while (next < best)
-  {
-    best = next;
-    modified_a1 += 360;
-    next = fabs(a2 - modified_a1);
-  }
-
-  // subtract 360 from a1 until it's as close to a2 as possible
-  modified_a1 = a1 - 360;
-  next = fabs(a2 - modified_a1);
-  while (next < best)
-  {
-    best = next;
-    modified_a1 -= 360;
-    next = fabs(a2 - modified_a1);
-  }
+  best = AngleMath_GetAbsAnglesBetween(a1, a2);
 
   // return the best found number
   lua_pushnumber(luaState, best);
