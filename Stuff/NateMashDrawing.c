@@ -14,16 +14,20 @@ Please refer to <http://unlicense.org/>
 
 void MyDrawNode(NateMashNode * node)
 {
-  size_t i, j, k, i2;
+  size_t i, j, k, iVert, iNormal;
   size_t count;
   size_t stride;
   size_t vertexInputIndex;
+  size_t normalInputIndex;
   size_t numInputs;
-  int vertIndexes[3];
+  int vertIndex;
+  int normalIndex;
   float vertParts[3];
-  //size_t dataCoordinatesStride;
-  NateMashSource * source;
-  float * sourceData;
+  float normalParts[3];
+  NateMashSource * vertSource;
+  NateMashSource * normalSource;
+  float * vertData;
+  float * normalData;
   int * dataIndexes;
   NateMashGeometry * geometry;
 
@@ -34,31 +38,40 @@ void MyDrawNode(NateMashNode * node)
 
   glBegin( GL_TRIANGLES );
 
-  // find the "VERTEX" input
-  // (I guess we just assume every mash has a single "VERTEX" input)
-  // and count the data coordinate stride
-  //dataCoordinatesStride = 0;
+  // find the "VERTEX" and "NORMAL" inputs
+  // (I guess we just assume every mash has a single "VERTEX" input and single "NORMAL" input)
   vertexInputIndex = 0xFFFFFFFF;
+  normalInputIndex = 0xFFFFFFFF;
   for (i = 0; i < geometry->polylist.numInputs; i++)
   {
-    //dataCoordinatesStride += mash->inputs[i].source->stride;
     if (geometry->polylist.inputs[i].dataType == NateMash_DataType_Vertex)
     {
       NateCheck(vertexInputIndex == 0xFFFFFFFF, "there can be only one!");
       vertexInputIndex = i;
     }
+    else if (geometry->polylist.inputs[i].dataType == NateMash_DataType_Normal)
+    {
+      NateCheck(normalInputIndex == 0xFFFFFFFF, "there can be only one!");
+      normalInputIndex = i;
+    }
   }
   NateCheck(vertexInputIndex != 0xFFFFFFFF, "there must be at least one!");
+  NateCheck(normalInputIndex != 0xFFFFFFFF, "there must be at least one!");
   
-  // get source
+  // get the source of vertex data
   // (I guess we just assume the source is using 3 floats to make a vertex)
-  source = geometry->polylist.inputs[vertexInputIndex].source;
-  sourceData = source->data;
-  NateAssert(source->stride == 3, "we assume sources depict triangles");
+  vertSource = geometry->polylist.inputs[vertexInputIndex].source;
+  vertData = vertSource->data;
+  NateAssert(vertSource->stride == 3, "we assume sources depict triangles");
+
+  // get the source of normal data
+  // (I guess we just assume the source is using 3 floats to make a vertex)
+  normalSource = geometry->polylist.inputs[normalInputIndex].source;
+  normalData = normalSource->data;
+  NateAssert(normalSource->stride == 3, "we assume sources depict triangles");
 
   // iterate through data coordinates
   // (I guess we just assume every 3 of these is a triangle that needs to be drawn)
-  //NateAssert(mash->numDataCoordinates == , "we assume numDataCoordinates depicts triangles");
   count = geometry->polylist.numDataCoordinates;
   stride = 3 * geometry->polylist.numInputs;
   dataIndexes = geometry->polylist.dataIndexes;
@@ -66,7 +79,8 @@ void MyDrawNode(NateMashNode * node)
   NateAssert(count * stride == geometry->polylist.numDataIndexes, "right?");
   for (i = 0; i < count; i++)
   {
-    i2 = i * stride + vertexInputIndex; // get to index of first vertex data index for this triangle
+    iVert = i * stride + vertexInputIndex; // get to index of first vertex data index for this triangle
+    iNormal = i * stride + normalInputIndex; // same, for normal data
 
     if (node->material != 0 && node->material->effect->effectType == NateMash_EffectType_Phong)
     {
@@ -82,13 +96,18 @@ void MyDrawNode(NateMashNode * node)
     // j = for each of the 3 vertices in a triangle
     for (j = 0; j < 3; j++)
     {
-      vertIndexes[j] = dataIndexes[i2 + j * numInputs];
+      vertIndex = dataIndexes[iVert + j * numInputs];
+      normalIndex = dataIndexes[iNormal + j * numInputs];
 
       // k = for each of the 3 x,y,z parts of a vertex
       for (k = 0; k < 3; k++)
       {
-        vertParts[k] = sourceData[vertIndexes[j] * 3 + k];
+        vertParts[k] = vertData[vertIndex * 3 + k];
+        normalParts[k] = normalData[normalIndex * 3 + k];
       }
+
+      // set the normal for this vertex
+      glNormal3fv( normalParts );
 
       // draw this vertex
       glVertex3fv( vertParts );
