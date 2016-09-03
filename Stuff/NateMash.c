@@ -12,6 +12,7 @@ Please refer to <http://unlicense.org/>
 #include "NateList.h"
 #include "FatalErrorHandler.h"
 #include "ResourceLoader.h"
+#include "NateMashCullingFix.h"
 
 #pragma warning( disable : 4996) // strcpy is unsafe warning
 
@@ -1491,6 +1492,9 @@ void NateMash_LoadFromColladaData(NateMash * obj, char * colladaFileData, size_t
   parseResult = NateXml_ParseDom(colladaFileData, colladaFileLength, errorBuffer, 200, &loadInfo, MyLoadFromColladaFileCallback);
   errorBuffer[199] = 0;
   NateCheck3(parseResult, "failed to parse collada mash xml: ", colladaFileDebugIdentifier, errorBuffer);
+
+  // reorder faces so they render in the direction of their normals
+  NateMashCullingFix(loadInfo.mash);
 }
 
 void NateMash_LoadFromColladaResourceFile(NateMash * obj, const char * mashFileName)

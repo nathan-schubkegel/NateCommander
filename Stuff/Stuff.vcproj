@@ -215,6 +215,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NateMashCullingFix.c"
+				>
+			</File>
+			<File
 				RelativePath=".\NateMashDrawing.c"
 				>
 			</File>
@@ -248,6 +252,10 @@
 			</File>
 			<File
 				RelativePath=".\Vectors2d.c"
+				>
+			</File>
+			<File
+				RelativePath=".\Vectors3d.c"
 				>
 			</File>
 			<File
@@ -317,6 +325,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NateMashCullingFix.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NateMashDrawing.h"
 				>
 			</File>
@@ -346,6 +358,10 @@
 			</File>
 			<File
 				RelativePath=".\Vectors2d.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Vectors3d.h"
 				>
 			</File>
 			<File
