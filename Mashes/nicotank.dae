@@ -369,7 +369,7 @@
         </instance_geometry>
       </node>
       <node id="Cube_002" name="Cube_002" type="NODE">
-        <matrix sid="transform">-2.97399e-8 -0.8105342 0 0 -0.0464862 5.18546e-7 0 0 0 0 0.04827571 0.4905362 0 0 0 1</matrix>
+        <matrix sid="transform">-2.97399e-8 -0.8105342 0 0 0.0464862 5.18546e-7 0 0 0 0 0.04827571 0.4905362 0 0 0 1</matrix>
         <instance_geometry url="#Cube_003-mesh"/>
       </node>
     </visual_scene>
