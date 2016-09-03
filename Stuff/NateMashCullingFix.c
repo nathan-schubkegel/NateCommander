@@ -11,8 +11,15 @@ Please refer to <http://unlicense.org/>
 #include "AngleMath.h"
 #include "FatalErrorHandler.h"
 
+#include <stdio.h>
+
+#pragma warning(disable : 4996) // unsafe function, should use _s version instead
+
 void MyNateMashCullingFixNode(NateMashNode * node)
 {
+  FILE * file;
+  char numberText[50];
+
   size_t i, j, k, iVert, iNormal;
   size_t count;
   size_t stride;
@@ -73,6 +80,25 @@ void MyNateMashCullingFixNode(NateMashNode * node)
   normalData = normalSource->data;
   NateAssert(normalSource->stride == 3, "we assume sources depict triangles");
 
+  file = 0;
+  fopen_s(&file, node->id, "w");
+  fputs("node name: ", file);
+  fputs(node->id, file);
+  fputs("\n", file);
+
+  fputs("matrix: ", file);
+  for (i = 0; i < 4; i++)
+  {
+    if (i > 0) fputs("        ", file);
+    for (j = 0; j < 4; j++)
+    {
+      sprintf(numberText, "%f", node->transform.elements[i * 4 + j]);
+      fputs(numberText, file);
+      if (j < 3) fputs(", ", file);
+      else fputs("\n", file);
+    }
+  }
+
   // iterate through data coordinates
   // (I guess we just assume every 3 of these is a triangle that needs to be drawn)
   count = geometry->polylist.numDataCoordinates;
@@ -80,14 +106,31 @@ void MyNateMashCullingFixNode(NateMashNode * node)
   dataIndexes = geometry->polylist.dataIndexes;
   numInputs = geometry->polylist.numInputs;
   NateAssert(count * stride == geometry->polylist.numDataIndexes, "right?");
+
+  fputs("triangle count: ", file);
+  _itoa(count, numberText, 10);
+  fputs(numberText, file);
+  fputs("\n", file);
+  fputs("\n", file);
+
   for (i = 0; i < count; i++)
   {
     iVert = i * stride + vertexInputIndex; // get to index of first vertex data index for this triangle
     iNormal = i * stride + normalInputIndex; // same, for normal data
 
+    fputs("triangle ", file);
+    _itoa(i, numberText, 10);
+    fputs(numberText, file);
+    fputs(":\n", file);
+
     // j = for each of the 3 vertices in a triangle
     for (j = 0; j < 3; j++)
     {
+      _itoa(j, numberText, 10);
+      fputs("  vertex ", file);
+      fputs(numberText, file);
+      fputs(": ", file);
+
       vertIndexes[j] = dataIndexes[iVert + j * numInputs];
       normalIndexes[j] = dataIndexes[iNormal + j * numInputs];
 
@@ -96,6 +139,30 @@ void MyNateMashCullingFixNode(NateMashNode * node)
       {
         vertParts[j][k] = vertData[vertIndexes[j] * 3 + k];
         normalParts[j][k] = normalData[normalIndexes[j] * 3 + k];
+
+        fputs(k == 0 ? "x = " : k == 1 ? "y = " : "z = ", file);
+        sprintf(numberText, "%f", vertParts[j][k]);
+        fputs(numberText, file);
+        if (k < 2) fputs(", ", file);
+        else fputs("\n", file);
+      }
+    }
+
+    // repeat for normal
+    // j = for each of the 3 vertices in a triangle
+    //for (j = 0; j < 3; j++)
+    j = 0;
+    {
+      fputs("  normal: ", file);
+
+      // k = for each of the 3 x,y,z parts of a vertex
+      for (k = 0; k < 3; k++)
+      {
+        fputs(k == 0 ? "x = " : k == 1 ? "y = " : "z = ", file);
+        sprintf(numberText, "%f", normalParts[j][k]);
+        fputs(numberText, file);
+        if (k < 2) fputs(", ", file);
+        else fputs("\n", file);
       }
     }
 
@@ -140,12 +207,14 @@ void MyNateMashCullingFixNode(NateMashNode * node)
     {
       // else, need to swap the data for 2nd and 3rd vertices so face culling occurs on the desired side
       // https://www.opengl.org/wiki/Face_Culling
-      dataIndexes[iVert + 1 * numInputs] = vertIndexes[2];
-      dataIndexes[iNormal + 1 * numInputs] = normalIndexes[2];
-      dataIndexes[iVert + 2 * numInputs] = vertIndexes[1];
-      dataIndexes[iNormal + 2 * numInputs] = normalIndexes[1];
+      //dataIndexes[iVert + 1 * numInputs] = vertIndexes[2];
+      //dataIndexes[iNormal + 1 * numInputs] = normalIndexes[2];
+      //dataIndexes[iVert + 2 * numInputs] = vertIndexes[1];
+      //dataIndexes[iNormal + 2 * numInputs] = normalIndexes[1];
     }
   }
+
+  fclose(file);
 
   // recurse for children
   for (i = 0; i < node->nodes.numNodes; i++)

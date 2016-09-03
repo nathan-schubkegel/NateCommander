@@ -82,12 +82,12 @@ void MyDrawNode(NateMashNode * node)
     iVert = i * stride + vertexInputIndex; // get to index of first vertex data index for this triangle
     iNormal = i * stride + normalInputIndex; // same, for normal data
 
-    if (node->material != 0 && node->material->effect->effectType == NateMash_EffectType_Phong)
-    {
+    //if (node->material != 0 && node->material->effect->effectType == NateMash_EffectType_Phong)
+    //{
       // use the material's diffuse color
-      glColor4fv(node->material->effect->data.phong.diffuse.rgba);
-    }
-    else 
+    //  glColor4fv(node->material->effect->data.phong.diffuse.rgba);
+    //}
+    //else 
     {
       // random-ish color
       glColor4ubv(colors[i % 8]);
