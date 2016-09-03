@@ -66,66 +66,26 @@ int SafeMath_Asin(double a, double * result)
 
 double SafeMath_CoolAtan2(double y, double x)
 {
-  int yClass, xClass, divClass;
+  int divClass;
   double yDivX;
 
-  // normal atan2 does this (says MSDN)
-  // if x equals 0, atan2 returns p/2 if y is positive, -p/2 if y is negative, or 0 if y is 0.
-
-  // cool atan2 returns more varied angles for infinities, and NAN for NAN scenarios
-
-  yClass = _fpclass(y);
-  xClass = _fpclass(x);
-
-  if (yClass & (_FPCLASS_SNAN | _FPCLASS_QNAN))
+  // (says MSDN) normal atan2 does
+  //     if x equals 0, atan2 returns 
+  //          p/2 if y is positive, 
+  //         -p/2 if y is negative, 
+  //          0 if y is 0.
+  if (x == 0)
   {
-    return yClass;
+    if (y > 0) return M_PI / 2;
+    if (y < 0) return - M_PI / 2;
+    return 0;
   }
 
-  if (xClass & (_FPCLASS_SNAN | _FPCLASS_QNAN))
+  // CoolAtan2 does the same if y equals 0
+  if (y == 0)
   {
-    return xClass;
-  }
-
-  if (yClass & (_FPCLASS_NINF))
-  {
-    if (xClass & (_FPCLASS_NINF))
-    {
-      return M_PI * 5 / 4;
-    }
-    else if (xClass & (_FPCLASS_PINF))
-    {
-      return M_PI * 7 / 4;
-    }
-    else
-    {
-      return M_PI * 3 / 2;
-    }
-  }
-
-  if (yClass & (_FPCLASS_PINF))
-  {
-    if (xClass & (_FPCLASS_NINF))
-    {
-      return M_PI * 3 / 4;
-    }
-    else if (xClass & (_FPCLASS_PINF))
-    {
-      return M_PI * 1 / 4;
-    }
-    else
-    {
-      return M_PI / 2;
-    }
-  }
-
-  if (xClass & (_FPCLASS_NINF))
-  {
-    return M_PI;
-  }
-
-  if (xClass & (_FPCLASS_PINF))
-  {
+    if (x > 0) return 0;
+    if (x < 0) return M_PI;
     return 0;
   }
 
@@ -137,22 +97,19 @@ double SafeMath_CoolAtan2(double y, double x)
   yDivX = y / x;
   divClass = _fpclass(yDivX);
 
-  if (divClass & (_FPCLASS_NINF | _FPCLASS_PINF))
-  {
-    if (y > 0)
-    {
-      return M_PI / 2;
-    }
-    else
-    {
-      return M_PI * 3 / 2;
-    }
-  }
-
   if (divClass & (_FPCLASS_SNAN | _FPCLASS_QNAN))
   {
+    if (x > 0) return 0;
+    if (x < 0) return M_PI;
     return 0;
   }
 
+  if (divClass & (_FPCLASS_NINF | _FPCLASS_PINF))
+  {
+    if (y > 0) return M_PI / 2;
+    if (y < 0) return - M_PI / 2;
+    return 0;
+  }
+  
   return atan(yDivX);
 }
