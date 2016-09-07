@@ -17,10 +17,22 @@ int __stdcall WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmd
   MainAppHostStruct * hostStruct;
   static SDL_Event sdlEvent;
 
-  // Initialize defaults, Video and Audio
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) == -1)
+  // Initialize video
+  if (SDL_Init(SDL_INIT_VIDEO) == -1)
   {
-    FatalError_Sdl("Could not initialize SDL");
+    FatalError_Sdl("Could not initialize SDL Video");
+  }
+
+  // Initialize audio
+  if (SDL_Init(SDL_INIT_AUDIO) == -1)
+  {
+    NonFatalError_Sdl("Could not initialize SDL Audio");
+  }
+
+  // Initialize joystick and/or game controller
+  if (SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMECONTROLLER) == -1)
+  {
+    NonFatalError_Sdl("Could not initialize SDL Joysticks/Gamecontrollers");
   }
 
   // Clean up on exit

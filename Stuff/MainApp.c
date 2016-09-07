@@ -11,6 +11,7 @@ Please refer to <http://unlicense.org/>
 #include "Resources.h"
 #include "MainAppHostStruct.h"
 #include "MainAppLua.h"
+#include "MainAppLuaInputs.h"
 #include "MainAppDrawing.h"
 #include "MainAppPhysics.h"
 #include "FatalErrorHandler.h"
@@ -43,22 +44,55 @@ void MainApp_HandleEvent(MainAppHostStruct * hostStruct, SDL_Event * sdlEvent)
 {
   switch (sdlEvent->type)
   {
+    /* Key events */
     case SDL_KEYDOWN:
-      MainAppLua_CallKeyDownEvent(hostStruct, &sdlEvent->key);
+      MainAppLuaInputs_CallKeyDownEvent(hostStruct, &sdlEvent->key);
       break;
 
     case SDL_KEYUP:
-      MainAppLua_CallKeyUpEvent(hostStruct, &sdlEvent->key);
+      MainAppLuaInputs_CallKeyUpEvent(hostStruct, &sdlEvent->key);
       break;
 
+    /* Mouse events */
     case SDL_MOUSEMOTION:
-      MainAppLua_CallMouseMotionEvent(hostStruct, &sdlEvent->motion);
+      MainAppLuaInputs_CallMouseMotionEvent(hostStruct, &sdlEvent->motion);
       break;
 
-    // FUTURE: implement these
     case SDL_MOUSEBUTTONDOWN:
+      MainAppLuaInputs_CallMouseDownEvent(hostStruct, &sdlEvent->button);
+      break;
+
     case SDL_MOUSEBUTTONUP:
+      MainAppLuaInputs_CallMouseUpEvent(hostStruct, &sdlEvent->button);
+      break;
+
     case SDL_MOUSEWHEEL:
+      MainAppLuaInputs_CallMouseWheelEvent(hostStruct, &sdlEvent->wheel);
+      break;
+
+    /* Game controller events */
+    case SDL_CONTROLLERAXISMOTION:
+      MainAppLuaInputs_CallControllerAxisEvent(hostStruct, &sdlEvent->caxis);
+      break;
+      
+    case SDL_CONTROLLERBUTTONDOWN:
+      MainAppLuaInputs_CallControllerButtonDownEvent(hostStruct, &sdlEvent->cbutton);
+      break;
+
+    case SDL_CONTROLLERBUTTONUP:
+      MainAppLuaInputs_CallControllerButtonUpEvent(hostStruct, &sdlEvent->cbutton);
+      break;
+
+    case SDL_CONTROLLERDEVICEADDED:
+      MainAppLuaInputs_CallControllerAddedEvent(hostStruct, &sdlEvent->cdevice);
+      break;
+
+    case SDL_CONTROLLERDEVICEREMOVED:
+      MainAppLuaInputs_CallControllerRemovedEvent(hostStruct, &sdlEvent->cdevice);
+      break;
+
+    case SDL_CONTROLLERDEVICEREMAPPED:
+      // TODO: I don't understand controller mappings yet
       break;
       
     case SDL_QUIT:

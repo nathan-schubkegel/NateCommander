@@ -191,7 +191,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MainAppHostStruct.c"
+				>
+			</File>
+			<File
 				RelativePath=".\MainAppLua.c"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppLuaInputs.c"
 				>
 			</File>
 			<File
@@ -294,6 +302,10 @@
 			</File>
 			<File
 				RelativePath=".\MainAppLua.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppLuaInputs.h"
 				>
 			</File>
 			<File

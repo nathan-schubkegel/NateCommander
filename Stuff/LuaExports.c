@@ -13,6 +13,7 @@ Please refer to <http://unlicense.org/>
 #include "NateMash.h"
 #include "NateMashDrawing.h"
 #include "MainAppLua.h"
+#include "MainAppLuaInputs.h"
 #include "MainAppPhysics.h"
 #include <GL\gl.h>
 #include <GL\glu.h>
@@ -249,7 +250,7 @@ int C_RegisterKeyDownHandler(lua_State * luaState)
   NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
   NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"eventKey\" to be a number or nil");
   
-  MainAppLua_RegisterKeyDownHandler(luaState, 1, 2, 3);
+  MainAppLuaInputs_RegisterKeyDownHandler(luaState, 1, 2, 3);
 
   return 0;
 }
@@ -261,7 +262,7 @@ int C_RegisterKeyUpHandler(lua_State * luaState)
   NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
   NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"eventKey\" to be a number or nil");
   
-  MainAppLua_RegisterKeyUpHandler(luaState, 1, 2, 3);
+  MainAppLuaInputs_RegisterKeyUpHandler(luaState, 1, 2, 3);
 
   return 0;
 }
@@ -273,7 +274,7 @@ int C_RegisterKeyResetHandler(lua_State * luaState)
   NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
   NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"eventKey\" to be a number or nil");
   
-  MainAppLua_RegisterKeyResetHandler(luaState, 1, 2, 3);
+  MainAppLuaInputs_RegisterKeyResetHandler(luaState, 1, 2, 3);
 
   return 0;
 }
@@ -284,7 +285,7 @@ int C_RegisterMouseMotionHandler(lua_State * luaState)
   NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
   NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
   
-  MainAppLua_RegisterMouseMotionHandler(luaState, 1, 2);
+  MainAppLuaInputs_RegisterMouseMotionHandler(luaState, 1, 2);
 
   return 0;
 }
