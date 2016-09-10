@@ -8,6 +8,8 @@ Please refer to <http://unlicense.org/>
 
 #include "FatalErrorHandler.h"
 #include "MainAppHostStruct.h"
+#include "MainAppHostTable.h"
+#include "LuaHelpers.h"
 
 void MainAppLuaInputs_Initialize(MainAppHostStruct * hostStruct)
 {
@@ -26,6 +28,30 @@ void MainAppLuaInputs_Initialize(MainAppHostStruct * hostStruct)
   lua_newtable(luaState);
   lua_settable(luaState, -3);
 
+  lua_pushstring(luaState, "MouseDownNames");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "MouseDownHandlers");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "MouseUpNames");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "MouseUpHandlers");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "MouseWheelNames");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "MouseWheelHandlers");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
   lua_pushstring(luaState, "KeyUpNames");
   lua_newtable(luaState);
   lua_settable(luaState, -3);
@@ -39,14 +65,6 @@ void MainAppLuaInputs_Initialize(MainAppHostStruct * hostStruct)
   lua_settable(luaState, -3);
 
   lua_pushstring(luaState, "KeyDownHandlers");
-  lua_newtable(luaState);
-  lua_settable(luaState, -3);
-
-  lua_pushstring(luaState, "KeyResetNames");
-  lua_newtable(luaState);
-  lua_settable(luaState, -3);
-
-  lua_pushstring(luaState, "KeyResetHandlers");
   lua_newtable(luaState);
   lua_settable(luaState, -3);
 
@@ -121,35 +139,13 @@ void MyCallHandlerEvent(MainAppHostStruct * hostStruct,
   }
 }
 
-void MainAppLuaInputs_CallKeyDownEvent(MainAppHostStruct * hostStruct, SDL_KeyboardEvent * e)
+void MainAppLuaInputs_CallKeyEvent(MainAppHostStruct * hostStruct, SDL_KeyboardEvent * e)
 {
   lua_State * luaState = hostStruct->luaState;
   int originalStackIndex = lua_gettop(luaState);
   int eventDataIndex;
-
-  NateCheck0(lua_checkstack(luaState, 3));
-
-  // make an event args table with 'keysym' = e->keysym
-  lua_newtable(luaState);
-  eventDataIndex = lua_gettop(luaState);
-
-  // table.keysym = e->keysym
-  lua_pushstring(luaState, "keysym");
-  lua_pushnumber(luaState, e->keysym.sym);
-  lua_settable(luaState, eventDataIndex);
-
-  // call the custom event handler (if it exists)
-  MyCallHandlerEvent(hostStruct, "KeyDownNames", "KeyDownHandlers", e->keysym.sym, eventDataIndex);
-
-  // restore stack
-  lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
-}
-
-void MainAppLuaInputs_CallKeyUpEvent(MainAppHostStruct * hostStruct, SDL_KeyboardEvent * e)
-{
-  lua_State * luaState = hostStruct->luaState;
-  int originalStackIndex = lua_gettop(luaState);
-  int eventDataIndex;
+  char * namesTable;
+  char * handlersTable;
 
   NateCheck0(lua_checkstack(luaState, 3));
 
@@ -163,10 +159,69 @@ void MainAppLuaInputs_CallKeyUpEvent(MainAppHostStruct * hostStruct, SDL_Keyboar
   lua_settable(luaState, eventDataIndex);
 
   // call the custom event handler (if it exists)
-  MyCallHandlerEvent(hostStruct, "KeyUpNames", "KeyUpHandlers", e->keysym.sym, eventDataIndex);
+  if (e->type == SDL_KEYDOWN)
+  {
+    namesTable = "KeyDownNames";
+    handlersTable = "KeyDownHandlers";
+  }
+  else
+  {
+    namesTable = "KeyUpNames";
+    handlersTable = "KeyUpHandlers";
+  }
+  MyCallHandlerEvent(hostStruct, namesTable, handlersTable, e->keysym.sym, eventDataIndex);
 
   // restore stack
   lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
+}
+
+int MyPushMouseMultiButtonTable(lua_State * luaState, Uint32 buttons)
+{
+  int tableIndex;
+
+  NateCheck0(lua_checkstack(luaState, 3));
+
+  // make a table
+  lua_newtable(luaState);
+  tableIndex = lua_gettop(luaState);
+
+  // add a value to the table for each depressed button
+  if (buttons & SDL_BUTTON_LMASK)
+  {
+    lua_pushnumber(luaState, SDL_BUTTON_LEFT);
+    lua_pushnumber(luaState, SDL_BUTTON_LEFT);
+    lua_settable(luaState, tableIndex);
+  }
+
+  if (buttons & SDL_BUTTON_RMASK)
+  {
+    lua_pushnumber(luaState, SDL_BUTTON_RIGHT);
+    lua_pushnumber(luaState, SDL_BUTTON_RIGHT);
+    lua_settable(luaState, tableIndex);
+  }
+
+  if (buttons & SDL_BUTTON_MMASK)
+  {
+    lua_pushnumber(luaState, SDL_BUTTON_MIDDLE);
+    lua_pushnumber(luaState, SDL_BUTTON_MIDDLE);
+    lua_settable(luaState, tableIndex);
+  }
+
+  if (buttons & SDL_BUTTON_X1MASK)
+  {
+    lua_pushnumber(luaState, SDL_BUTTON_X1);
+    lua_pushnumber(luaState, SDL_BUTTON_X1);
+    lua_settable(luaState, tableIndex);
+  }
+
+  if (buttons & SDL_BUTTON_X2MASK)
+  {
+    lua_pushnumber(luaState, SDL_BUTTON_X2);
+    lua_pushnumber(luaState, SDL_BUTTON_X2);
+    lua_settable(luaState, tableIndex);
+  }
+
+  return tableIndex;
 }
 
 void MainAppLuaInputs_CallMouseMotionEvent(MainAppHostStruct * hostStruct, SDL_MouseMotionEvent * e)
@@ -175,12 +230,19 @@ void MainAppLuaInputs_CallMouseMotionEvent(MainAppHostStruct * hostStruct, SDL_M
   int originalStackIndex = lua_gettop(luaState);
   int eventDataIndex;
 
+  // the wiki recommended ignoring touchpad events. Not sure if I have to.
+  if (e->which == SDL_TOUCH_MOUSEID) return;
+
   NateCheck0(lua_checkstack(luaState, 3));
 
   // make an event args table
   lua_newtable(luaState);
   eventDataIndex = lua_gettop(luaState);
 
+  // table.Buttons = table of buttons currently held down
+  lua_pushstring(luaState, "Buttons");
+  MyPushMouseMultiButtonTable(luaState, e->state);
+  lua_settable(luaState, eventDataIndex);
   // table.ChangeX = relative x movement
   lua_pushstring(luaState, "ChangeX");
   lua_pushnumber(luaState, e->xrel);
@@ -205,115 +267,90 @@ void MainAppLuaInputs_CallMouseMotionEvent(MainAppHostStruct * hostStruct, SDL_M
   lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
 }
 
-int MyToAbsoluteIndex(lua_State * luaState, int index)
+void MainAppLuaInputs_CallMouseButtonEvent(MainAppHostStruct * hostStruct, SDL_MouseButtonEvent * e)
 {
-  if (index < 0)
-  {
-    return lua_gettop(luaState) + 1 + index;
-  }
-  return index;
-}
-
-void MyReplaceNilWithNumber(lua_State * luaState, int index, lua_Number number)
-{
-  int absoluteIndex;
-
-  NateCheck0(lua_checkstack(luaState, 1));
-
-  absoluteIndex = MyToAbsoluteIndex(luaState, index);
-  if (lua_isnil(luaState, absoluteIndex))
-  {
-    lua_pushnumber(luaState, number);
-    lua_replace(luaState, absoluteIndex);
-  }
-}
-
-void MyRegisterEventHandler(lua_State * luaState,
-                            int luaHandlerNameIndex,
-                            int luaHandlerMethodIndex,
-                            int eventKeyIndex,
-                            const char * namesTableId, 
-                            const char * handlersTableId)
-{
-  int hostTableIndex;
+  lua_State * luaState = hostStruct->luaState;
   int originalStackIndex = lua_gettop(luaState);
+  int eventDataIndex;
+  char * namesTable;
+  char * handlersTable;
 
-  NateCheck0(lua_checkstack(luaState, 4));
+  // the wiki recommended ignoring touchpad events. Not sure if I have to.
+  if (e->which == SDL_TOUCH_MOUSEID) return;
 
-  // get the host table (pushes it on the lua stack)
-  hostTableIndex = MainAppHostStruct_LuaPushHostTable2(luaState);
+  NateCheck0(lua_checkstack(luaState, 3));
 
-  // get the HandlerNames table
-  lua_pushstring(luaState, namesTableId);
-  lua_gettable(luaState, hostTableIndex);
+  // make an event args table
+  lua_newtable(luaState);
+  eventDataIndex = lua_gettop(luaState);
 
-  // HandlerNames[eventKeyIndex ?? -1] = handlerName
-  lua_pushvalue(luaState, eventKeyIndex);
-  MyReplaceNilWithNumber(luaState, -1, -1.0);
-  lua_pushvalue(luaState, luaHandlerNameIndex);
-  lua_settable(luaState, -3);
-  lua_pop(luaState, 1); // pop the handlernames table
+  // table.PositionX = absolute x position
+  lua_pushstring(luaState, "PositionX");
+  lua_pushnumber(luaState, e->x);
+  lua_settable(luaState, eventDataIndex);
+  // table.PositionY = absolute x position
+  lua_pushstring(luaState, "PositionY");
+  lua_pushnumber(luaState, e->y);
+  lua_settable(luaState, eventDataIndex);
+  // table.Button = index of pressed/depressed mouse button
+  lua_pushstring(luaState, "Button");
+  lua_pushnumber(luaState, e->button);
+  lua_settable(luaState, eventDataIndex);
+  // table.Pressed = true if pressed, false if depressed
+  lua_pushstring(luaState, "Pressed");
+  lua_pushboolean(luaState, e->state == SDL_PRESSED);
+  lua_settable(luaState, eventDataIndex);
+  // table.Clicks = number of clicks so far
+  lua_pushstring(luaState, "Clicks");
+  lua_pushnumber(luaState, e->clicks);
+  lua_settable(luaState, eventDataIndex);
 
-  // get the Handlers table
-  lua_pushstring(luaState, handlersTableId);
-  lua_gettable(luaState, hostTableIndex);
-
-  // Handlers[eventKeyIndex ?? -1] = handlerMethod
-  lua_pushvalue(luaState, eventKeyIndex);
-  MyReplaceNilWithNumber(luaState, -1, -1.0);
-  lua_pushvalue(luaState, luaHandlerMethodIndex);
-  lua_settable(luaState, -3);
+  // call the custom event handler (if it exists)
+  if (e->state == SDL_PRESSED)
+  {
+    namesTable = "MouseDownNames";
+    handlersTable = "MouseDownHandlers";
+  }
+  else
+  {
+    namesTable = "MouseUpNames";
+    handlersTable = "MouseUpHandlers";
+  }
+  MyCallHandlerEvent(hostStruct, namesTable, handlersTable, e->button, eventDataIndex);
 
   // restore stack
   lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
 }
 
-// these are exported and invoked by Lua client code
-// the indexes are checked in the C_LuaExport methods so in case of errors
-// the user gets a message with significantly more context than he deserves
-void MainAppLuaInputs_RegisterKeyDownHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex)
-{
-  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, eventKeyIndex,
-    "KeyDownNames", "KeyDownHandlers");
-}
-
-void MainAppLuaInputs_RegisterKeyUpHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex)
-{
-  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, eventKeyIndex,
-    "KeyUpNames", "KeyUpHandlers");
-}
-
-void MainAppLuaInputs_RegisterKeyResetHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex)
-{
-  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, eventKeyIndex,
-    "KeyResetNames", "KeyResetHandlers");
-}
-
-void MainAppLuaInputs_RegisterMouseMotionHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex)
-{
-  // fabricate eventKeyIndex = 0
-  NateCheck0(lua_checkstack(luaState, 1));
-  lua_pushnumber(luaState, 0);
-  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, lua_gettop(luaState),
-    "MouseMotionNames", "MouseMotionHandlers");
-}
-
-void MainAppLuaInputs_CallMouseDownEvent(MainAppHostStruct * hostStruct, SDL_MouseButtonEvent * e)
-{
-  (void)hostStruct;
-  (void)e;
-}
-
-void MainAppLuaInputs_CallMouseUpEvent(MainAppHostStruct * hostStruct, SDL_MouseButtonEvent * e)
-{
-  (void)hostStruct;
-  (void)e;
-}
-
 void MainAppLuaInputs_CallMouseWheelEvent(MainAppHostStruct * hostStruct, SDL_MouseWheelEvent * e)
 {
-  (void)hostStruct;
-  (void)e;
+  lua_State * luaState = hostStruct->luaState;
+  int originalStackIndex = lua_gettop(luaState);
+  int eventDataIndex;
+
+  // the wiki recommended ignoring touchpad events. Not sure if I have to.
+  if (e->which == SDL_TOUCH_MOUSEID) return;
+
+  NateCheck0(lua_checkstack(luaState, 3));
+
+  // make an event args table
+  lua_newtable(luaState);
+  eventDataIndex = lua_gettop(luaState);
+
+  // table.ScrollX = relative x scroll movement
+  lua_pushstring(luaState, "ScrollX");
+  lua_pushnumber(luaState, e->x);
+  lua_settable(luaState, eventDataIndex);
+  // table.ScrollY = relative y scroll movement
+  lua_pushstring(luaState, "ScrollY");
+  lua_pushnumber(luaState, e->y);
+  lua_settable(luaState, eventDataIndex);
+
+  // call the custom event handler (if it exists)
+  MyCallHandlerEvent(hostStruct, "MouseWheelNames", "MouseWheelHandlers", 0, eventDataIndex);
+
+  // restore stack
+  lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
 }
 
 void MainAppLuaInputs_CallControllerAxisEvent(MainAppHostStruct * hostStruct, SDL_ControllerAxisEvent * e)
@@ -344,4 +381,91 @@ void MainAppLuaInputs_CallControllerRemovedEvent(MainAppHostStruct * hostStruct,
 {
   (void)hostStruct;
   (void)e;
+}
+
+void MyRegisterEventHandler(lua_State * luaState,
+                            int luaHandlerNameIndex,
+                            int luaHandlerMethodIndex,
+                            int eventKeyIndex,
+                            const char * namesTableId, 
+                            const char * handlersTableId)
+{
+  int hostTableIndex;
+  int originalStackIndex = lua_gettop(luaState);
+
+  NateCheck0(lua_checkstack(luaState, 4));
+
+  // get the host table (pushes it on the lua stack)
+  hostTableIndex = MainAppHostTable_LuaPushHostTable(luaState);
+
+  // get the HandlerNames table
+  lua_pushstring(luaState, namesTableId);
+  lua_gettable(luaState, hostTableIndex);
+
+  // HandlerNames[eventKeyIndex ?? -1] = handlerName
+  lua_pushvalue(luaState, eventKeyIndex);
+  LuaHelpers_ReplaceNilWithNumber(luaState, -1, -1.0);
+  lua_pushvalue(luaState, luaHandlerNameIndex);
+  lua_settable(luaState, -3);
+  lua_pop(luaState, 1); // pop the handlernames table
+
+  // get the Handlers table
+  lua_pushstring(luaState, handlersTableId);
+  lua_gettable(luaState, hostTableIndex);
+
+  // Handlers[eventKeyIndex ?? -1] = handlerMethod
+  lua_pushvalue(luaState, eventKeyIndex);
+  LuaHelpers_ReplaceNilWithNumber(luaState, -1, -1.0);
+  lua_pushvalue(luaState, luaHandlerMethodIndex);
+  lua_settable(luaState, -3);
+
+  // restore stack
+  lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
+}
+
+// these are exported and invoked by Lua client code
+// the indexes are checked in the C_LuaExport methods so in case of errors
+// the user gets a message with significantly more context than he deserves
+void MainAppLuaInputs_RegisterKeyDownHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex)
+{
+  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, eventKeyIndex,
+    "KeyDownNames", "KeyDownHandlers");
+}
+
+void MainAppLuaInputs_RegisterKeyUpHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex)
+{
+  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, eventKeyIndex,
+    "KeyUpNames", "KeyUpHandlers");
+}
+
+void MainAppLuaInputs_RegisterMouseMotionHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex)
+{
+  // fabricate eventKeyIndex = 0
+  NateCheck0(lua_checkstack(luaState, 1));
+  lua_pushnumber(luaState, 0);
+
+  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, lua_gettop(luaState),
+    "MouseMotionNames", "MouseMotionHandlers");
+}
+
+void MainAppLuaInputs_RegisterMouseDownHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int mouseButtonIndex)
+{
+  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, mouseButtonIndex,
+    "MouseDownNames", "MouseDownHandlers");
+}
+
+void MainAppLuaInputs_RegisterMouseUpHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int mouseButtonIndex)
+{
+  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, mouseButtonIndex,
+    "MouseUpNames", "MouseUpHandlers");
+}
+
+void MainAppLuaInputs_RegisterMouseWheelHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex)
+{
+  // fabricate eventKeyIndex = 0
+  NateCheck0(lua_checkstack(luaState, 1));
+  lua_pushnumber(luaState, 0);
+
+  MyRegisterEventHandler(luaState, handlerNameIndex, handlerFunctionIndex, lua_gettop(luaState),
+    "MouseWheelNames", "MouseWheelHandlers");
 }

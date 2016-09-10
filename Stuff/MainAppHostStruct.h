@@ -30,7 +30,6 @@ void MainAppHostStruct_InitializeLuaState(MainAppHostStruct * hostStruct, lua_St
 // pushes the lua HostTable onto the Lua Stack, acquiring it from the given inputs
 // returns the pushed index
 int MainAppHostStruct_LuaPushHostTable(MainAppHostStruct * hostStruct);
-int MainAppHostStruct_LuaPushHostTable2(lua_State * luaState);
 
 // pushes the lua ClientTable onto the Lua Stack, acquiring it from the given inputs
 // returns the pushed index

@@ -46,11 +46,8 @@ void MainApp_HandleEvent(MainAppHostStruct * hostStruct, SDL_Event * sdlEvent)
   {
     /* Key events */
     case SDL_KEYDOWN:
-      MainAppLuaInputs_CallKeyDownEvent(hostStruct, &sdlEvent->key);
-      break;
-
     case SDL_KEYUP:
-      MainAppLuaInputs_CallKeyUpEvent(hostStruct, &sdlEvent->key);
+      MainAppLuaInputs_CallKeyEvent(hostStruct, &sdlEvent->key);
       break;
 
     /* Mouse events */
@@ -59,11 +56,8 @@ void MainApp_HandleEvent(MainAppHostStruct * hostStruct, SDL_Event * sdlEvent)
       break;
 
     case SDL_MOUSEBUTTONDOWN:
-      MainAppLuaInputs_CallMouseDownEvent(hostStruct, &sdlEvent->button);
-      break;
-
     case SDL_MOUSEBUTTONUP:
-      MainAppLuaInputs_CallMouseUpEvent(hostStruct, &sdlEvent->button);
+      MainAppLuaInputs_CallMouseButtonEvent(hostStruct, &sdlEvent->button);
       break;
 
     case SDL_MOUSEWHEEL:

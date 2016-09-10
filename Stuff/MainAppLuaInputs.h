@@ -16,11 +16,9 @@ Please refer to <http://unlicense.org/>
 void MainAppLuaInputs_Initialize(MainAppHostStruct * hostStruct);
 
 // These are invoked by C code to execute Lua client code
-void MainAppLuaInputs_CallKeyDownEvent(MainAppHostStruct * hostStruct, SDL_KeyboardEvent * e);
-void MainAppLuaInputs_CallKeyUpEvent(MainAppHostStruct * hostStruct, SDL_KeyboardEvent * e);
+void MainAppLuaInputs_CallKeyEvent(MainAppHostStruct * hostStruct, SDL_KeyboardEvent * e);
 void MainAppLuaInputs_CallMouseMotionEvent(MainAppHostStruct * hostStruct, SDL_MouseMotionEvent * e);
-void MainAppLuaInputs_CallMouseDownEvent(MainAppHostStruct * hostStruct, SDL_MouseButtonEvent * e);
-void MainAppLuaInputs_CallMouseUpEvent(MainAppHostStruct * hostStruct, SDL_MouseButtonEvent * e);
+void MainAppLuaInputs_CallMouseButtonEvent(MainAppHostStruct * hostStruct, SDL_MouseButtonEvent * e);
 void MainAppLuaInputs_CallMouseWheelEvent(MainAppHostStruct * hostStruct, SDL_MouseWheelEvent * e);
 void MainAppLuaInputs_CallControllerAxisEvent(MainAppHostStruct * hostStruct, SDL_ControllerAxisEvent * e);
 void MainAppLuaInputs_CallControllerButtonDownEvent(MainAppHostStruct * hostStruct, SDL_ControllerButtonEvent * e);
@@ -31,7 +29,9 @@ void MainAppLuaInputs_CallControllerRemovedEvent(MainAppHostStruct * hostStruct,
 // these are exported and invoked by Lua client code
 void MainAppLuaInputs_RegisterKeyDownHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex);
 void MainAppLuaInputs_RegisterKeyUpHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex);
-void MainAppLuaInputs_RegisterKeyResetHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex);
 void MainAppLuaInputs_RegisterMouseMotionHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex);
+void MainAppLuaInputs_RegisterMouseDownHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int mouseButtonIndex);
+void MainAppLuaInputs_RegisterMouseUpHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int mouseButtonIndex);
+void MainAppLuaInputs_RegisterMouseWheelHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex);
 
 #endif

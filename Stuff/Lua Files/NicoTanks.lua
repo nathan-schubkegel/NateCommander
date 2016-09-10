@@ -52,11 +52,22 @@ function Initialize_NicoTanks(state)
   state.WorldTimeLeftoverMs = 0
   state.Paused = false
   
-  -- this is in game axes, where X is -west/+east and Y is -south/+north
-  state.CameraFocalPoint = { X = (state.WorldLeft + state.WorldWidth / 2),
-                             Y = (state.WorldTop + state.WorldHeight / 2), }
+  -- this is in game degrees
+  -- 10 LeftRight degrees is looking a little left of "down the X axis"
+  -- -30 UpDown degrees is looking down on the stuff
+  state.CameraLeftRightAngle = 90
+  state.CameraUpDownAngle = -60
+  state.CameraDistance = 50
+  state.SpinnyBoxZ = 0
                              
+  -- this is in game axes, where X is -west/+east and Y is -south/+north
   state.WindowSize = { X = 500, Y = 500 } -- just guessing at window size initially
+  state.Mouse = 
+    {
+      Position = { X = (state.WindowSize.X / 2),
+                   Y = (state.WindowSize.Y / 2) },  -- just guessing a mouse position initially
+      ButtonsDown = {},
+    };
 
   state.Mashes =
     {
@@ -135,13 +146,10 @@ function Initialize_NicoTanks(state)
     end,
     nil)
 
-  C_RegisterKeyResetHandler("HandleKeyEvent(Reset)",
-    function(state, e) 
-      HandleKeyEvent(state, e, "HandleKeyReset_", nil)
-    end,
-    nil)
-  
   C_RegisterMouseMotionHandler("HandleMouseMotion", HandleMouseMotion)
+  C_RegisterMouseDownHandler("HandleMouseDown", HandleMouseDown, nil)
+  C_RegisterMouseUpHandler("HandleMouseUp", HandleMouseUp, nil)
+  C_RegisterMouseWheelHandler("HandleMouseWheel", HandleMouseWheel)
     
   state.SDLK_Keys = 
     {
@@ -182,7 +190,7 @@ function HandleKeyEvent(state, e, handlerMethodNamePrefix, keyDown)
   end
 
   if keyName ~= nil then
-    -- handlerMethodNamePrefix is like "HandleKeyDown_" or "HandleKeyUp_" or "HandleKeyReset_"
+    -- handlerMethodNamePrefix is like "HandleKeyDown_" or "HandleKeyUp_"
     local keyHandler = _G[handlerMethodNamePrefix .. keyName]
     if keyHandler ~= nil then
       keyHandler(state, e)
@@ -252,7 +260,20 @@ function Clamp(value, min, max)
     value = max
   end
   
-  return value;
+  return value
+end
+
+function NormalizeAngle(value)
+  -- TODO: use modulo to guarantee performance
+  while value < 0 do
+    value = value + 360
+  end
+  
+  while value > 360 do
+    value = value - 360
+  end
+  
+  return value
 end
 
 function HandleMouseMotion(state, e)
@@ -261,21 +282,71 @@ function HandleMouseMotion(state, e)
   -- e.ChangeY
   -- e.PositionX, absolute mouse position, (0,0 is top left)
   -- e.PositionY
+  -- e.Buttons, table of numbers representing SDL mouse buttons
+  --     SDL_BUTTON_LEFT     1
+  --     SDL_BUTTON_MIDDLE   2
+  --     SDL_BUTTON_RIGHT    3
+  --     SDL_BUTTON_X1       4
+  --     SDL_BUTTON_X2       5
   
-  local xPercent = e.PositionX / state.WindowSize.X
+  local pos = state.Mouse.Position
+  pos.X = e.PositionX
+  pos.Y = e.PositionY
   
-  -- mouse events Y axis grows positive as mouse moves down the window
-  -- but game world coordinates north is Y axis+ (the opposite)
-  -- so compensate
-  local yPercent = (state.WindowSize.Y - e.PositionY) / state.WindowSize.Y
+  -- while left button is down, rotate camera by the changed amount
+  if e.Buttons[1] ~= nil then
+    local xPercent = -e.ChangeX / 500
+    local yPercent = -e.ChangeY / 500
+
+    state.CameraLeftRightAngle = NormalizeAngle(state.CameraLeftRightAngle + (xPercent * 360))
+    state.CameraUpDownAngle = Clamp(state.CameraUpDownAngle + (yPercent * 360), -90, 90)
+  end
   
-  state.CameraFocalPoint = 
-    {
-      -- theoretically don't need clamping if state.WindowSize is correct
-      -- but I can't always trust it. Sometimes it's going to be stale for a tick.
-      X = Clamp(state.WorldLeft + state.WorldWidth * xPercent, state.WorldLeft, state.WorldLeft + state.WorldWidth),
-      Y = Clamp(state.WorldTop + state.WorldHeight * yPercent, state.WorldTop, state.WorldTop + state.WorldHeight)
-    }
+  -- while right button is down, change camera distance
+  if e.Buttons[3] ~= nil then
+    state.CameraDistance = Clamp(state.CameraDistance - e.ChangeY, 0, 100)
+  end
+end
+
+function HandleMouseDown(state, e)
+  -- available event data:
+  -- e.PositionX, absolute mouse position, (0,0 is top left)
+  -- e.PositionY
+  -- e.Button, number representing changed SDL mouse button
+  --     SDL_BUTTON_LEFT     1
+  --     SDL_BUTTON_MIDDLE   2
+  --     SDL_BUTTON_RIGHT    3
+  --     SDL_BUTTON_X1       4
+  --     SDL_BUTTON_X2       5
+  -- e.Pressed, true if pressed, false if released
+  -- e.Clicks, number of clicks so far (1, 2, etc)
+  state.Mouse.ButtonsDown[e.Button] = true;
+  
+  -- TODO:
+  -- when user clicks right mouse button down somewhere,
+  -- paint a target there
+  if e.Button == 3 then
+  end
+end
+
+function HandleMouseUp(state, e)
+  -- available event data: same as MouseDown
+  state.Mouse.ButtonsDown[e.Button] = nil;
+  
+  -- TODO:
+  -- when user releases right mouse button somewhere,
+  -- paint another target there, and draw a line between them
+  if e.Button == 3 then
+  end
+end
+
+function HandleMouseWheel(state, e)
+  -- available event data:
+  -- e.ScrollX, relative x scroll movement
+  -- e.ScrollY
+  
+  -- move spinny box up/down with scroll wheel
+  state.SpinnyBoxZ = Clamp(state.SpinnyBoxZ + (e.ScrollY / 10), -50, 50)
 end
 
 function Process(state)
@@ -462,27 +533,14 @@ function Draw(state, e)
     1.0, -- zNear
     1024.0) -- zFar
 
-  -- set the camera to look down on the playing field
-  C_SetView_CameraLookingAtPoint_FromDistance_AtAngle(
-    -- arg: FocalPointX
-    0,
-    -- arg: FocalPointY
-    0,
-    -- arg: FocalPointZ
-    0,
-    -- arg: FocalPointDistance
-    -- look down at the people from above
-    -- TODO: find a better way to look at the world
-    math.max(state.WorldWidth, state.WorldHeight) - 0.3 * math.max(state.WorldWidth, state.WorldHeight),
-    -- arg: LeftRightAngle
-    -- graphics "LeftRight" means rotating around the up/down graphics Y axis
-    -- graphics "LeftRight" 0 degrees means "looking into -Z direction" (into the monitor)
-    -- in game terms we always want to look 90 degrees, north
-    -- (in graphics terms that's 0 degrees)
-    0,
-    -- arg: UpDownAngle
-    -- -60 degrees means "looking down on the little people"
-    -60)
+  -- determine the point between the two tanks
+  local focalPoint = { X = (state.Tanks.Nate.Position.X + state.Tanks.Nico.Position.X) / 2,
+                       Y = (state.Tanks.Nate.Position.Y + state.Tanks.Nico.Position.Y) / 2,
+                       Z = 0 }
+
+  -- TODO: be smarter
+  local cameraDistance = (math.abs(state.Tanks.Nate.Position.X - state.Tanks.Nico.Position.X) + 
+                         math.abs(state.Tanks.Nate.Position.Y - state.Tanks.Nico.Position.Y))
 
   -- graphics coordinates are in terms of
   -- "being a person standing on the ground looking forward" with
@@ -492,17 +550,39 @@ function Draw(state, e)
   -- "looking down on a town of people, oriented by a compass" with
   -- -Z underground, +Z sky, -X west, +X east, +Y north, -Y south"
   
-  -- transform the Projection matrix so drawings to ModelView can be in game coordinates
-  -- (this says "rotate round X axis 90 degrees so graphics +Z axis points into sky
-  --  and graphics Y axis points north")
+  -- blender models have same X/Y/Z as these game coordinates
+  -- and I'm standardizing on blender models facing the X axis
+  -- so 90 degrees rotation causes the model to look at y+ northward
+
+  -- establish camera distance
+  -- (on Z axis because at this point in the transformations, -Z still goes into the screen)
+  C_glTranslate(0, 0, -state.CameraDistance)
+
+  -- rotate everything -90 degrees around X axis
+  -- so +Z axis points into sky and +Y axis points north. Then we can draw in game coordinates
   C_glRotate(-90, 1, 0, 0)
+
+  -- rotate camera in the direction desired to look.
+  -- negative because 'CameraUpDownAngle' is in terms of "where is the camera on the face of a globe"
+  -- but really this matrix rotates what's drawn to give that appearance.
+  C_glRotate(-state.CameraUpDownAngle, 1, 0, 0)
+  
+  -- rotate everything 90 degrees around Z axis (up/down axis)
+  -- so +X axis points into the screen. (That puts it in game coordinates)
+  C_glRotate(90, 0, 0, 1)  
+  
+  -- rotate camera in the direction desired to look.
+  -- negative because 'CameraLeftRightAngle' is in terms of "where is the camera on the face of a globe"
+  -- but really this matrix rotates what's drawn to give that appearance.
+  C_glRotate(-state.CameraLeftRightAngle, 0, 0, 1)  
   
   -- scoot camera around the map
+  -- negative because really this moves what's drawn
   C_glTranslate(
-    -state.CameraFocalPoint.X,
-    -state.CameraFocalPoint.Y,
+    -focalPoint.X,
+    -focalPoint.Y,
     0)
-    
+
   -- Clear the color and depth buffers.
   C_glClear(bit32.bor(0x00004000, 0x00000100)) -- GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT
 
@@ -515,6 +595,8 @@ function Draw(state, e)
   C_glScale(5, 5, 5)
   -- (make the cube spin around at some speed)
   C_glRotate(((C_MsCounter_GetCount(state.WorldTime) % 3500) / 3500) * 360, 0, 0, 1)
+  -- (make the cube hover based on scroll wheel)
+  C_glTranslate(0, 0, state.SpinnyBoxZ)
   C_DrawRainbowCube()
 
   for name, tank in pairs(state.Tanks) do

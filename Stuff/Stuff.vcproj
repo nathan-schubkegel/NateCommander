@@ -183,6 +183,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\LuaHelpers.c"
+				>
+			</File>
+			<File
 				RelativePath=".\MainApp.c"
 				>
 			</File>
@@ -192,6 +196,10 @@
 			</File>
 			<File
 				RelativePath=".\MainAppHostStruct.c"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppHostTable.c"
 				>
 			</File>
 			<File
@@ -289,6 +297,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LuaHelpers.h"
+				>
+			</File>
+			<File
 				RelativePath=".\MainApp.h"
 				>
 			</File>
@@ -298,6 +310,10 @@
 			</File>
 			<File
 				RelativePath=".\MainAppHostStruct.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppHostTable.h"
 				>
 			</File>
 			<File

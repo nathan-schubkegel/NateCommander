@@ -267,18 +267,6 @@ int C_RegisterKeyUpHandler(lua_State * luaState)
   return 0;
 }
 
-int C_RegisterKeyResetHandler(lua_State * luaState)
-{
-  NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
-  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
-  NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
-  NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"eventKey\" to be a number or nil");
-  
-  MainAppLuaInputs_RegisterKeyResetHandler(luaState, 1, 2, 3);
-
-  return 0;
-}
-
 int C_RegisterMouseMotionHandler(lua_State * luaState)
 {
   NateCheck(lua_gettop(luaState) == 2, "Expected exactly two arguments");
@@ -286,6 +274,41 @@ int C_RegisterMouseMotionHandler(lua_State * luaState)
   NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
   
   MainAppLuaInputs_RegisterMouseMotionHandler(luaState, 1, 2);
+
+  return 0;
+}
+
+int C_RegisterMouseDownHandler(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
+  NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
+  NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"mouseButton\" to be a number or nil");
+  
+  MainAppLuaInputs_RegisterMouseDownHandler(luaState, 1, 2, 3);
+
+  return 0;
+}
+
+int C_RegisterMouseUpHandler(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 3, "Expected exactly three arguments");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
+  NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
+  NateCheck(lua_isnumber(luaState, 3) || lua_isnil(luaState, 3), "Expected argument 3 \"mouseButton\" to be a number or nil");
+  
+  MainAppLuaInputs_RegisterMouseUpHandler(luaState, 1, 2, 3);
+
+  return 0;
+}
+
+int C_RegisterMouseWheelHandler(lua_State * luaState)
+{
+  NateCheck(lua_gettop(luaState) == 2, "Expected exactly two arguments");
+  NateCheck(lua_isstring(luaState, 1), "Expected argument 1 \"handlerName\" to be a string");
+  NateCheck(lua_isfunction(luaState, 2) || lua_isnil(luaState, 2), "Expected argument 2 \"handlerFunction\" to be a function or nil");
+  
+  MainAppLuaInputs_RegisterMouseWheelHandler(luaState, 1, 2);
 
   return 0;
 }
@@ -728,8 +751,10 @@ void LuaExports_PublishCMethods(lua_State * luaState)
   PUBLISH_CMETHOD(C_AdvanceGSIM);
   PUBLISH_CMETHOD(C_RegisterKeyDownHandler);
   PUBLISH_CMETHOD(C_RegisterKeyUpHandler);
-  PUBLISH_CMETHOD(C_RegisterKeyResetHandler);
   PUBLISH_CMETHOD(C_RegisterMouseMotionHandler);
+  PUBLISH_CMETHOD(C_RegisterMouseDownHandler);
+  PUBLISH_CMETHOD(C_RegisterMouseUpHandler);
+  PUBLISH_CMETHOD(C_RegisterMouseWheelHandler);
   PUBLISH_CMETHOD(C_NateMash_Uninit);
   PUBLISH_CMETHOD(C_NateMash_LoadFromColladaResourceFile);
   PUBLISH_CMETHOD(C_NateMash_DrawUpright);

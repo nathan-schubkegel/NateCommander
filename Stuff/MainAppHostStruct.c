@@ -72,21 +72,6 @@ int MainAppHostStruct_LuaPushHostTable(MainAppHostStruct * hostStruct)
   return lua_gettop(luaState);
 }
 
-int MainAppHostStruct_LuaPushHostTable2(lua_State * luaState)
-{
-  MainAppHostStruct * hostStruct;
-
-  NateCheck0(lua_checkstack(luaState, 1));
-
-  // local HostTable = Registry[HostStruct]
-  hostStruct = MainAppHostStruct_GetHostStruct(luaState);
-  lua_pushlightuserdata(luaState, hostStruct);
-  lua_gettable(luaState, LUA_REGISTRYINDEX);
-  // NOTE: the goal of this function was to push the HostTable onto the lua stack
-  // (which has now been accomplished)
-  return lua_gettop(luaState);
-}
-
 int MainAppHostStruct_LuaPushClientTable(MainAppHostStruct * hostStruct)
 {
   lua_State * luaState = hostStruct->luaState;
