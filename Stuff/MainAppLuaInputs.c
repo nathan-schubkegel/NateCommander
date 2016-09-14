@@ -10,6 +10,7 @@ Please refer to <http://unlicense.org/>
 #include "MainAppHostStruct.h"
 #include "MainAppHostTable.h"
 #include "LuaHelpers.h"
+#include "MainAppGameControllers.h"
 
 void MainAppLuaInputs_Initialize(MainAppHostStruct * hostStruct)
 {
@@ -68,8 +69,46 @@ void MainAppLuaInputs_Initialize(MainAppHostStruct * hostStruct)
   lua_newtable(luaState);
   lua_settable(luaState, -3);
 
+  lua_pushstring(luaState, "ControllerButtonUpNames");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "ControllerButtonUpHandlers");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "ControllerButtonDownNames");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "ControllerButtonDownHandlers");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "ControllerAxisNames");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "ControllerAxisHandlers");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "ControllersChangedNames");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "ControllersChangedHandlers");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
+  lua_pushstring(luaState, "ControllersLastNotified");
+  lua_newtable(luaState);
+  lua_settable(luaState, -3);
+
   // restore stack
   lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
+
+  MainAppGameControllers_Initialize(hostStruct);
 }
 
 void MyCallHandlerEvent(MainAppHostStruct * hostStruct, 
@@ -355,32 +394,154 @@ void MainAppLuaInputs_CallMouseWheelEvent(MainAppHostStruct * hostStruct, SDL_Mo
 
 void MainAppLuaInputs_CallControllerAxisEvent(MainAppHostStruct * hostStruct, SDL_ControllerAxisEvent * e)
 {
-  (void)hostStruct;
-  (void)e;
+  lua_State * luaState = hostStruct->luaState;
+  int originalStackIndex = lua_gettop(luaState);
+  SDL_GameController * controller;
+  int eventDataIndex;
+
+  controller = MainAppGameControllers_GetControllerFromJoystickId(hostStruct, e->which);
+
+  // not sure if this can happen, but guarding it
+  if (controller == 0) return;
+
+  NateCheck0(lua_checkstack(luaState, 3));
+
+  // make an event args table
+  lua_newtable(luaState);
+  eventDataIndex = lua_gettop(luaState);
+
+  // table.Id = joystick instance id, an integer that uniquely identifies the gamepad forever
+  lua_pushstring(luaState, "Id");
+  lua_pushnumber(luaState, e->which);
+  lua_settable(luaState, eventDataIndex);
+  // table.Axis = the controller axis, one of SDL_GameControllerAxis
+  // 0 = SDL_CONTROLLER_AXIS_LEFTX,
+  // 1 = SDL_CONTROLLER_AXIS_LEFTY,
+  // 2  = SDL_CONTROLLER_AXIS_RIGHTX,
+  // 3  = SDL_CONTROLLER_AXIS_RIGHTY,
+  // 4  = SDL_CONTROLLER_AXIS_TRIGGERLEFT,
+  // 5  = SDL_CONTROLLER_AXIS_TRIGGERRIGHT,
+  lua_pushstring(luaState, "Axis");
+  lua_pushnumber(luaState, e->axis);
+  lua_settable(luaState, eventDataIndex);
+  // table.Value = The axis value (range: -32768 to 32767)
+  lua_pushstring(luaState, "Value");
+  lua_pushnumber(luaState, e->value);
+  lua_settable(luaState, eventDataIndex);
+
+  // call the custom event handler (if it exists)
+  MyCallHandlerEvent(hostStruct, "ControllerAxisNames", "ControllerAxisHandlers", e->which, eventDataIndex);
+
+  // restore stack
+  lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
 }
 
-void MainAppLuaInputs_CallControllerButtonDownEvent(MainAppHostStruct * hostStruct, SDL_ControllerButtonEvent * e)
+void MainAppLuaInputs_CallControllerButtonEvent(MainAppHostStruct * hostStruct, SDL_ControllerButtonEvent * e)
 {
-  (void)hostStruct;
-  (void)e;
+  lua_State * luaState = hostStruct->luaState;
+  int originalStackIndex = lua_gettop(luaState);
+  SDL_GameController * controller;
+  int eventDataIndex;
+  char * namesTable;
+  char * handlersTable;
+
+  controller = MainAppGameControllers_GetControllerFromJoystickId(hostStruct, e->which);
+
+  // not sure if this can happen, but guarding it
+  if (controller == 0) return;
+
+  NateCheck0(lua_checkstack(luaState, 3));
+
+  // make an event args table
+  lua_newtable(luaState);
+  eventDataIndex = lua_gettop(luaState);
+
+  // table.Id = joystick instance id, an integer that uniquely identifies the gamepad forever
+  lua_pushstring(luaState, "Id");
+  lua_pushnumber(luaState, e->which);
+  lua_settable(luaState, eventDataIndex);
+  // table.Button = the controller button, one of SDL_GameControllerButton
+  // 0 = SDL_CONTROLLER_BUTTON_A,
+  // 1 = SDL_CONTROLLER_BUTTON_B,
+  // 2 = SDL_CONTROLLER_BUTTON_X,
+  // 3 = SDL_CONTROLLER_BUTTON_Y,
+  // 4 = SDL_CONTROLLER_BUTTON_BACK,
+  // 5 = SDL_CONTROLLER_BUTTON_GUIDE,
+  // 6 = SDL_CONTROLLER_BUTTON_START,
+  // 7 = SDL_CONTROLLER_BUTTON_LEFTSTICK,
+  // 8 = SDL_CONTROLLER_BUTTON_RIGHTSTICK,
+  // 9 = SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
+  // 10 = SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
+  // 11 = SDL_CONTROLLER_BUTTON_DPAD_UP,
+  // 12 = SDL_CONTROLLER_BUTTON_DPAD_DOWN,
+  // 13 = SDL_CONTROLLER_BUTTON_DPAD_LEFT,
+  // 14 = SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
+  lua_pushstring(luaState, "Button");
+  lua_pushnumber(luaState, e->button);
+  lua_settable(luaState, eventDataIndex);
+  // table.Pressed = True if button is pressed down, False if not
+  lua_pushstring(luaState, "Pressed");
+  lua_pushboolean(luaState, e->state == SDL_PRESSED);
+  lua_settable(luaState, eventDataIndex);
+
+  // call the custom event handler (if it exists)
+  if (e->state == SDL_PRESSED)
+  {
+    namesTable = "ControllerButtonDownNames";
+    handlersTable = "ControllerButtonDownHandlers";
+  }
+  else
+  {
+    namesTable = "ControllerButtonUpNames";
+    handlersTable = "ControllerButtonUpHandlers";
+  }
+  MyCallHandlerEvent(hostStruct, namesTable, handlersTable, e->which, eventDataIndex);
+
+  // restore stack
+  lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
 }
 
-void MainAppLuaInputs_CallControllerButtonUpEvent(MainAppHostStruct * hostStruct, SDL_ControllerButtonEvent * e)
+void MainAppLuaInputs_CallControllersChangedEvent(MainAppHostStruct * hostStruct)
 {
-  (void)hostStruct;
-  (void)e;
-}
+  lua_State * luaState = hostStruct->luaState;
+  int originalStackIndex = lua_gettop(luaState);
+  int eventDataIndex;
+  int oldControllersIndex;
 
-void MainAppLuaInputs_CallControllerAddedEvent(MainAppHostStruct * hostStruct, SDL_ControllerDeviceEvent * e)
-{
-  (void)hostStruct;
-  (void)e;
-}
+  NateCheck0(lua_checkstack(luaState, 5));
 
-void MainAppLuaInputs_CallControllerRemovedEvent(MainAppHostStruct * hostStruct, SDL_ControllerDeviceEvent * e)
-{
-  (void)hostStruct;
-  (void)e;
+  // make an event args table
+  lua_newtable(luaState);
+  eventDataIndex = lua_gettop(luaState);
+
+  // push HostTable
+  MainAppHostStruct_LuaPushHostTable(hostStruct);
+
+  // push "ControllersLastNotified" table
+  lua_pushstring(luaState, "ControllersLastNotified");
+  lua_gettable(luaState, -1);
+  oldControllersIndex = lua_gettop(luaState);
+
+  // eventTable.Added = a table containing every added joystick instance id
+  lua_pushstring(luaState, "Added");
+  MainAppGameControllers_LuaPushAddedControllersTable(hostStruct, oldControllersIndex);
+  lua_settable(luaState, eventDataIndex);
+
+  // eventTable.Removed = a table containing every removed joystick instance id
+  lua_pushstring(luaState, "Removed");
+  MainAppGameControllers_LuaPushRemovedControllersTable(hostStruct, oldControllersIndex);
+  lua_settable(luaState, eventDataIndex);
+  
+  // eventTable.All = a table containing all joystick instance ids
+  lua_pushstring(luaState, "All");
+  MainAppGameControllers_LuaPushAllControllersTable(hostStruct);
+  lua_settable(luaState, eventDataIndex);
+
+  // call the custom event handler (if it exists)
+  MyCallHandlerEvent(hostStruct, "ControllersChangedNames", "ControllersChangedHandlers", 0, eventDataIndex);
+
+  // restore stack
+  lua_pop(luaState, lua_gettop(luaState) - originalStackIndex);
 }
 
 void MyRegisterEventHandler(lua_State * luaState,

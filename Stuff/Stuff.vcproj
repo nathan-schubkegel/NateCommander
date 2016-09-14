@@ -195,6 +195,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MainAppGameControllers.c"
+				>
+			</File>
+			<File
 				RelativePath=".\MainAppHostStruct.c"
 				>
 			</File>
@@ -306,6 +310,10 @@
 			</File>
 			<File
 				RelativePath=".\MainAppDrawing.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MainAppGameControllers.h"
 				>
 			</File>
 			<File

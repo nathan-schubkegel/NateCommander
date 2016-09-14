@@ -21,10 +21,8 @@ void MainAppLuaInputs_CallMouseMotionEvent(MainAppHostStruct * hostStruct, SDL_M
 void MainAppLuaInputs_CallMouseButtonEvent(MainAppHostStruct * hostStruct, SDL_MouseButtonEvent * e);
 void MainAppLuaInputs_CallMouseWheelEvent(MainAppHostStruct * hostStruct, SDL_MouseWheelEvent * e);
 void MainAppLuaInputs_CallControllerAxisEvent(MainAppHostStruct * hostStruct, SDL_ControllerAxisEvent * e);
-void MainAppLuaInputs_CallControllerButtonDownEvent(MainAppHostStruct * hostStruct, SDL_ControllerButtonEvent * e);
-void MainAppLuaInputs_CallControllerButtonUpEvent(MainAppHostStruct * hostStruct, SDL_ControllerButtonEvent * e);
-void MainAppLuaInputs_CallControllerAddedEvent(MainAppHostStruct * hostStruct, SDL_ControllerDeviceEvent * e);
-void MainAppLuaInputs_CallControllerRemovedEvent(MainAppHostStruct * hostStruct, SDL_ControllerDeviceEvent * e);
+void MainAppLuaInputs_CallControllerButtonEvent(MainAppHostStruct * hostStruct, SDL_ControllerButtonEvent * e);
+void MainAppLuaInputs_CallControllersChangedEvent(MainAppHostStruct * hostStruct);
 
 // these are exported and invoked by Lua client code
 void MainAppLuaInputs_RegisterKeyDownHandler(lua_State * luaState, int handlerNameIndex, int handlerFunctionIndex, int eventKeyIndex);

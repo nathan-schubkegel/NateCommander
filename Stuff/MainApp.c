@@ -15,6 +15,7 @@ Please refer to <http://unlicense.org/>
 #include "MainAppDrawing.h"
 #include "MainAppPhysics.h"
 #include "FatalErrorHandler.h"
+#include "MainAppGameControllers.h"
 
 MainAppHostStruct * MainApp_Initialize()
 {
@@ -27,6 +28,9 @@ MainAppHostStruct * MainApp_Initialize()
 
   // Initialize LUA stuff
   MainAppLua_InitLua(hostStruct);
+
+  // open all joysticks
+  MainAppGameControllers_OpenAllControllers(hostStruct);
 
   // Not calling this for today... tokamak is kinda crashing right now
   //MainAppPhysics_InitPhysics();
@@ -70,19 +74,19 @@ void MainApp_HandleEvent(MainAppHostStruct * hostStruct, SDL_Event * sdlEvent)
       break;
       
     case SDL_CONTROLLERBUTTONDOWN:
-      MainAppLuaInputs_CallControllerButtonDownEvent(hostStruct, &sdlEvent->cbutton);
+      MainAppLuaInputs_CallControllerButtonEvent(hostStruct, &sdlEvent->cbutton);
       break;
 
     case SDL_CONTROLLERBUTTONUP:
-      MainAppLuaInputs_CallControllerButtonUpEvent(hostStruct, &sdlEvent->cbutton);
+      MainAppLuaInputs_CallControllerButtonEvent(hostStruct, &sdlEvent->cbutton);
       break;
 
     case SDL_CONTROLLERDEVICEADDED:
-      MainAppLuaInputs_CallControllerAddedEvent(hostStruct, &sdlEvent->cdevice);
+      MainAppGameControllers_ControllerAdded(hostStruct, &sdlEvent->cdevice);
       break;
 
     case SDL_CONTROLLERDEVICEREMOVED:
-      MainAppLuaInputs_CallControllerRemovedEvent(hostStruct, &sdlEvent->cdevice);
+      MainAppGameControllers_ControllerRemoved(hostStruct, &sdlEvent->cdevice);
       break;
 
     case SDL_CONTROLLERDEVICEREMAPPED:
