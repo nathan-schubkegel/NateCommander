@@ -171,6 +171,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GameControllerMapper.c"
+				>
+			</File>
+			<File
 				RelativePath=".\LuaExports.c"
 				>
 				<FileConfiguration
@@ -294,6 +298,10 @@
 			</File>
 			<File
 				RelativePath=".\FatalErrorHandler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameControllerMapper.h"
 				>
 			</File>
 			<File
